@@ -30,7 +30,7 @@ chrome.runtime.onInstalled.addListener(async () => {
   }
   if (!data.model) {
     await chrome.storage.sync.set({
-      model: "mistralai/mistral-small-3.2-24b-instruct:free",
+      model: "google/gemma-3-27b-it:free",
     });
   }
 });
@@ -55,8 +55,7 @@ async function handleRewrite(text, prompt, apiKey, model) {
     );
   }
 
-  const resolvedModel =
-    model || "mistralai/mistral-small-3.2-24b-instruct:free";
+  const resolvedModel = model || "google/gemma-3-27b-it:free";
   let lastError;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {

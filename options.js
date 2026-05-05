@@ -75,9 +75,14 @@ const modelSaveFeedback = document.getElementById("modelSaveFeedback");
 const OLD_VENICE_MODEL =
   "cognitivecomputations/dolphin-mistral-24b-venice-edition:free";
 const OLD_LLAMA_MODEL = "meta-llama/llama-3.3-70b-instruct:free";
-const DEFAULT_MODEL = "mistralai/mistral-small-3.2-24b-instruct:free";
+const OLD_MISTRAL_FREE = "mistralai/mistral-small-3.2-24b-instruct:free"; // never existed
+const DEFAULT_MODEL = "google/gemma-3-27b-it:free";
 
-const RATE_LIMITED_MODELS = new Set([OLD_VENICE_MODEL, OLD_LLAMA_MODEL]);
+const RATE_LIMITED_MODELS = new Set([
+  OLD_VENICE_MODEL,
+  OLD_LLAMA_MODEL,
+  OLD_MISTRAL_FREE,
+]);
 
 chrome.storage.sync.get("model", (data) => {
   // Migrate away from models known to have severe free-tier rate limits

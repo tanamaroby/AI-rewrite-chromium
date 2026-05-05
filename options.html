@@ -126,25 +126,33 @@
         <div class="card model-card">
           <div class="model-badge free">FREE</div>
           <div class="model-info">
-            <div class="model-name">Mistral Small 3.2 24B <span class="model-tag recommended">Recommended</span></div>
-            <div class="model-id"><code>mistralai/mistral-small-3.2-24b-instruct:free</code></div>
-            <div class="model-desc">Best free-tier rate limits on OpenRouter right now. Fast, capable, and loosely filtered. Great default for everyday rewrites.</div>
+            <div class="model-name">Google Gemma 3 27B <span class="model-tag recommended">Recommended</span></div>
+            <div class="model-id"><code>google/gemma-3-27b-it:free</code></div>
+            <div class="model-desc">27B model, free, unmoderated (moderated:false). Best balance of quality and availability on the free tier. Good for everyday rewrites.</div>
           </div>
         </div>
         <div class="card model-card" style="margin-top: 10px;">
           <div class="model-badge free">FREE</div>
           <div class="model-info">
-            <div class="model-name">Llama 3.3 70B Instruct</div>
-            <div class="model-id"><code>meta-llama/llama-3.3-70b-instruct:free</code></div>
-            <div class="model-desc">Very capable but <strong style="color: var(--error)">429 rate limits are common</strong> on the free tier. Use if Mistral isn't working.</div>
+            <div class="model-name">Google Gemma 4 31B</div>
+            <div class="model-id"><code>google/gemma-4-31b-it:free</code></div>
+            <div class="model-desc">Newer and larger, 262K context, unmoderated. Try this if Gemma 3 is slow.</div>
+          </div>
+        </div>
+        <div class="card model-card" style="margin-top: 10px;">
+          <div class="model-badge free">FREE</div>
+          <div class="model-info">
+            <div class="model-name">OpenRouter Free Router</div>
+            <div class="model-id"><code>openrouter/free</code></div>
+            <div class="model-desc">Automatically picks whichever free model is available right now. Best for avoiding rate limits — rotates across models so you never get stuck.</div>
           </div>
         </div>
         <div class="card model-card" style="margin-top: 10px;">
           <div class="model-badge uncensored">UNCENSORED</div>
           <div class="model-info">
-            <div class="model-name">Dolphin Mistral 7B <span class="model-tag">~$0.06/M tokens</span></div>
-            <div class="model-id"><code>cognitivecomputations/dolphin-mistral-7b</code></div>
-            <div class="model-desc">No safety filters. Paid but extremely cheap — roughly 16,000 rewrites per $1. No rate limits. Best for high-volume or unrestricted use.</div>
+            <div class="model-name">Cydonia 24B v4.1 <span class="model-tag">~$0.05/M tokens</span></div>
+            <div class="model-id"><code>thedrummer/cydonia-24b-v4.1</code></div>
+            <div class="model-desc">Uncensored creative writing model based on Mistral Small 3.2 24B. No safety filters, ultra cheap, no rate limits. Best for unrestricted rewrites.</div>
           </div>
         </div>
         <div class="card model-card" style="margin-top: 10px;">
@@ -162,7 +170,7 @@
             type="text"
             id="modelInput"
             class="form-input"
-            placeholder="e.g. mistralai/mistral-small-3.2-24b-instruct:free"
+            placeholder="e.g. google/gemma-3-27b-it:free"
             spellcheck="false"
           />
           <p class="form-hint">
