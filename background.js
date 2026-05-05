@@ -30,7 +30,7 @@ chrome.runtime.onInstalled.addListener(async () => {
   }
   if (!data.model) {
     await chrome.storage.sync.set({
-      model: "google/gemma-3-27b-it:free",
+      model: "openrouter/free",
     });
   }
 });
@@ -55,7 +55,7 @@ async function handleRewrite(text, prompt, apiKey, model) {
     );
   }
 
-  const resolvedModel = model || "google/gemma-3-27b-it:free";
+  const resolvedModel = model || "openrouter/free";
   let lastError;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
