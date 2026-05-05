@@ -131,6 +131,7 @@
 
   async function handleRewrite(el, match) {
     const overlay = createOverlay(el);
+    const startTime = Date.now();
 
     try {
       const result = await new Promise((resolve, reject) => {
@@ -146,7 +147,7 @@
             if (chrome.runtime.lastError) {
               reject(new Error(chrome.runtime.lastError.message));
             } else if (response.success) {
-              resolve(response.text);
+              resolve(response);
             } else {
               reject(new Error(response.error));
             }
@@ -154,12 +155,17 @@
         );
       });
 
-      replaceText(el, result);
-      showToast(`✓ Rewritten with "${match.cmd.label || match.keyword}"`);
+      const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1);
+      replaceText(el, result.text);
+      const modelShort = (result.model || model || "unknown").split("/").pop();
+      showToast(
+        `✓ ${match.cmd.label || match.keyword} · ${modelShort} · ${elapsedSec}s`,
+      );
     } catch (err) {
+      const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1);
       // Restore original text without keyword on error
       replaceText(el, match.textToRewrite);
-      showToast(err.message, true);
+      showToast(`✗ Failed after ${elapsedSec}s — ${err.message}`, true);
       console.error("[AI Rewriter]", err);
     } finally {
       removeOverlay(el);

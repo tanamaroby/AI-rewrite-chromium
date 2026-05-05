@@ -68,7 +68,10 @@
   transition:
     opacity 0.25s ease,
     transform 0.25s ease;
+  max-width: min(560px, 90vw);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   pointer-events: none;
 }
 

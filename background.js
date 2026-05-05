@@ -39,7 +39,9 @@ chrome.runtime.onInstalled.addListener(async () => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "REWRITE_TEXT") {
     handleRewrite(message.text, message.prompt, message.apiKey, message.model)
-      .then((result) => sendResponse({ success: true, text: result }))
+      .then((result) =>
+        sendResponse({ success: true, text: result.text, model: result.model }),
+      )
       .catch((err) => sendResponse({ success: false, error: err.message }));
     return true; // Keep channel open for async response
   }
@@ -109,12 +111,22 @@ async function handleRewrite(text, prompt, apiKey, model) {
 
     const data = await response.json();
     const result = data.choices?.[0]?.message?.content?.trim();
-    if (!result) throw new Error("Empty response from AI.");
-    return result;
+    const usedModel = data.model || resolvedModel;
+    if (!result) {
+      // Empty response — treat like a retryable failure
+      lastError = new Error(
+        `Empty response from AI (attempt ${attempt + 1}/${MAX_RETRIES}).`,
+      );
+      continue;
+    }
+    return { text: result, model: usedModel };
   }
 
   // All retries exhausted
-  throw new Error(
-    `Rate limit exceeded after ${MAX_RETRIES} attempts. Try switching to a paid model (e.g. mistralai/mistral-7b-instruct) in options — costs ~$0.06/M tokens.`,
+  throw (
+    lastError ||
+    new Error(
+      `Rate limit exceeded after ${MAX_RETRIES} attempts. Try switching to a paid model in options.`,
+    )
   );
 }

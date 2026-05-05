@@ -5,24 +5,31 @@ document.getElementById("openOptions2").addEventListener("click", openOptions);
 
 const statusDot = document.getElementById("statusDot");
 const statusText = document.getElementById("statusText");
+const modelText = document.getElementById("modelText");
 const commandsList = document.getElementById("commandsList");
 
-chrome.storage.sync.get(["commands", "apiKey"], (data) => {
+chrome.storage.sync.get(["commands", "apiKey", "model"], (data) => {
   const commands = data.commands || [];
   const apiKey = data.apiKey || "";
+  const model = data.model || "openrouter/free";
 
   // API key status
   if (!apiKey) {
     statusDot.className = "status-dot err";
-    statusText.textContent = "No API key — set one in options";
+    statusText.textContent = "No API key set";
   } else {
     statusDot.className = "status-dot ok";
-    statusText.textContent = "API key configured";
+    statusText.textContent = "API key active";
   }
+
+  // Model display — show just the last segment, full ID in title tooltip
+  const modelShort = model.split("/").pop();
+  modelText.textContent = modelShort;
+  modelText.closest(".model-pill").title = model;
 
   // Render command chips
   if (commands.length === 0) {
-    commandsList.innerHTML = `<div class="cmd-empty">No keywords defined yet.</div>`;
+    commandsList.innerHTML = `<div class="cmd-empty">No keywords defined yet.<br><span class="cmd-empty-hint">Add some in Settings.</span></div>`;
     return;
   }
 
@@ -31,7 +38,10 @@ chrome.storage.sync.get(["commands", "apiKey"], (data) => {
       (cmd) => `
       <div class="command-chip">
         <span class="cmd-keyword">${escHtml(cmd.keyword)}</span>
-        <span class="cmd-label">${escHtml(cmd.label || "Custom")}</span>
+        <div class="cmd-right">
+          <span class="cmd-label">${escHtml(cmd.label || "Custom")}</span>
+          <span class="cmd-prompt">${escHtml(cmd.prompt || "")}</span>
+        </div>
       </div>`,
     )
     .join("");
