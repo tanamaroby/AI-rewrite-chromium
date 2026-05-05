@@ -539,6 +539,137 @@ body {
   line-height: 1.5;
 }
 
+/* Model group label */
+.model-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+  margin-bottom: 8px;
+  margin-top: 6px;
+}
+
+/* Clickable model cards */
+.model-card[data-model] {
+  position: relative;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.model-card[data-model]:hover {
+  border-color: rgba(108, 99, 255, 0.45);
+  background: rgba(108, 99, 255, 0.07);
+}
+.model-card.active {
+  border-color: rgba(108, 99, 255, 0.7) !important;
+  background: rgba(108, 99, 255, 0.1) !important;
+}
+
+/* Select / Active pill (top-right of card) */
+.model-select-pill {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  transition:
+    opacity 0.12s,
+    color 0.12s,
+    background 0.12s,
+    border-color 0.12s;
+  opacity: 0;
+  color: var(--text-faint);
+  background: rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+.model-card[data-model]:hover .model-select-pill {
+  opacity: 1;
+}
+.model-card.active .model-select-pill {
+  opacity: 1;
+  color: var(--success);
+  background: rgba(74, 222, 128, 0.12);
+  border-color: rgba(74, 222, 128, 0.25);
+}
+
+/* Stat chips */
+.model-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.stat {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+.stat.stat-free {
+  color: var(--success);
+  background: rgba(74, 222, 128, 0.08);
+  border-color: rgba(74, 222, 128, 0.2);
+}
+.stat.stat-warn {
+  color: #fb923c;
+  background: rgba(251, 146, 60, 0.08);
+  border-color: rgba(251, 146, 60, 0.2);
+}
+
+/* Comparison guide */
+.compare-box {
+  background: rgba(108, 99, 255, 0.05);
+  border: 1px solid rgba(108, 99, 255, 0.15);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+}
+.compare-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.compare-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 5px 0;
+}
+.compare-row + .compare-row {
+  border-top: 1px solid rgba(148, 163, 184, 0.07);
+}
+.compare-use {
+  color: var(--text-muted);
+  flex: 1;
+}
+.compare-arrow {
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+.compare-pick {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent2);
+  background: rgba(108, 99, 255, 0.1);
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

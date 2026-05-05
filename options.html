@@ -119,49 +119,112 @@
         <div class="section-header">
           <h2>AI Model</h2>
           <p class="section-desc">
-            Choose which AI model to use for rewrites. The default is a <strong>free uncensored model</strong> via OpenRouter.
+            Choose which AI model powers your rewrites. <strong>Click any card</strong> to select it, then save.
           </p>
         </div>
 
-        <div class="card model-card">
-          <div class="model-badge free">FREE</div>
-          <div class="model-info">
-            <div class="model-name">Google Gemma 3 27B <span class="model-tag recommended">Recommended</span></div>
-            <div class="model-id"><code>google/gemma-3-27b-it:free</code></div>
-            <div class="model-desc">27B model, free, unmoderated (moderated:false). Best balance of quality and availability on the free tier. Good for everyday rewrites.</div>
+        <div class="compare-box">
+          <div class="compare-title">Which should I pick?</div>
+          <div class="compare-row">
+            <span class="compare-use">Just works, zero setup</span>
+            <span class="compare-arrow">→</span>
+            <span class="compare-pick">openrouter/free</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-use">Best free + less restricted</span>
+            <span class="compare-arrow">→</span>
+            <span class="compare-pick">Hermes 3 405B</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-use">Cheapest paid, no filters</span>
+            <span class="compare-arrow">→</span>
+            <span class="compare-pick">Cydonia 24B</span>
+          </div>
+          <div class="compare-row">
+            <span class="compare-use">Best creative / narrative writing</span>
+            <span class="compare-arrow">→</span>
+            <span class="compare-pick">Skyfall 36B or Euryale 70B</span>
           </div>
         </div>
-        <div class="card model-card" style="margin-top: 10px;">
+
+        <div class="model-group-label">FREE MODELS</div>
+
+        <div class="card model-card" data-model="openrouter/free">
           <div class="model-badge free">FREE</div>
           <div class="model-info">
-            <div class="model-name">Google Gemma 4 31B</div>
-            <div class="model-id"><code>google/gemma-4-31b-it:free</code></div>
-            <div class="model-desc">Newer and larger, 262K context, unmoderated. Try this if Gemma 3 is slow.</div>
-          </div>
-        </div>
-        <div class="card model-card" style="margin-top: 10px;">
-          <div class="model-badge free">FREE</div>
-          <div class="model-info">
-            <div class="model-name">OpenRouter Free Router</div>
+            <div class="model-name">OpenRouter Free Router <span class="model-tag recommended">Default</span></div>
             <div class="model-id"><code>openrouter/free</code></div>
-            <div class="model-desc">Automatically picks whichever free model is available right now. Best for avoiding rate limits — rotates across models so you never get stuck.</div>
+            <div class="model-desc">Automatically picks whichever free model is available at the time of your request. Never gets stuck on rate limits — rotates across models. Zero cost, no configuration needed.</div>
+            <div class="model-stats">
+              <span class="stat stat-free">$0 / M tokens</span>
+              <span class="stat">Auto-routes</span>
+              <span class="stat">No rate limits</span>
+            </div>
           </div>
+          <div class="model-select-pill">Select</div>
         </div>
-        <div class="card model-card" style="margin-top: 10px;">
+
+        <div class="card model-card" data-model="nousresearch/hermes-3-llama-3.1-405b:free" style="margin-top: 10px;">
+          <div class="model-badge free">FREE</div>
+          <div class="model-info">
+            <div class="model-name">Hermes 3 405B Instruct</div>
+            <div class="model-id"><code>nousresearch/hermes-3-llama-3.1-405b:free</code></div>
+            <div class="model-desc">405B Llama 3.1 fine-tune by Nous Research. Designed for steerability and reduced refusals — more willing to follow unusual prompts than the base model. Hosted on Venice (Beta) only — uptime is ~64%, so expect occasional failures. Pair with openrouter/free as a fallback plan.</div>
+            <div class="model-stats">
+              <span class="stat stat-free">$0 / M tokens</span>
+              <span class="stat">131K ctx</span>
+              <span class="stat stat-warn">~64% uptime</span>
+            </div>
+          </div>
+          <div class="model-select-pill">Select</div>
+        </div>
+
+        <div class="model-group-label" style="margin-top: 18px;">PAID — UNCENSORED</div>
+
+        <div class="card model-card" data-model="thedrummer/cydonia-24b-v4.1">
           <div class="model-badge uncensored">UNCENSORED</div>
           <div class="model-info">
-            <div class="model-name">Cydonia 24B v4.1 <span class="model-tag">~$0.05/M tokens</span></div>
+            <div class="model-name">Cydonia 24B v4.1 <span class="model-tag">Best value</span></div>
             <div class="model-id"><code>thedrummer/cydonia-24b-v4.1</code></div>
-            <div class="model-desc">Uncensored creative writing model based on Mistral Small 3.2 24B. No safety filters, ultra cheap, no rate limits. Best for unrestricted rewrites.</div>
+            <div class="model-desc">Uncensored creative writing model built on Mistral Small 3.2 24B. No safety filters, no refusals. Best bang-for-buck for everyday unrestricted rewrites — fast, cheap, reliable. ~$1 covers around 6,000 rewrites.</div>
+            <div class="model-stats">
+              <span class="stat">$0.30 / M in</span>
+              <span class="stat">$0.50 / M out</span>
+              <span class="stat">131K ctx</span>
+              <span class="stat">~6K rewrites / $1</span>
+            </div>
           </div>
+          <div class="model-select-pill">Select</div>
         </div>
-        <div class="card model-card" style="margin-top: 10px;">
+
+        <div class="card model-card" data-model="thedrummer/skyfall-36b-v2" style="margin-top: 10px;">
           <div class="model-badge uncensored">UNCENSORED</div>
           <div class="model-info">
-            <div class="model-name">Venice Uncensored — Dolphin Mistral 24B</div>
-            <div class="model-id"><code>cognitivecomputations/dolphin-mistral-24b-venice-edition:free</code></div>
-            <div class="model-desc">No safety filters. <strong style="color: var(--error)">Very low rate limits</strong> — hits 429 almost immediately even with an API key.</div>
+            <div class="model-name">Skyfall 36B v2 <span class="model-tag">Best prose</span></div>
+            <div class="model-id"><code>thedrummer/skyfall-36b-v2</code></div>
+            <div class="model-desc">Mistral Small 2501 fine-tuned for creative writing, nuanced storytelling, and roleplay. No filters. Noticeably richer prose than Cydonia — worth the small price premium if writing quality matters.</div>
+            <div class="model-stats">
+              <span class="stat">$0.55 / M in</span>
+              <span class="stat">$0.80 / M out</span>
+              <span class="stat">32K ctx</span>
+            </div>
           </div>
+          <div class="model-select-pill">Select</div>
+        </div>
+
+        <div class="card model-card" data-model="sao10k/l3.3-euryale-70b" style="margin-top: 10px;">
+          <div class="model-badge uncensored">UNCENSORED</div>
+          <div class="model-info">
+            <div class="model-name">Euryale 70B v2.3</div>
+            <div class="model-id"><code>sao10k/l3.3-euryale-70b</code></div>
+            <div class="model-desc">Llama 3.3 70B fine-tuned by Sao10K for immersive creative roleplay and narrative writing. No safety filters. Largest and most capable model in this list — best raw output quality for complex or long-form rewrites.</div>
+            <div class="model-stats">
+              <span class="stat">$0.65 / M in</span>
+              <span class="stat">$0.75 / M out</span>
+              <span class="stat">131K ctx</span>
+            </div>
+          </div>
+          <div class="model-select-pill">Select</div>
         </div>
 
         <div class="form-group" style="margin-top: 20px;">
@@ -170,7 +233,7 @@
             type="text"
             id="modelInput"
             class="form-input"
-            placeholder="e.g. google/gemma-3-27b-it:free"
+            placeholder="e.g. openrouter/free"
             spellcheck="false"
           />
           <p class="form-hint">

@@ -84,6 +84,19 @@ const RATE_LIMITED_MODELS = new Set([
   OLD_MISTRAL_FREE,
 ]);
 
+function updateCardSelection(selectedModel) {
+  document.querySelectorAll(".model-card[data-model]").forEach((card) => {
+    const pill = card.querySelector(".model-select-pill");
+    if (card.dataset.model === selectedModel) {
+      card.classList.add("active");
+      if (pill) pill.textContent = "✓ Active";
+    } else {
+      card.classList.remove("active");
+      if (pill) pill.textContent = "Select";
+    }
+  });
+}
+
 chrome.storage.sync.get("model", (data) => {
   // Migrate away from models known to have severe free-tier rate limits
   const shouldMigrate = !data.model || RATE_LIMITED_MODELS.has(data.model);
@@ -92,6 +105,19 @@ chrome.storage.sync.get("model", (data) => {
     chrome.storage.sync.set({ model: DEFAULT_MODEL });
   }
   modelInput.value = current;
+  updateCardSelection(current);
+});
+
+document.querySelectorAll(".model-card[data-model]").forEach((card) => {
+  card.addEventListener("click", () => {
+    const model = card.dataset.model;
+    modelInput.value = model;
+    updateCardSelection(model);
+  });
+});
+
+modelInput.addEventListener("input", () => {
+  updateCardSelection(modelInput.value.trim());
 });
 
 saveModelBtn.addEventListener("click", () => {
@@ -102,6 +128,7 @@ saveModelBtn.addEventListener("click", () => {
   }
   chrome.storage.sync.set({ model }, () => {
     showFeedback(modelSaveFeedback, "✓ Saved!", true);
+    updateCardSelection(model);
   });
 });
 
