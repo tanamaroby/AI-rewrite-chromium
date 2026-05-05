@@ -1,0 +1,9 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Release artifacts (built by CI)
+*.zip
+
+# Editor
+.vscode/settings.json

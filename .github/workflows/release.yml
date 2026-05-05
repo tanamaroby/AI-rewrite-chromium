@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build zip
+        run: |
+          zip -r ai-rewriter-${{ github.ref_name }}.zip \
+            manifest.json \
+            background.js \
+            content.js \
+            content.css \
+            popup.html \
+            popup.css \
+            popup.js \
+            options.html \
+            options.css \
+            options.js \
+            icons/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: AI Rewriter ${{ github.ref_name }}
+          body: |
+            ## Installation
+
+            1. Download **ai-rewriter-${{ github.ref_name }}.zip** below
+            2. Unzip it anywhere permanent (e.g. `~/Extensions/ai-rewriter`)
+            3. Open Chrome → `chrome://extensions` → enable **Developer mode** (top-right toggle)
+            4. Click **Load unpacked** → select the unzipped folder
+            5. Open the extension options → paste your [OpenRouter API key](https://openrouter.ai/settings/keys)
+
+            > **Note:** Do not delete the folder after loading — Chrome loads the extension live from it.
+          files: ai-rewriter-${{ github.ref_name }}.zip
+          fail_on_unmatched_files: true
