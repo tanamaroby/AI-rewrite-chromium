@@ -28,6 +28,7 @@ icons/               PNG icons at 16/32/48/128px
 ## Models
 
 Default is `openrouter/free`. Known bad models (rate-limited or nonexistent) tracked in `options.js`:
+
 - `RATE_LIMITED_MODELS` Set — used for auto-migration on options page load
 - `mistralai/mistral-small-3.2-24b-instruct:free` does NOT exist on OpenRouter (no free variant)
 - Venice Dolphin free is severely rate-limited
@@ -44,8 +45,12 @@ Default is `openrouter/free`. Known bad models (rate-limited or nonexistent) tra
 ## Release process
 
 - Bump `"version"` in `manifest.json`
-- Tag: `git tag vX.Y.Z && git push origin vX.Y.Z`
-- GitHub Actions (`.github/workflows/release.yml`) zips the extension files and creates a GitHub Release automatically
+- Add a new entry to `CHANGELOG.md` under `## [X.Y.Z] - YYYY-MM-DD` (Keep a Changelog format)
+- Commit, tag, and push: `git tag vX.Y.Z && git push origin vX.Y.Z`
+- GitHub Actions (`.github/workflows/release.yml`) automatically:
+  - Extracts the matching changelog section for the tag from `CHANGELOG.md`
+  - Zips the extension files
+  - Creates a GitHub Release with the changelog notes + installation instructions as the body
 - Users install by downloading the zip, unzipping to a permanent folder, and using "Load unpacked" in `chrome://extensions`
 
 ## Style notes
