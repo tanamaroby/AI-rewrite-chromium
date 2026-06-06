@@ -148,8 +148,11 @@
   function formatText(text) {
     // Strip all existing asterisks first to normalise before re-applying formatting
     text = text.replace(/\*/g, "");
+    // Normalise curly/smart quotes to straight quotes
+    text = text.replace(/[""]/g, '"');
     const parts = [];
-    const regex = /[""][^"""]*[""]/g;
+    // Match straight-quoted strings OR square-bracketed strings
+    const regex = /"[^"]*"|\[[^\]]*\]/g;
     let lastIndex = 0;
     let match;
     while ((match = regex.exec(text)) !== null) {
