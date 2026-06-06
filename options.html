@@ -259,43 +259,64 @@
       <!-- SpicyChat Section -->
       <section id="section-spicychat" class="section">
         <div class="section-header">
-          <h2>SpicyChat — Memories Drawer</h2>
+          <h2>SpicyChat — Notes Panel</h2>
           <p class="section-desc">
-            Adds a persistent side drawer on SpicyChat.AI chat pages that keeps
-            the <strong>Memories</strong> panel always visible on the right.
-            Disable this if you notice any slowdown on SpicyChat pages.
+            Adds a persistent side panel on SpicyChat.AI chat pages where you can
+            take notes per chat. Notes are saved per chat and persist across page
+            loads and browser restarts. Supports Markdown preview, word count, and export.
           </p>
         </div>
         <div class="card">
           <div class="toggle-row">
             <div class="toggle-info">
-              <span class="toggle-label">Enable memories drawer</span>
+              <span class="toggle-label">Enable notes panel</span>
               <span class="toggle-hint">Only active on spicychat.ai/chat/* pages. Reload the tab after changing.</span>
             </div>
             <label class="toggle-switch">
-              <input type="checkbox" id="spicychatDrawerToggle" />
+              <input type="checkbox" id="spicychatNotesToggle" />
               <span class="toggle-track"></span>
             </label>
           </div>
         </div>
-
-        <div class="form-group">
-          <label class="form-label" for="spicychatDrawerWidthInput">Drawer width (px)</label>
-          <input
-            type="number"
-            id="spicychatDrawerWidthInput"
-            class="form-input"
-            placeholder="440"
-            min="280"
-            max="720"
-            style="width: 120px;"
-          />
-          <p class="form-hint">280 – 720 px. You can also drag the left edge of the drawer to resize it live.</p>
+        <div class="form-actions">
+          <span class="save-feedback" id="spicychatNotesSaveFeedback"></span>
         </div>
 
-        <div class="form-actions">
-          <button class="btn-primary" id="saveSpicychatDrawer">Save</button>
-          <span class="save-feedback" id="spicychatDrawerSaveFeedback"></span>
+        <!-- Keyboard shortcuts reference -->
+        <div class="section-header" style="margin-top: 28px;">
+          <h3 style="font-size: 14px; color: var(--text-secondary); margin: 0 0 10px;">Keyboard Shortcuts</h3>
+        </div>
+        <div class="card" style="padding: 0; overflow: hidden;">
+          <table style="width:100%; border-collapse: collapse; font-size: 12.5px;">
+            <tr style="border-bottom: 1px solid rgba(108,99,255,0.12);">
+              <td style="padding: 9px 16px; color: var(--text-secondary);">Toggle Markdown preview</td>
+              <td style="padding: 9px 16px; text-align: right;"><kbd>Ctrl</kbd> + <kbd>P</kbd></td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(108,99,255,0.12);">
+              <td style="padding: 9px 16px; color: var(--text-secondary);">Force-save immediately</td>
+              <td style="padding: 9px 16px; text-align: right;"><kbd>Ctrl</kbd> + <kbd>S</kbd></td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(108,99,255,0.12);">
+              <td style="padding: 9px 16px; color: var(--text-secondary);">Insert indent (2 spaces)</td>
+              <td style="padding: 9px 16px; text-align: right;"><kbd>Tab</kbd></td>
+            </tr>
+            <tr>
+              <td style="padding: 9px 16px; color: var(--text-secondary);">Close panel</td>
+              <td style="padding: 9px 16px; text-align: right;"><kbd>Esc</kbd></td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Saved notes list -->
+        <div style="margin-top: 28px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+          <h3 style="font-size: 14px; color: var(--text-secondary); margin: 0;">
+            Saved notes
+            <span id="sc-notes-count" style="display: inline-block; background: rgba(108,99,255,0.25); color: #a78bfa; font-size: 11px; font-weight: 600; border-radius: 10px; padding: 1px 8px; margin-left: 6px; vertical-align: middle;">0</span>
+          </h3>
+          <button class="btn-ghost" id="sc-notes-refresh" style="font-size: 12px; padding: 4px 12px;">↻ Refresh</button>
+        </div>
+        <div id="sc-notes-list" style="display: flex; flex-direction: column; gap: 8px;">
+          <p style="color: var(--text-muted); font-size: 12.5px; padding: 12px 0;" id="sc-notes-empty">No notes saved yet.</p>
         </div>
       </section>
 

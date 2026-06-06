@@ -55,18 +55,18 @@ function escHtml(str) {
     .replace(/"/g, "&quot;");
 }
 
-// SpicyChat drawer toggle
-const spicychatDrawerTogglePopup = document.getElementById(
-  "spicychatDrawerTogglePopup",
+// SpicyChat notes toggle
+const spicychatNotesTogglePopup = document.getElementById(
+  "spicychatNotesTogglePopup",
 );
 
-chrome.storage.sync.get("spicychatDrawerEnabled", (data) => {
-  spicychatDrawerTogglePopup.checked = data.spicychatDrawerEnabled !== false;
+chrome.storage.sync.get("spicychatNotesEnabled", (data) => {
+  spicychatNotesTogglePopup.checked = data.spicychatNotesEnabled !== false;
 });
 
-spicychatDrawerTogglePopup.addEventListener("change", () => {
+spicychatNotesTogglePopup.addEventListener("change", () => {
   chrome.storage.sync.set({
-    spicychatDrawerEnabled: spicychatDrawerTogglePopup.checked,
+    spicychatNotesEnabled: spicychatNotesTogglePopup.checked,
   });
 });
 

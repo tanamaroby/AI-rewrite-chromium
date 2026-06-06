@@ -249,57 +249,161 @@ saveCommandsBtn.addEventListener("click", () => {
     showFeedback(cmdSaveFeedback, "✓ Saved!", true);
   });
 });
-// ─── SpicyChat Drawer ──────────────────────────────────────────────────────────────
+// ─── SpicyChat Notes ───────────────────────────────────────────────────────────────
 
-const spicychatDrawerToggle = document.getElementById("spicychatDrawerToggle");
-const spicychatDrawerWidthInput = document.getElementById(
-  "spicychatDrawerWidthInput",
-);
-const saveSpicychatDrawerBtn = document.getElementById("saveSpicychatDrawer");
-const spicychatDrawerSaveFeedback = document.getElementById(
-  "spicychatDrawerSaveFeedback",
+const spicychatNotesToggle = document.getElementById("spicychatNotesToggle");
+const spicychatNotesSaveFeedback = document.getElementById(
+  "spicychatNotesSaveFeedback",
 );
 
-chrome.storage.sync.get(
-  ["spicychatDrawerEnabled", "spicychatDrawerWidth"],
-  (data) => {
-    spicychatDrawerToggle.checked = data.spicychatDrawerEnabled !== false;
-    spicychatDrawerWidthInput.value = data.spicychatDrawerWidth || 440;
-  },
-);
-
-spicychatDrawerToggle.addEventListener("change", () => {
-  chrome.storage.sync.set({
-    spicychatDrawerEnabled: spicychatDrawerToggle.checked,
-  });
+chrome.storage.sync.get("spicychatNotesEnabled", (data) => {
+  spicychatNotesToggle.checked = data.spicychatNotesEnabled !== false;
 });
 
-saveSpicychatDrawerBtn.addEventListener("click", () => {
-  const w = parseInt(spicychatDrawerWidthInput.value, 10);
-  if (isNaN(w) || w < 280 || w > 720) {
-    spicychatDrawerWidthInput.style.borderColor = "var(--error)";
-    showFeedback(
-      spicychatDrawerSaveFeedback,
-      "Width must be 280–720 px",
-      false,
-    );
-    return;
-  }
-  spicychatDrawerWidthInput.style.borderColor = "";
+spicychatNotesToggle.addEventListener("change", () => {
   chrome.storage.sync.set(
-    {
-      spicychatDrawerEnabled: spicychatDrawerToggle.checked,
-      spicychatDrawerWidth: w,
-    },
+    { spicychatNotesEnabled: spicychatNotesToggle.checked },
     () => {
       showFeedback(
-        spicychatDrawerSaveFeedback,
+        spicychatNotesSaveFeedback,
         "✓ Saved! Reload the SpicyChat tab to apply.",
         true,
       );
     },
   );
 });
+
+// ── Notes list ──
+const scNotesCountEl = document.getElementById("sc-notes-count");
+const scNotesListEl = document.getElementById("sc-notes-list");
+const scNotesEmptyEl = document.getElementById("sc-notes-empty");
+const scNotesRefreshBtn = document.getElementById("sc-notes-refresh");
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function renderNotesList(notes) {
+  scNotesCountEl.textContent = notes.length;
+  if (notes.length === 0) {
+    scNotesEmptyEl.style.display = "";
+    Array.from(scNotesListEl.children).forEach((c) => {
+      if (c !== scNotesEmptyEl) c.remove();
+    });
+    return;
+  }
+  scNotesEmptyEl.style.display = "none";
+  Array.from(scNotesListEl.children).forEach((c) => {
+    if (c !== scNotesEmptyEl) c.remove();
+  });
+
+  for (const note of notes) {
+    const words =
+      note.text.trim() === "" ? 0 : note.text.trim().split(/\s+/).length;
+    const chars = note.text.length;
+    const lastmod = note.lastmod
+      ? new Date(note.lastmod).toLocaleString([], {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "—";
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.cssText =
+      "padding: 12px 16px; display: flex; flex-direction: column; gap: 8px;";
+    card.dataset.chatId = note.chatId;
+    card.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <div>
+          <span style="font-size:12px; font-weight:600; color:var(--text-primary);">${escapeHtml(note.chatId)}</span>
+          <span style="font-size:11px; color:var(--text-muted); margin-left:10px;">${words} words · ${chars} chars · ${escapeHtml(lastmod)}</span>
+        </div>
+        <div style="display:flex; gap:6px; flex-shrink:0;">
+          <button class="btn-ghost sc-note-edit-btn" style="font-size:11px; padding:3px 10px;" data-chat-id="${escapeHtml(note.chatId)}">Edit</button>
+          <button class="btn-ghost sc-note-delete-btn" style="font-size:11px; padding:3px 10px; color:#ef4444; border-color:rgba(239,68,68,0.4);" data-chat-id="${escapeHtml(note.chatId)}">Delete</button>
+        </div>
+      </div>
+      <div class="sc-note-editor" style="display:none;">
+        <textarea class="form-input sc-note-textarea" rows="8" style="font-family:ui-monospace,monospace; font-size:12px; resize:vertical; width:100%; box-sizing:border-box;">${escapeHtml(note.text)}</textarea>
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <button class="btn-primary sc-note-save-btn" style="padding:6px 16px; font-size:12px;" data-chat-id="${escapeHtml(note.chatId)}">Save</button>
+          <button class="btn-ghost sc-note-cancel-btn" style="font-size:12px; padding:6px 14px;" data-chat-id="${escapeHtml(note.chatId)}">Cancel</button>
+          <span class="save-feedback sc-note-save-feedback" style="margin-left:4px;"></span>
+        </div>
+      </div>
+    `;
+    scNotesListEl.appendChild(card);
+  }
+
+  scNotesListEl.querySelectorAll(".sc-note-edit-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const card = btn.closest(".card");
+      const editor = card.querySelector(".sc-note-editor");
+      const isOpen = editor.style.display !== "none";
+      editor.style.display = isOpen ? "none" : "";
+      btn.textContent = isOpen ? "Edit" : "Close";
+    });
+  });
+
+  scNotesListEl.querySelectorAll(".sc-note-save-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const chatId = btn.dataset.chatId;
+      const card = btn.closest(".card");
+      const ta = card.querySelector(".sc-note-textarea");
+      const fb = card.querySelector(".sc-note-save-feedback");
+      const key = "sc_note_v1_" + chatId;
+      chrome.storage.local.set(
+        { [key]: { text: ta.value, lastmod: Date.now() } },
+        () => {
+          showFeedback(fb, "✓ Saved", true);
+        },
+      );
+    });
+  });
+
+  scNotesListEl.querySelectorAll(".sc-note-delete-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const chatId = btn.dataset.chatId;
+      if (!confirm(`Delete notes for chat "${chatId}"? This cannot be undone.`))
+        return;
+      const key = "sc_note_v1_" + chatId;
+      chrome.storage.local.remove(key, () => loadSavedNotes());
+    });
+  });
+
+  scNotesListEl.querySelectorAll(".sc-note-cancel-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const card = btn.closest(".card");
+      const editor = card.querySelector(".sc-note-editor");
+      const editBtn = card.querySelector(".sc-note-edit-btn");
+      editor.style.display = "none";
+      editBtn.textContent = "Edit";
+    });
+  });
+}
+
+function loadSavedNotes() {
+  chrome.storage.local.get(null, (items) => {
+    const notes = [];
+    for (const [key, val] of Object.entries(items)) {
+      if (!key.startsWith("sc_note_v1_")) continue;
+      const chatId = key.replace("sc_note_v1_", "");
+      notes.push({ chatId, text: val.text || "", lastmod: val.lastmod || 0 });
+    }
+    notes.sort((a, b) => b.lastmod - a.lastmod);
+    renderNotesList(notes);
+  });
+}
+
+scNotesRefreshBtn.addEventListener("click", loadSavedNotes);
+loadSavedNotes();
 
 // ─── Formatter ─────────────────────────────────────────────────────────────────────
 

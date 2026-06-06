@@ -305,6 +305,25 @@ body {
   transform: scale(0.97);
 }
 
+.btn-ghost {
+  padding: 6px 14px;
+  background: transparent;
+  color: var(--accent-light);
+  border: 1px solid rgba(108, 99, 255, 0.35);
+  border-radius: 6px;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.btn-ghost:hover {
+  background: rgba(108, 99, 255, 0.12);
+  border-color: rgba(108, 99, 255, 0.6);
+}
+
 .save-feedback {
   font-size: 12px;
   font-weight: 500;
