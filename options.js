@@ -252,17 +252,45 @@ saveCommandsBtn.addEventListener("click", () => {
 // ─── SpicyChat Drawer ──────────────────────────────────────────────────────────────
 
 const spicychatDrawerToggle = document.getElementById("spicychatDrawerToggle");
+const spicychatDrawerWidthInput = document.getElementById(
+  "spicychatDrawerWidthInput",
+);
+const saveSpicychatDrawerBtn = document.getElementById("saveSpicychatDrawer");
 const spicychatDrawerSaveFeedback = document.getElementById(
   "spicychatDrawerSaveFeedback",
 );
 
-chrome.storage.sync.get("spicychatDrawerEnabled", (data) => {
-  spicychatDrawerToggle.checked = data.spicychatDrawerEnabled !== false;
-});
+chrome.storage.sync.get(
+  ["spicychatDrawerEnabled", "spicychatDrawerWidth"],
+  (data) => {
+    spicychatDrawerToggle.checked = data.spicychatDrawerEnabled !== false;
+    spicychatDrawerWidthInput.value = data.spicychatDrawerWidth || 440;
+  },
+);
 
 spicychatDrawerToggle.addEventListener("change", () => {
+  chrome.storage.sync.set({
+    spicychatDrawerEnabled: spicychatDrawerToggle.checked,
+  });
+});
+
+saveSpicychatDrawerBtn.addEventListener("click", () => {
+  const w = parseInt(spicychatDrawerWidthInput.value, 10);
+  if (isNaN(w) || w < 280 || w > 720) {
+    spicychatDrawerWidthInput.style.borderColor = "var(--error)";
+    showFeedback(
+      spicychatDrawerSaveFeedback,
+      "Width must be 280–720 px",
+      false,
+    );
+    return;
+  }
+  spicychatDrawerWidthInput.style.borderColor = "";
   chrome.storage.sync.set(
-    { spicychatDrawerEnabled: spicychatDrawerToggle.checked },
+    {
+      spicychatDrawerEnabled: spicychatDrawerToggle.checked,
+      spicychatDrawerWidth: w,
+    },
     () => {
       showFeedback(
         spicychatDrawerSaveFeedback,

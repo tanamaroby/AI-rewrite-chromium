@@ -5,13 +5,18 @@
   if (!/^\/chat\//.test(location.pathname)) return;
 
   // Check the toggle before doing anything — bail immediately if disabled.
-  chrome.storage.sync.get("spicychatDrawerEnabled", (data) => {
-    if (data.spicychatDrawerEnabled === false) return;
-    init();
-  });
+  chrome.storage.sync.get(
+    ["spicychatDrawerEnabled", "spicychatDrawerWidth"],
+    (data) => {
+      if (data.spicychatDrawerEnabled === false) return;
+      init(data.spicychatDrawerWidth || 440);
+    },
+  );
 
-  function init() {
-    const DRAWER_W = 440;
+  function init(savedWidth) {
+    const MIN_W = 280;
+    const MAX_W = 720;
+    let DRAWER_W = Math.min(MAX_W, Math.max(MIN_W, savedWidth));
     const LS_KEY = "sc_memdrawer_v1";
 
     let isOpen = false;
@@ -28,7 +33,7 @@
     #sc-mdr {
       position: fixed;
       top: 56px; right: 0;
-      width: ${DRAWER_W}px;
+      width: var(--sc-mdr-w, ${DRAWER_W}px);
       height: calc(100dvh - 56px);
       background: #0f0e1a;
       border-left: 1px solid rgba(108, 99, 255, 0.25);
@@ -47,7 +52,7 @@
 
     /* Push main content left when drawer is open. */
     body.sc-dr-open [relay-container="true"] {
-      margin-right: ${DRAWER_W}px;
+      margin-right: var(--sc-mdr-w, ${DRAWER_W}px);
       transition: margin-right 0.28s cubic-bezier(0.4, 0, 0.2, 1);
     }
     body:not(.sc-dr-open) [relay-container="true"] {
@@ -74,7 +79,23 @@
       transition: right 0.28s cubic-bezier(0.4, 0, 0.2, 1), background 0.15s;
     }
     #sc-mdr-tab:hover { background: #271f4a; }
-    body.sc-dr-open #sc-mdr-tab { right: ${DRAWER_W}px; }
+    body.sc-dr-open #sc-mdr-tab { right: var(--sc-mdr-w, ${DRAWER_W}px); }
+
+    /* Resize handle on the left edge of the drawer */
+    #sc-mdr-resize {
+      position: absolute;
+      top: 0; left: 0;
+      width: 5px;
+      height: 100%;
+      cursor: ew-resize;
+      z-index: 10;
+      background: transparent;
+      transition: background 0.15s;
+    }
+    #sc-mdr-resize:hover,
+    #sc-mdr-resize.sc-mdr-resizing {
+      background: rgba(108, 99, 255, 0.35);
+    }
 
     /* Drawer header — hidden: the docked dialog provides its own title/close */
     #sc-mdr-header {
@@ -128,7 +149,7 @@
       right: 0 !important;
       left: auto !important;
       bottom: 0 !important;
-      width: ${DRAWER_W}px !important;
+      width: var(--sc-mdr-w, ${DRAWER_W}px) !important;
       height: calc(100dvh - 56px) !important;
       max-width: none !important;
       max-height: none !important;
@@ -151,6 +172,7 @@
     const drawer = document.createElement("div");
     drawer.id = "sc-mdr";
     drawer.innerHTML = `
+    <div id="sc-mdr-resize" title="Drag to resize"></div>
     <div id="sc-mdr-header">
       <span id="sc-mdr-title">Memories</span>
       <button id="sc-mdr-close" aria-label="Close memories drawer" title="Close">
@@ -452,6 +474,42 @@
       };
       setTimeout(check, 100);
     }
+
+    // Initialise CSS variable to saved width
+    document.documentElement.style.setProperty("--sc-mdr-w", DRAWER_W + "px");
+
+    // Drag-to-resize handle
+    const resizeHandle = document.getElementById("sc-mdr-resize");
+    let resizing = false;
+    let resizeStartX = 0;
+    let resizeStartW = 0;
+
+    resizeHandle.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      resizing = true;
+      resizeStartX = e.clientX;
+      resizeStartW = DRAWER_W;
+      resizeHandle.classList.add("sc-mdr-resizing");
+      document.body.style.cursor = "ew-resize";
+      document.body.style.userSelect = "none";
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (!resizing) return;
+      const delta = resizeStartX - e.clientX; // drag left = wider
+      const newW = Math.min(MAX_W, Math.max(MIN_W, resizeStartW + delta));
+      DRAWER_W = newW;
+      document.documentElement.style.setProperty("--sc-mdr-w", newW + "px");
+    });
+
+    document.addEventListener("mouseup", () => {
+      if (!resizing) return;
+      resizing = false;
+      resizeHandle.classList.remove("sc-mdr-resizing");
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      chrome.storage.sync.set({ spicychatDrawerWidth: DRAWER_W });
+    });
 
     /* ─────────────────────────────────────────
      Initialise — always start closed
