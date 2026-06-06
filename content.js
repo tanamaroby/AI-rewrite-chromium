@@ -9,11 +9,19 @@
   let model = "";
   let formatterEnabled = true;
   let formatterKeyword = "//format";
+  let autoFormatAfterRewrite = true;
 
   // Load settings from storage
   function loadSettings() {
     chrome.storage.sync.get(
-      ["commands", "apiKey", "model", "formatterEnabled", "formatterKeyword"],
+      [
+        "commands",
+        "apiKey",
+        "model",
+        "formatterEnabled",
+        "formatterKeyword",
+        "autoFormatAfterRewrite",
+      ],
       (data) => {
         commands = data.commands || [];
         apiKey = data.apiKey || "";
@@ -22,6 +30,7 @@
           "cognitivecomputations/dolphin-mistral-24b-venice-edition:free";
         formatterEnabled = data.formatterEnabled !== false;
         formatterKeyword = data.formatterKeyword || "//format";
+        autoFormatAfterRewrite = data.autoFormatAfterRewrite !== false;
       },
     );
   }
@@ -324,10 +333,17 @@
       });
 
       const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1);
-      replaceText(el, result.text);
+      let finalText = result.text;
+      let wasFormatted = false;
+      if (autoFormatAfterRewrite && formatterEnabled) {
+        finalText = formatText(result.text);
+        wasFormatted = true;
+      }
+      replaceText(el, finalText);
       const modelShort = (result.model || model || "unknown").split("/").pop();
+      const formattedSuffix = wasFormatted ? " + formatted" : "";
       showToast(
-        `✓ ${match.cmd.label || match.keyword} · ${modelShort} · ${elapsedSec}s`,
+        `✓ ${match.cmd.label || match.keyword}${formattedSuffix} · ${modelShort} · ${elapsedSec}s`,
       );
     } catch (err) {
       const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1);

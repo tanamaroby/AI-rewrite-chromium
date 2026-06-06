@@ -409,13 +409,33 @@ loadSavedNotes();
 
 const formatterToggle = document.getElementById("formatterToggle");
 const formatterKeywordInput = document.getElementById("formatterKeywordInput");
+const autoFormatAfterRewriteToggle = document.getElementById(
+  "autoFormatAfterRewriteToggle",
+);
 const saveFormatterBtn = document.getElementById("saveFormatter");
 const formatterSaveFeedback = document.getElementById("formatterSaveFeedback");
 
-chrome.storage.sync.get(["formatterEnabled", "formatterKeyword"], (data) => {
-  formatterToggle.checked = data.formatterEnabled !== false;
-  formatterKeywordInput.value = data.formatterKeyword || "//format";
-});
+function syncAutoFormatRowState() {
+  const row = autoFormatAfterRewriteToggle.closest(".toggle-row");
+  if (formatterToggle.checked) {
+    row.classList.remove("disabled");
+  } else {
+    row.classList.add("disabled");
+  }
+}
+
+chrome.storage.sync.get(
+  ["formatterEnabled", "formatterKeyword", "autoFormatAfterRewrite"],
+  (data) => {
+    formatterToggle.checked = data.formatterEnabled !== false;
+    formatterKeywordInput.value = data.formatterKeyword || "//format";
+    autoFormatAfterRewriteToggle.checked =
+      data.autoFormatAfterRewrite !== false;
+    syncAutoFormatRowState();
+  },
+);
+
+formatterToggle.addEventListener("change", syncAutoFormatRowState);
 
 saveFormatterBtn.addEventListener("click", () => {
   const kw = formatterKeywordInput.value.trim();
@@ -429,6 +449,7 @@ saveFormatterBtn.addEventListener("click", () => {
     {
       formatterEnabled: formatterToggle.checked,
       formatterKeyword: kw || "//format",
+      autoFormatAfterRewrite: autoFormatAfterRewriteToggle.checked,
     },
     () => {
       showFeedback(formatterSaveFeedback, "✓ Saved!", true);

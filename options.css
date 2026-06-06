@@ -713,6 +713,11 @@ body {
   gap: 16px;
 }
 
+.toggle-row.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 .toggle-info {
   display: flex;
   flex-direction: column;
