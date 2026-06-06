@@ -81,20 +81,43 @@
     #sc-mdr-tab:hover { background: #271f4a; }
     body.sc-dr-open #sc-mdr-tab { right: var(--sc-mdr-w, ${DRAWER_W}px); }
 
-    /* Resize handle on the left edge of the drawer */
+    /* Resize handle — fixed so it floats above the docked dialog (z-[900000]) */
     #sc-mdr-resize {
-      position: absolute;
-      top: 0; left: 0;
-      width: 5px;
-      height: 100%;
+      position: fixed;
+      top: 56px;
+      right: var(--sc-mdr-w, ${DRAWER_W}px);
+      width: 10px;
+      height: calc(100dvh - 56px);
       cursor: ew-resize;
-      z-index: 10;
+      z-index: 900001;
       background: transparent;
-      transition: background 0.15s;
+      transition: background 0.15s, right 0.28s cubic-bezier(0.4,0,0.2,1);
+      display: none; /* hidden until drawer opens */
+    }
+    body.sc-dr-open #sc-mdr-resize {
+      display: block;
+    }
+    /* Grip dots visible on hover/drag */
+    #sc-mdr-resize::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 4px;
+      height: 40px;
+      border-left: 2px dotted rgba(108, 99, 255, 0.5);
+      border-right: 2px dotted rgba(108, 99, 255, 0.5);
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    #sc-mdr-resize:hover::after,
+    #sc-mdr-resize.sc-mdr-resizing::after {
+      opacity: 1;
     }
     #sc-mdr-resize:hover,
     #sc-mdr-resize.sc-mdr-resizing {
-      background: rgba(108, 99, 255, 0.35);
+      background: rgba(108, 99, 255, 0.18);
     }
 
     /* Drawer header — hidden: the docked dialog provides its own title/close */
