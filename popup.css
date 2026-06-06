@@ -300,6 +300,85 @@ body {
   transform: scale(0.98);
 }
 
+/* ── Formatter row ────────────────────────────────────────────────── */
+
+.formatter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 11px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-top: 2px;
+}
+
+.formatter-row-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.formatter-row-label svg {
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+/* Compact toggle for popup */
+.toggle-sm {
+  flex-shrink: 0;
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.toggle-sm input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggle-sm-track {
+  position: absolute;
+  inset: 0;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+
+.toggle-sm-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: var(--text-faint);
+  border-radius: 50%;
+  transition:
+    transform 0.2s,
+    background 0.2s;
+}
+
+.toggle-sm input:checked + .toggle-sm-track {
+  background: rgba(108, 99, 255, 0.28);
+  border-color: rgba(108, 99, 255, 0.55);
+}
+
+.toggle-sm input:checked + .toggle-sm-track::after {
+  transform: translateX(14px);
+  background: var(--accent2);
+}
+
 .popup-container {
   display: flex;
   flex-direction: column;

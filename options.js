@@ -249,7 +249,21 @@ saveCommandsBtn.addEventListener("click", () => {
     showFeedback(cmdSaveFeedback, "✓ Saved!", true);
   });
 });
+// ─── Formatter ─────────────────────────────────────────────────────────────────────
 
+const formatterToggle = document.getElementById("formatterToggle");
+const saveFormatterBtn = document.getElementById("saveFormatter");
+const formatterSaveFeedback = document.getElementById("formatterSaveFeedback");
+
+chrome.storage.sync.get("formatterEnabled", (data) => {
+  formatterToggle.checked = data.formatterEnabled !== false;
+});
+
+saveFormatterBtn.addEventListener("click", () => {
+  chrome.storage.sync.set({ formatterEnabled: formatterToggle.checked }, () => {
+    showFeedback(formatterSaveFeedback, "✓ Saved!", true);
+  });
+});
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function showFeedback(el, message, success) {

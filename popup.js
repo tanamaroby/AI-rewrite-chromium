@@ -54,3 +54,14 @@ function escHtml(str) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
+
+// Formatter toggle
+const formatterTogglePopup = document.getElementById("formatterTogglePopup");
+
+chrome.storage.sync.get("formatterEnabled", (data) => {
+  formatterTogglePopup.checked = data.formatterEnabled !== false;
+});
+
+formatterTogglePopup.addEventListener("change", () => {
+  chrome.storage.sync.set({ formatterEnabled: formatterTogglePopup.checked });
+});

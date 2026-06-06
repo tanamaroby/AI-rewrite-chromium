@@ -7,16 +7,21 @@
   let commands = [];
   let apiKey = "";
   let model = "";
+  let formatterEnabled = true;
 
   // Load settings from storage
   function loadSettings() {
-    chrome.storage.sync.get(["commands", "apiKey", "model"], (data) => {
-      commands = data.commands || [];
-      apiKey = data.apiKey || "";
-      model =
-        data.model ||
-        "cognitivecomputations/dolphin-mistral-24b-venice-edition:free";
-    });
+    chrome.storage.sync.get(
+      ["commands", "apiKey", "model", "formatterEnabled"],
+      (data) => {
+        commands = data.commands || [];
+        apiKey = data.apiKey || "";
+        model =
+          data.model ||
+          "cognitivecomputations/dolphin-mistral-24b-venice-edition:free";
+        formatterEnabled = data.formatterEnabled !== false;
+      },
+    );
   }
 
   loadSettings();
@@ -127,6 +132,143 @@
     }
   }
 
+  // ─── Text formatter (no AI) ─────────────────────────────────────────────────
+
+  function formatText(text) {
+    const parts = [];
+    const regex = /"[^"]*"/g;
+    let lastIndex = 0;
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(wrapOutsideText(text.slice(lastIndex, match.index)));
+      }
+      parts.push(match[0]);
+      lastIndex = regex.lastIndex;
+    }
+    if (lastIndex < text.length) {
+      parts.push(wrapOutsideText(text.slice(lastIndex)));
+    }
+    return parts.join("");
+  }
+
+  function wrapOutsideText(str) {
+    const trimmed = str.trim();
+    if (!trimmed) return str;
+    const leadWS = str.slice(0, str.length - str.trimStart().length);
+    const trailWS = str.slice(str.trimEnd().length);
+    return leadWS + "*" + trimmed + "*" + trailWS;
+  }
+
+  // ─── Format button & overlay ─────────────────────────────────────────────────
+
+  let formatBtn = null;
+  let formatBtnTarget = null;
+  let formatBtnBlurTimer = null;
+  let formatOverlay = null;
+
+  function createFormatOverlay(targetEl) {
+    removeFormatOverlay();
+    const rect = targetEl.getBoundingClientRect();
+    const overlay = document.createElement("div");
+    overlay.className = "ai-formatter-overlay";
+    overlay.innerHTML = `
+      <div class="ai-formatter-spinner"></div>
+      <span>Formatting…</span>
+    `;
+    Object.assign(overlay.style, {
+      position: "fixed",
+      top: `${rect.top}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+      height: `${rect.height}px`,
+      zIndex: "2147483647",
+      pointerEvents: "none",
+    });
+    document.body.appendChild(overlay);
+    formatOverlay = overlay;
+    targetEl.classList.add("ai-formatter-loading");
+  }
+
+  function removeFormatOverlay(targetEl) {
+    if (formatOverlay) {
+      formatOverlay.remove();
+      formatOverlay = null;
+    }
+    if (targetEl) targetEl.classList.remove("ai-formatter-loading");
+  }
+
+  function handleFormat(el) {
+    const original = el.isContentEditable
+      ? el.innerText || el.textContent || ""
+      : el.value || "";
+    if (!original.trim()) return;
+    createFormatOverlay(el);
+    const formatted = formatText(original);
+    setTimeout(() => {
+      replaceText(el, formatted);
+      removeFormatOverlay(el);
+      showToast("✓ Formatted");
+    }, 250);
+  }
+
+  function positionFormatButton(btn, el) {
+    const rect = el.getBoundingClientRect();
+    const btnSize = 26;
+    const top = rect.top + Math.min((rect.height - btnSize) / 2, 16);
+    Object.assign(btn.style, {
+      top: `${top}px`,
+      left: `${rect.right + 6}px`,
+    });
+  }
+
+  function showFormatButton(el) {
+    if (!formatterEnabled) return;
+    clearTimeout(formatBtnBlurTimer);
+    if (formatBtn && formatBtnTarget === el) return;
+    removeFormatButton(true);
+
+    const btn = document.createElement("button");
+    btn.className = "ai-formatter-btn";
+    btn.title = "Format text";
+    btn.setAttribute("aria-label", "Format text");
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>`;
+    Object.assign(btn.style, {
+      position: "fixed",
+      zIndex: "2147483646",
+    });
+    positionFormatButton(btn, el);
+    document.body.appendChild(btn);
+    formatBtn = btn;
+    formatBtnTarget = el;
+
+    btn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      clearTimeout(formatBtnBlurTimer);
+    });
+    btn.addEventListener("click", () => {
+      handleFormat(el);
+    });
+  }
+
+  function removeFormatButton(instant) {
+    clearTimeout(formatBtnBlurTimer);
+    if (!formatBtn) return;
+    if (instant) {
+      formatBtn.remove();
+      formatBtn = null;
+      formatBtnTarget = null;
+    } else {
+      formatBtnBlurTimer = setTimeout(() => {
+        if (formatBtn) {
+          formatBtn.remove();
+          formatBtn = null;
+          formatBtnTarget = null;
+        }
+      }, 200);
+    }
+  }
+
   // ─── Main rewrite handler ───────────────────────────────────────────────────
 
   async function handleRewrite(el, match) {
@@ -211,4 +353,44 @@
   }
 
   document.addEventListener("input", onInput, true);
+
+  // ─── Format button focus tracking ───────────────────────────────────────────
+
+  document.addEventListener(
+    "focusin",
+    (e) => {
+      if (isEditableElement(e.target)) {
+        showFormatButton(e.target);
+      }
+    },
+    true,
+  );
+
+  document.addEventListener(
+    "focusout",
+    () => {
+      removeFormatButton(false);
+    },
+    true,
+  );
+
+  document.addEventListener(
+    "scroll",
+    () => {
+      if (formatBtn && formatBtnTarget) {
+        positionFormatButton(formatBtn, formatBtnTarget);
+      }
+    },
+    { passive: true, capture: true },
+  );
+
+  window.addEventListener(
+    "resize",
+    () => {
+      if (formatBtn && formatBtnTarget) {
+        positionFormatButton(formatBtn, formatBtnTarget);
+      }
+    },
+    { passive: true },
+  );
 })();

@@ -35,6 +35,10 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
           Model
         </a>
+        <a href="#section-formatter" class="nav-link" data-section="section-formatter">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
+          Formatter
+        </a>
       </nav>
     </aside>
 
@@ -245,6 +249,36 @@
         <div class="form-actions">
           <button class="btn-primary" id="saveModel">Save Model</button>
           <span class="save-feedback" id="modelSaveFeedback"></span>
+        </div>
+      </section>
+
+      <!-- Formatter Section -->
+      <section id="section-formatter" class="section">
+        <div class="section-header">
+          <h2>Formatter</h2>
+          <p class="section-desc">
+            The formatter adds a small <strong>format button</strong> that appears beside every focused
+            text input. Clicking it wraps text outside quotation marks in asterisks — no AI, instant,
+            no API calls required.
+          </p>
+        </div>
+
+        <div class="card">
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Enable format button</span>
+              <span class="toggle-hint">Shows a small button beside focused text inputs on every page</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="formatterToggle" />
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-primary" id="saveFormatter">Save</button>
+          <span class="save-feedback" id="formatterSaveFeedback"></span>
         </div>
       </section>
     </main>
