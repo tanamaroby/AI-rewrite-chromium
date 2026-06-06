@@ -146,6 +146,8 @@
   // ─── Text formatter (no AI) ─────────────────────────────────────────────────
 
   function formatText(text) {
+    // Strip all existing asterisks first to normalise before re-applying formatting
+    text = text.replace(/\*/g, "");
     const parts = [];
     const regex = /[""][^"""]*[""]/g;
     let lastIndex = 0;
