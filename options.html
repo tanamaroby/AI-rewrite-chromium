@@ -39,6 +39,10 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
           Formatter
         </a>
+        <a href="#section-spicychat" class="nav-link" data-section="section-spicychat">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>
+          SpicyChat
+        </a>
       </nav>
     </aside>
 
@@ -249,6 +253,33 @@
         <div class="form-actions">
           <button class="btn-primary" id="saveModel">Save Model</button>
           <span class="save-feedback" id="modelSaveFeedback"></span>
+        </div>
+      </section>
+
+      <!-- SpicyChat Section -->
+      <section id="section-spicychat" class="section">
+        <div class="section-header">
+          <h2>SpicyChat — Memories Drawer</h2>
+          <p class="section-desc">
+            Adds a persistent side drawer on SpicyChat.AI chat pages that keeps
+            the <strong>Memories</strong> panel always visible on the right.
+            Disable this if you notice any slowdown on SpicyChat pages.
+          </p>
+        </div>
+        <div class="card">
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Enable memories drawer</span>
+              <span class="toggle-hint">Only active on spicychat.ai/chat/* pages. Reload the tab after changing.</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="spicychatDrawerToggle" />
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+        </div>
+        <div class="form-actions">
+          <span class="save-feedback" id="spicychatDrawerSaveFeedback"></span>
         </div>
       </section>
 

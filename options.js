@@ -249,6 +249,30 @@ saveCommandsBtn.addEventListener("click", () => {
     showFeedback(cmdSaveFeedback, "✓ Saved!", true);
   });
 });
+// ─── SpicyChat Drawer ──────────────────────────────────────────────────────────────
+
+const spicychatDrawerToggle = document.getElementById("spicychatDrawerToggle");
+const spicychatDrawerSaveFeedback = document.getElementById(
+  "spicychatDrawerSaveFeedback",
+);
+
+chrome.storage.sync.get("spicychatDrawerEnabled", (data) => {
+  spicychatDrawerToggle.checked = data.spicychatDrawerEnabled !== false;
+});
+
+spicychatDrawerToggle.addEventListener("change", () => {
+  chrome.storage.sync.set(
+    { spicychatDrawerEnabled: spicychatDrawerToggle.checked },
+    () => {
+      showFeedback(
+        spicychatDrawerSaveFeedback,
+        "✓ Saved! Reload the SpicyChat tab to apply.",
+        true,
+      );
+    },
+  );
+});
+
 // ─── Formatter ─────────────────────────────────────────────────────────────────────
 
 const formatterToggle = document.getElementById("formatterToggle");

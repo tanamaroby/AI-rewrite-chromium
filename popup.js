@@ -55,6 +55,21 @@ function escHtml(str) {
     .replace(/"/g, "&quot;");
 }
 
+// SpicyChat drawer toggle
+const spicychatDrawerTogglePopup = document.getElementById(
+  "spicychatDrawerTogglePopup",
+);
+
+chrome.storage.sync.get("spicychatDrawerEnabled", (data) => {
+  spicychatDrawerTogglePopup.checked = data.spicychatDrawerEnabled !== false;
+});
+
+spicychatDrawerTogglePopup.addEventListener("change", () => {
+  chrome.storage.sync.set({
+    spicychatDrawerEnabled: spicychatDrawerTogglePopup.checked,
+  });
+});
+
 // Formatter toggle
 const formatterTogglePopup = document.getElementById("formatterTogglePopup");
 

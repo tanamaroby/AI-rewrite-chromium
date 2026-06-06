@@ -13,6 +13,11 @@
       "matches": ["<all_urls>"],
       "js": ["content.js"],
       "css": ["content.css"]
+    },
+    {
+      "matches": ["https://spicychat.ai/*"],
+      "js": ["spicychat-memory-drawer.js"],
+      "run_at": "document_end"
     }
   ],
   "action": {
