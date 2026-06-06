@@ -5,5 +5,8 @@ Thumbs.db
 # Release artifacts (built by CI)
 *.zip
 
+# Personal userscript (local only)
+ai-rewriter.user.js
+
 # Editor
 .vscode/settings.json
