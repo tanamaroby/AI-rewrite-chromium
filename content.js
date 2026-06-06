@@ -150,6 +150,11 @@
     text = text.replace(/\*/g, "");
     // Normalise curly/smart quotes to straight quotes
     text = text.replace(/[""]/g, '"');
+    // Trim leading/trailing whitespace from every paragraph (line)
+    text = text
+      .split("\n")
+      .map((line) => line.trim())
+      .join("\n");
     const parts = [];
     // Match straight-quoted strings OR square-bracketed strings
     const regex = /"[^"]*"|\[[^\]]*\]/g;
