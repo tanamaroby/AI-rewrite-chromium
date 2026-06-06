@@ -155,11 +155,15 @@
   }
 
   function wrapOutsideText(str) {
-    const trimmed = str.trim();
-    if (!trimmed) return str;
-    const leadWS = str.slice(0, str.length - str.trimStart().length);
-    const trailWS = str.slice(str.trimEnd().length);
-    return leadWS + "*" + trimmed + "*" + trailWS;
+    // Wrap each individual line separately so paragraph breaks don't end up
+    // inside a single asterisk pair (e.g. *line1\n\nline2* → *line1*\n\n*line2*)
+    return str.replace(/[^\n]+/g, (chunk) => {
+      const trimmed = chunk.trim();
+      if (!trimmed) return chunk;
+      const leadWS = chunk.slice(0, chunk.length - chunk.trimStart().length);
+      const trailWS = chunk.slice(chunk.trimEnd().length);
+      return leadWS + "*" + trimmed + "*" + trailWS;
+    });
   }
 
   // ─── Format button & overlay ─────────────────────────────────────────────────
