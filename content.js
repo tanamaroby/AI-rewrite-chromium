@@ -8,11 +8,12 @@
   let apiKey = "";
   let model = "";
   let formatterEnabled = true;
+  let formatterKeyword = "//format";
 
   // Load settings from storage
   function loadSettings() {
     chrome.storage.sync.get(
-      ["commands", "apiKey", "model", "formatterEnabled"],
+      ["commands", "apiKey", "model", "formatterEnabled", "formatterKeyword"],
       (data) => {
         commands = data.commands || [];
         apiKey = data.apiKey || "";
@@ -20,6 +21,7 @@
           data.model ||
           "cognitivecomputations/dolphin-mistral-24b-venice-edition:free";
         formatterEnabled = data.formatterEnabled !== false;
+        formatterKeyword = data.formatterKeyword || "//format";
       },
     );
   }
@@ -198,10 +200,13 @@
     if (targetEl) targetEl.classList.remove("ai-formatter-loading");
   }
 
-  function handleFormat(el) {
-    const original = el.isContentEditable
-      ? el.innerText || el.textContent || ""
-      : el.value || "";
+  function handleFormat(el, textOverride) {
+    const original =
+      textOverride !== undefined
+        ? textOverride
+        : el.isContentEditable
+          ? el.innerText || el.textContent || ""
+          : el.value || "";
     if (!original.trim()) return;
     createFormatOverlay(el);
     const formatted = formatText(original);
@@ -212,13 +217,30 @@
     }, 250);
   }
 
+  function getFormatterMatch(el) {
+    if (!formatterEnabled) return null;
+    const kw = formatterKeyword;
+    if (!kw) return null;
+    const fullText = el.isContentEditable
+      ? el.innerText || el.textContent || ""
+      : el.value || "";
+    const idx = fullText.indexOf(kw);
+    if (idx !== -1) {
+      const textToFormat = fullText.slice(0, idx).trimEnd();
+      if (textToFormat.length > 0) return { textToFormat };
+    }
+    return null;
+  }
+
   function positionFormatButton(btn, el) {
     const rect = el.getBoundingClientRect();
-    const btnSize = 26;
-    const top = rect.top + Math.min((rect.height - btnSize) / 2, 16);
+    const btnH = 26;
+    const gap = 5;
+    const top = Math.max(rect.top - btnH - gap, 4);
+    const left = rect.right - 26;
     Object.assign(btn.style, {
       top: `${top}px`,
-      left: `${rect.right + 6}px`,
+      left: `${left}px`,
     });
   }
 
@@ -334,6 +356,11 @@
       const match = getTextAndKeyword(el);
       if (match) {
         handleRewrite(el, match);
+        return;
+      }
+      const fmatch = getFormatterMatch(el);
+      if (fmatch) {
+        handleFormat(el, fmatch.textToFormat);
       }
     }, 300);
 

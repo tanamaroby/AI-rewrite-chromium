@@ -257,17 +257,29 @@
         <div class="section-header">
           <h2>Formatter</h2>
           <p class="section-desc">
-            The formatter adds a small <strong>format button</strong> that appears beside every focused
+            The formatter adds a small <strong>format button</strong> that appears above every focused
             text input. Clicking it wraps text outside quotation marks in asterisks — no AI, instant,
-            no API calls required.
+            no API calls required. You can also trigger it by typing the keyword at the end of your text.
           </p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="formatterKeywordInput">Trigger Keyword</label>
+          <input
+            type="text"
+            id="formatterKeywordInput"
+            class="form-input"
+            placeholder="//format"
+            spellcheck="false"
+          />
+          <p class="form-hint">Type this keyword at the end of any text to instantly format it. Must start with <code>//</code>.</p>
         </div>
 
         <div class="card">
           <div class="toggle-row">
             <div class="toggle-info">
               <span class="toggle-label">Enable format button</span>
-              <span class="toggle-hint">Shows a small button beside focused text inputs on every page</span>
+              <span class="toggle-hint">Shows a small button above focused text inputs on every page</span>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="formatterToggle" />

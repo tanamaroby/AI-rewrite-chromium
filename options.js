@@ -252,17 +252,32 @@ saveCommandsBtn.addEventListener("click", () => {
 // ─── Formatter ─────────────────────────────────────────────────────────────────────
 
 const formatterToggle = document.getElementById("formatterToggle");
+const formatterKeywordInput = document.getElementById("formatterKeywordInput");
 const saveFormatterBtn = document.getElementById("saveFormatter");
 const formatterSaveFeedback = document.getElementById("formatterSaveFeedback");
 
-chrome.storage.sync.get("formatterEnabled", (data) => {
+chrome.storage.sync.get(["formatterEnabled", "formatterKeyword"], (data) => {
   formatterToggle.checked = data.formatterEnabled !== false;
+  formatterKeywordInput.value = data.formatterKeyword || "//format";
 });
 
 saveFormatterBtn.addEventListener("click", () => {
-  chrome.storage.sync.set({ formatterEnabled: formatterToggle.checked }, () => {
-    showFeedback(formatterSaveFeedback, "✓ Saved!", true);
-  });
+  const kw = formatterKeywordInput.value.trim();
+  if (kw && !kw.startsWith("//")) {
+    formatterKeywordInput.style.borderColor = "var(--error)";
+    showFeedback(formatterSaveFeedback, "Keyword must start with //", false);
+    return;
+  }
+  formatterKeywordInput.style.borderColor = "";
+  chrome.storage.sync.set(
+    {
+      formatterEnabled: formatterToggle.checked,
+      formatterKeyword: kw || "//format",
+    },
+    () => {
+      showFeedback(formatterSaveFeedback, "✓ Saved!", true);
+    },
+  );
 });
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
