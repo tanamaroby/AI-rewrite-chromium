@@ -21,6 +21,11 @@
   let fmtCapitaliseSentences = true;
   let fmtUnwrapBrackets = true;
   let fmtExtraDelimiters = "";
+  let rpPersonaEnabled = false;
+  let rpPersonaName = "";
+  let rpPersonaPrepend = "";
+  let lastRewrite = null; // { el, before, after, label, ts }
+  const isSpicyChat = location.hostname.includes("spicychat.ai");
 
   // Load settings from storage
   function loadSettings() {
@@ -43,6 +48,9 @@
         "fmtCapitaliseSentences",
         "fmtUnwrapBrackets",
         "fmtExtraDelimiters",
+        "rpPersonaEnabled",
+        "rpPersonaName",
+        "rpPersonaPrepend",
       ],
       (data) => {
         commands = data.commands || [];
@@ -62,6 +70,9 @@
         fmtCapitaliseSentences = data.fmtCapitaliseSentences !== false;
         fmtUnwrapBrackets = data.fmtUnwrapBrackets !== false;
         fmtExtraDelimiters = data.fmtExtraDelimiters || "";
+        rpPersonaEnabled = data.rpPersonaEnabled === true;
+        rpPersonaName = data.rpPersonaName || "";
+        rpPersonaPrepend = data.rpPersonaPrepend || "";
       },
     );
   }
@@ -328,10 +339,16 @@
 
   function positionFormatButton(btn, el) {
     const rect = el.getBoundingClientRect();
+    const btnW = 26;
     const btnH = 26;
     const gap = 5;
-    const top = Math.max(rect.top - btnH - gap, 4);
-    const left = rect.right - 26;
+    // Try to sit above the element; if too close to the top (e.g. behind a fixed header), sit inside
+    let top = rect.top - btnH - gap;
+    if (top < 62) top = rect.top + gap;
+    top = Math.min(top, window.innerHeight - btnH - 8);
+    // Right-align to element, clamped to viewport edges
+    let left = rect.right - btnW - gap;
+    left = Math.max(4, Math.min(left, window.innerWidth - btnW - 4));
     Object.assign(btn.style, {
       top: `${top}px`,
       left: `${left}px`,
@@ -385,6 +402,18 @@
     }
   }
 
+  // ─── Persona prompt builder ─────────────────────────────────────────────────
+
+  function buildPrompt(basePrompt) {
+    if (!isSpicyChat || !rpPersonaEnabled || !rpPersonaPrepend.trim())
+      return basePrompt;
+    const resolved = rpPersonaPrepend.replace(
+      /\{\{user\}\}/gi,
+      rpPersonaName || "{{user}}",
+    );
+    return resolved.trim() + "\n\n" + basePrompt;
+  }
+
   // ─── Main rewrite handler ───────────────────────────────────────────────────
 
   async function handleRewrite(el, match) {
@@ -397,7 +426,7 @@
           {
             type: "REWRITE_TEXT",
             text: match.textToRewrite,
-            prompt: match.cmd.prompt,
+            prompt: buildPrompt(match.cmd.prompt),
             apiKey,
             model,
           },
@@ -421,6 +450,23 @@
         wasFormatted = true;
       }
       replaceText(el, finalText);
+      lastRewrite = {
+        el,
+        before: match.textToRewrite,
+        after: finalText,
+        label: match.cmd.label || match.keyword,
+        ts: Date.now(),
+      };
+      const rewriteDetail = {
+        before: match.textToRewrite,
+        after: finalText,
+        label: match.cmd.label || match.keyword,
+        ts: lastRewrite.ts,
+      };
+      chrome.storage.local.set({ sc_last_rewrite: rewriteDetail });
+      document.dispatchEvent(
+        new CustomEvent("sc-rp-rewrite-done", { detail: rewriteDetail }),
+      );
       const modelShort = (result.model || model || "unknown").split("/").pop();
       const formattedSuffix = wasFormatted ? " + formatted" : "";
       showToast(
@@ -522,4 +568,22 @@
     },
     { passive: true },
   );
+
+  // ─── Rewrite undo (triggered by RP Tools drawer) ────────────────────────────
+
+  document.addEventListener("sc-rp-undo", () => {
+    if (!lastRewrite) return;
+    if (!document.contains(lastRewrite.el)) {
+      showToast("\u21a9 Element no longer in page — can't undo", true);
+      lastRewrite = null;
+      chrome.storage.local.remove("sc_last_rewrite");
+      document.dispatchEvent(new CustomEvent("sc-rp-undo-done"));
+      return;
+    }
+    replaceText(lastRewrite.el, lastRewrite.before);
+    showToast("\u21a9 Undone");
+    lastRewrite = null;
+    chrome.storage.local.remove("sc_last_rewrite");
+    document.dispatchEvent(new CustomEvent("sc-rp-undo-done"));
+  });
 })();

@@ -466,6 +466,38 @@ saveFormatterBtn.addEventListener("click", () => {
     showFeedback(formatterSaveFeedback, "✓ Saved!", true);
   });
 });
+// ─── RP Persona ───────────────────────────────────────────────────────────────
+
+const rpPersonaEnabledToggle = document.getElementById(
+  "rpPersonaEnabledToggle",
+);
+const rpPersonaNameInput = document.getElementById("rpPersonaNameInput");
+const rpPersonaPrependInput = document.getElementById("rpPersonaPrependInput");
+const saveRpPersonaBtn = document.getElementById("saveRpPersona");
+const rpPersonaSaveFeedback = document.getElementById("rpPersonaSaveFeedback");
+
+chrome.storage.sync.get(
+  ["rpPersonaEnabled", "rpPersonaName", "rpPersonaPrepend"],
+  (data) => {
+    rpPersonaEnabledToggle.checked = data.rpPersonaEnabled === true;
+    rpPersonaNameInput.value = data.rpPersonaName || "";
+    rpPersonaPrependInput.value = data.rpPersonaPrepend || "";
+  },
+);
+
+saveRpPersonaBtn.addEventListener("click", () => {
+  chrome.storage.sync.set(
+    {
+      rpPersonaEnabled: rpPersonaEnabledToggle.checked,
+      rpPersonaName: rpPersonaNameInput.value.trim(),
+      rpPersonaPrepend: rpPersonaPrependInput.value,
+    },
+    () => {
+      showFeedback(rpPersonaSaveFeedback, "✓ Saved!", true);
+    },
+  );
+});
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function showFeedback(el, message, success) {

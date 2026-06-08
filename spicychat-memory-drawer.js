@@ -3,6 +3,8 @@
 
   /* Only run on SpicyChat chat pages */
   if (!/^\/chat\//.test(location.pathname)) return;
+  /* PC only — skip on touch/mobile devices */
+  if ("ontouchstart" in window || navigator.maxTouchPoints > 1) return;
 
   chrome.storage.sync.get("spicychatNotesEnabled", (syncData) => {
     if (syncData.spicychatNotesEnabled === false) return;
@@ -253,6 +255,97 @@
     #sc-np-confirm-yes:hover { background: #dc2626; }
     #sc-np-confirm-no { background: rgba(108,99,255,0.2); color: #a78bfa; border: 1px solid rgba(108,99,255,0.3); }
     #sc-np-confirm-no:hover { background: rgba(108,99,255,0.3); }
+
+    /* ── Notes panel ── */
+    #sc-np-notes-panel { position: absolute; inset: 0; }
+    #sc-np-notes-panel.sc-np-hidden { display: none; }
+
+    /* ── Tab strip ── */
+    #sc-np-tabstrip { display: flex; gap: 3px; flex: 1; align-items: center; }
+    #sc-np-notes-btns { display: flex; align-items: center; gap: 0; }
+    #sc-np-tabstrip .sc-np-tab-pill {
+      padding: 3px 10px; border-radius: 100px; border: 1px solid transparent;
+      background: none; color: #64748b; font-size: 10.5px; font-weight: 600;
+      cursor: pointer; letter-spacing: 0.04em; text-transform: uppercase;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+      white-space: nowrap; font-family: inherit; line-height: 1;
+    }
+    #sc-np-tabstrip .sc-np-tab-pill:hover { color: #a78bfa; background: rgba(108,99,255,0.1); }
+    #sc-np-tabstrip .sc-np-tab-pill.active {
+      background: rgba(108,99,255,0.2); border-color: rgba(108,99,255,0.4); color: #a78bfa;
+    }
+
+    /* ── RP Tools panel ── */
+    #sc-np-rp-panel {
+      position: absolute; inset: 0; overflow-y: auto;
+      padding: 14px; box-sizing: border-box;
+      display: none; flex-direction: column; gap: 12px;
+    }
+    #sc-np-rp-panel.visible { display: flex; }
+    #sc-np-rp-panel::-webkit-scrollbar { width: 5px; }
+    #sc-np-rp-panel::-webkit-scrollbar-track { background: transparent; }
+    #sc-np-rp-panel::-webkit-scrollbar-thumb { background: rgba(108,99,255,0.3); border-radius: 3px; }
+    .rp-section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; }
+    .rp-card {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(108,99,255,0.18);
+      border-radius: 8px; padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .rp-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .rp-toggle-label { font-size: 12px; font-weight: 600; color: #cbd5e1; }
+    .rp-input {
+      width: 100%; box-sizing: border-box;
+      background: rgba(0,0,0,0.3); border: 1px solid rgba(108,99,255,0.2);
+      border-radius: 6px; color: #e2e8f0; font-size: 12.5px; font-family: inherit;
+      padding: 7px 10px; outline: none; transition: border-color 0.15s;
+    }
+    .rp-input:focus { border-color: rgba(108,99,255,0.55); }
+    .rp-input::placeholder { color: #334155; }
+    .rp-textarea { resize: vertical; min-height: 78px; line-height: 1.5; caret-color: #a78bfa; }
+    .rp-hint { font-size: 11px; color: #475569; }
+    .rp-autosave {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 10.5px; color: #22c55e;
+      opacity: 0; transition: opacity 0.3s; height: 14px;
+    }
+    .rp-autosave.visible { opacity: 1; }
+    .rp-toggle { position: relative; width: 32px; height: 18px; flex-shrink: 0; cursor: pointer; }
+    .rp-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .rp-toggle-track {
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,0.08); border-radius: 100px;
+      border: 1px solid rgba(108,99,255,0.25);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .rp-toggle-track::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 12px; height: 12px; background: #64748b; border-radius: 50%;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .rp-toggle input:checked ~ .rp-toggle-track { background: rgba(108,99,255,0.35); border-color: rgba(108,99,255,0.6); }
+    .rp-toggle input:checked ~ .rp-toggle-track::after { transform: translateX(14px); background: #a78bfa; }
+    .rp-rewrite-meta { font-size: 11px; color: #64748b; display: flex; align-items: center; justify-content: space-between; }
+    .rp-rewrite-label { font-weight: 600; color: #a78bfa; }
+    .rp-diff-block { display: flex; flex-direction: column; gap: 6px; }
+    .rp-diff-before, .rp-diff-after { border-radius: 6px; padding: 8px 10px; font-size: 12px; line-height: 1.5; color: #cbd5e1; }
+    .rp-diff-before { background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.18); }
+    .rp-diff-after  { background: rgba(34,197,94,0.07);  border: 1px solid rgba(34,197,94,0.18); }
+    .rp-diff-cap { font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; display: block; margin-bottom: 3px; }
+    .rp-diff-before .rp-diff-cap { color: rgba(239,68,68,0.55); }
+    .rp-diff-after  .rp-diff-cap { color: rgba(34,197,94,0.55); }
+    .rp-diff-text { color: #94a3b8; font-size: 12px; word-break: break-word; }
+    .rp-empty-state { text-align: center; color: #334155; font-size: 12px; padding: 16px 0; }
+    #sc-rp-undo-btn {
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      width: 100%; padding: 9px; border-radius: 7px;
+      border: 1px solid rgba(108,99,255,0.35);
+      background: rgba(108,99,255,0.12);
+      color: #a78bfa; font-size: 13px; font-weight: 600;
+      font-family: inherit; cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    #sc-rp-undo-btn:hover { background: rgba(108,99,255,0.22); border-color: rgba(108,99,255,0.55); }
+    #sc-rp-undo-btn:disabled { opacity: 0.35; cursor: not-allowed; }
     `;
     document.head.appendChild(style);
 
@@ -261,22 +354,21 @@
     drawer.id = "sc-np";
     drawer.innerHTML = `
       <div id="sc-np-header">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-          <polyline points="14 2 14 8 20 8"/>
-          <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-          <line x1="10" y1="9" x2="8" y2="9"/>
-        </svg>
-        <span id="sc-np-title">Notes</span>
-        <button id="sc-np-btn-preview" title="Toggle Markdown preview (Ctrl+P)">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-        </button>
-        <button id="sc-np-btn-export" title="Export note as .txt">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        </button>
-        <button id="sc-np-btn-clear" title="Clear note">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-        </button>
+        <div id="sc-np-tabstrip">
+          <button class="sc-np-tab-pill active" data-tab="notes">Notes</button>
+          <button class="sc-np-tab-pill" data-tab="rp">RP Tools</button>
+        </div>
+        <div id="sc-np-notes-btns">
+          <button id="sc-np-btn-preview" title="Toggle Markdown preview (Ctrl+P)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button id="sc-np-btn-export" title="Export note as .txt">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+          <button id="sc-np-btn-clear" title="Clear note">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </div>
         <button id="sc-np-btn-close" title="Close (Esc)">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -293,6 +385,7 @@
         <span id="sc-np-lastmod"></span>
       </div>
       <div id="sc-np-body">
+        <div id="sc-np-notes-panel">
         <textarea id="sc-np-textarea" data-ai-rewriter-ignore="1" placeholder="Start typing your notes for this chat\u2026&#10;&#10;Supports Markdown \u2014 click \ud83d\udc41\ufe0f to preview. Ctrl+S to save now."></textarea>
         <div id="sc-np-preview"></div>
         <div id="sc-np-clear-confirm">
@@ -301,6 +394,55 @@
           <div class="sc-np-confirm-btns">
             <button id="sc-np-confirm-yes">Clear</button>
             <button id="sc-np-confirm-no">Cancel</button>
+          </div>
+        </div>
+        </div>
+        <div id="sc-np-rp-panel">
+          <div class="rp-section-label">Persona</div>
+          <div class="rp-card">
+            <div class="rp-toggle-row">
+              <span class="rp-toggle-label">Enable persona prepend</span>
+              <label class="rp-toggle">
+                <input type="checkbox" id="sc-rp-persona-enabled" />
+                <span class="rp-toggle-track"></span>
+              </label>
+            </div>
+            <div>
+              <div class="rp-hint" style="margin-bottom:6px;">Your name &mdash; replaces <code style="background:rgba(108,99,255,0.15);padding:1px 5px;border-radius:3px;font-size:10.5px;color:#a78bfa;">{{user}}</code> in the prepend</div>
+              <input type="text" id="sc-rp-persona-name" class="rp-input" placeholder="Your persona name…" data-ai-rewriter-ignore="1" />
+            </div>
+            <div>
+              <div class="rp-hint" style="margin-bottom:6px;">Injected before every rewrite prompt on SpicyChat</div>
+              <textarea id="sc-rp-persona-prepend" class="rp-input rp-textarea" placeholder="e.g. You are writing a collaborative story. The human character is named {{user}}. Stay in character." data-ai-rewriter-ignore="1"></textarea>
+            </div>
+            <div class="rp-autosave" id="sc-rp-autosave">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Saved
+            </div>
+          </div>
+          <div class="rp-section-label">Last Rewrite</div>
+          <div class="rp-card">
+            <div class="rp-empty-state" id="sc-rp-empty">No rewrite recorded yet.</div>
+            <div id="sc-rp-rewrite-info" style="display:none; flex-direction:column; gap:8px;">
+              <div class="rp-rewrite-meta">
+                <span class="rp-rewrite-label" id="sc-rp-rewrite-label"></span>
+                <span id="sc-rp-rewrite-ts"></span>
+              </div>
+              <div class="rp-diff-block">
+                <div class="rp-diff-before">
+                  <span class="rp-diff-cap">Before</span>
+                  <div class="rp-diff-text" id="sc-rp-before-text"></div>
+                </div>
+                <div class="rp-diff-after">
+                  <span class="rp-diff-cap">After</span>
+                  <div class="rp-diff-text" id="sc-rp-after-text"></div>
+                </div>
+              </div>
+              <button id="sc-rp-undo-btn" disabled>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+                Undo Rewrite
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -334,12 +476,30 @@
     const btnClose = document.getElementById("sc-np-btn-close");
     const confirmYes = document.getElementById("sc-np-confirm-yes");
     const confirmNo = document.getElementById("sc-np-confirm-no");
+    const notesPanel = document.getElementById("sc-np-notes-panel");
+    const rpPanel = document.getElementById("sc-np-rp-panel");
+    const statusBar = document.getElementById("sc-np-status");
+    const notesBtns = document.getElementById("sc-np-notes-btns");
+    const rpPersonaEnabledCb = document.getElementById("sc-rp-persona-enabled");
+    const rpPersonaNameInput = document.getElementById("sc-rp-persona-name");
+    const rpPersonaPrependTa = document.getElementById("sc-rp-persona-prepend");
+    const rpAutosaveEl = document.getElementById("sc-rp-autosave");
+    const rpEmptyEl = document.getElementById("sc-rp-empty");
+    const rpRewriteInfo = document.getElementById("sc-rp-rewrite-info");
+    const rpRewriteLabelEl = document.getElementById("sc-rp-rewrite-label");
+    const rpRewriteTsEl = document.getElementById("sc-rp-rewrite-ts");
+    const rpBeforeTextEl = document.getElementById("sc-rp-before-text");
+    const rpAfterTextEl = document.getElementById("sc-rp-after-text");
+    const rpUndoBtn = document.getElementById("sc-rp-undo-btn");
 
     /* ── State ── */
     let isOpen = false;
     let previewMode = false;
     let saveTimer = null;
     let autosaveTimer = null;
+    let activeTab = "notes";
+    let rpSaveTimer = null;
+    let rpAutosaveTimer = null;
 
     /* ── CSS variable init ── */
     document.documentElement.style.setProperty("--sc-np-w", DRAWER_W + "px");
@@ -447,7 +607,7 @@
       isOpen = val;
       drawer.classList.toggle("sc-np-open", val);
       document.body.classList.toggle("sc-np-open", val);
-      if (val) textarea.focus();
+      if (val && activeTab === "notes") textarea.focus();
     }
 
     /* ── Textarea events ── */
@@ -518,6 +678,101 @@
       lastmodEl.textContent = "";
       clearConfirm.classList.remove("visible");
       if (previewMode) setPreview(false);
+    });
+
+    /* ── Tab switching ── */
+    function setTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll(".sc-np-tab-pill").forEach((p) => {
+        p.classList.toggle("active", p.dataset.tab === tab);
+      });
+      notesPanel.classList.toggle("sc-np-hidden", tab !== "notes");
+      rpPanel.classList.toggle("visible", tab === "rp");
+      statusBar.style.display = tab === "notes" ? "" : "none";
+      notesBtns.style.display = tab === "notes" ? "" : "none";
+      if (previewMode && tab !== "notes") setPreview(false);
+      if (tab !== "notes" && clearConfirm.classList.contains("visible")) {
+        clearConfirm.classList.remove("visible");
+      }
+      if (tab === "notes" && isOpen) textarea.focus();
+    }
+
+    document.querySelectorAll(".sc-np-tab-pill").forEach((btn) => {
+      btn.addEventListener("click", () => setTab(btn.dataset.tab));
+    });
+
+    /* ── Persona save/load ── */
+    function savePersona() {
+      chrome.storage.sync.set({
+        rpPersonaEnabled: rpPersonaEnabledCb.checked,
+        rpPersonaName: rpPersonaNameInput.value,
+        rpPersonaPrepend: rpPersonaPrependTa.value,
+      });
+      rpAutosaveEl.classList.add("visible");
+      clearTimeout(rpAutosaveTimer);
+      rpAutosaveTimer = setTimeout(
+        () => rpAutosaveEl.classList.remove("visible"),
+        1800,
+      );
+    }
+
+    function schedulePersonaSave() {
+      clearTimeout(rpSaveTimer);
+      rpSaveTimer = setTimeout(savePersona, 600);
+    }
+
+    rpPersonaEnabledCb.addEventListener("change", savePersona);
+    rpPersonaNameInput.addEventListener("input", schedulePersonaSave);
+    rpPersonaPrependTa.addEventListener("input", schedulePersonaSave);
+
+    chrome.storage.sync.get(
+      ["rpPersonaEnabled", "rpPersonaName", "rpPersonaPrepend"],
+      (data) => {
+        rpPersonaEnabledCb.checked = data.rpPersonaEnabled === true;
+        rpPersonaNameInput.value = data.rpPersonaName || "";
+        rpPersonaPrependTa.value = data.rpPersonaPrepend || "";
+      },
+    );
+
+    /* ── Undo state display ── */
+    function showRewriteState(detail) {
+      rpEmptyEl.style.display = "none";
+      rpRewriteInfo.style.display = "flex";
+      rpRewriteLabelEl.textContent = detail.label || "Rewrite";
+      rpRewriteTsEl.textContent = new Date(detail.ts).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      const cap = 220;
+      rpBeforeTextEl.textContent =
+        detail.before.length > cap
+          ? detail.before.slice(0, cap) + "\u2026"
+          : detail.before;
+      rpAfterTextEl.textContent =
+        detail.after.length > cap
+          ? detail.after.slice(0, cap) + "\u2026"
+          : detail.after;
+      rpUndoBtn.disabled = false;
+    }
+
+    function clearRewriteState() {
+      rpEmptyEl.style.display = "";
+      rpRewriteInfo.style.display = "none";
+    }
+
+    document.addEventListener("sc-rp-rewrite-done", (e) =>
+      showRewriteState(e.detail),
+    );
+    document.addEventListener("sc-rp-undo-done", () => clearRewriteState());
+
+    rpUndoBtn.addEventListener("click", () => {
+      rpUndoBtn.disabled = true;
+      document.dispatchEvent(new CustomEvent("sc-rp-undo"));
+    });
+
+    /* Load last rewrite state (persists across page loads) */
+    chrome.storage.local.get("sc_last_rewrite", (data) => {
+      if (data.sc_last_rewrite) showRewriteState(data.sc_last_rewrite);
     });
 
     /* ── Drag-to-resize ── */

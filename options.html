@@ -282,6 +282,42 @@
           <span class="save-feedback" id="spicychatNotesSaveFeedback"></span>
         </div>
 
+        <!-- RP Tools / Persona -->
+        <div class="section-header" style="margin-top: 28px;">
+          <h3 style="font-size: 15px; color: var(--text-primary); margin: 0 0 6px;">RP Tools &mdash; Persona Prepend</h3>
+          <p class="section-desc" style="margin: 0;">
+            Silently inject a persona context before every rewrite prompt on SpicyChat.
+            Use <code>{{user}}</code> as a placeholder for your persona name.
+            Also editable live from the <strong>RP Tools</strong> tab in the side drawer.
+          </p>
+        </div>
+        <div class="card">
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Enable persona prepend</span>
+              <span class="toggle-hint">Prepends your persona context to every rewrite on SpicyChat</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="rpPersonaEnabledToggle" />
+              <span class="toggle-track"></span>
+            </label>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 16px;">
+          <label class="form-label" for="rpPersonaNameInput">Your Persona Name</label>
+          <input type="text" id="rpPersonaNameInput" class="form-input" placeholder="e.g. Aria" spellcheck="false" />
+          <p class="form-hint">Replaces <code>{{user}}</code> in the prepend text below.</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="rpPersonaPrependInput">Persona Prepend Text</label>
+          <textarea id="rpPersonaPrependInput" class="form-input" rows="5" style="resize: vertical; font-family: ui-monospace, monospace; font-size: 12px;" placeholder="e.g. You are writing a collaborative story. The human character is named {{user}}. Stay in character."></textarea>
+          <p class="form-hint">Injected before every rewrite prompt on SpicyChat only. Supports <code>{{user}}</code> as a placeholder.</p>
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" id="saveRpPersona">Save Persona</button>
+          <span class="save-feedback" id="rpPersonaSaveFeedback"></span>
+        </div>
+
         <!-- Keyboard shortcuts reference -->
         <div class="section-header" style="margin-top: 28px;">
           <h3 style="font-size: 14px; color: var(--text-secondary); margin: 0 0 10px;">Keyboard Shortcuts</h3>
