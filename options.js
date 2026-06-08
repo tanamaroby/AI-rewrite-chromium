@@ -5,19 +5,7 @@ const DEFAULT_COMMANDS = [
     keyword: "//re",
     label: "Rewrite",
     prompt:
-      "Rewrite the following text to be clearer and more polished. Keep the same meaning and tone. Return only the rewritten text, no explanations.",
-  },
-  {
-    keyword: "//bt",
-    label: "Better",
-    prompt:
-      "Rewrite the following text to sound better — more professional, articulate, and compelling. Return only the rewritten text, no explanations.",
-  },
-  {
-    keyword: "//slime",
-    label: "Slime",
-    prompt:
-      "Rewrite the following text as if you are an enthusiastic, gooey slime character. Be playful, wobbly, and oozy in your language. Return only the rewritten text, no explanations.",
+      "Rewrite the text. Improve clarity, flow, and word choice—keep it simple and natural. Preserve all meaning, tone, and character voices. Do not add plot, characters, or events. Return only the rewritten text.",
   },
 ];
 
@@ -279,14 +267,6 @@ const scNotesListEl = document.getElementById("sc-notes-list");
 const scNotesEmptyEl = document.getElementById("sc-notes-empty");
 const scNotesRefreshBtn = document.getElementById("sc-notes-refresh");
 
-function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
 function renderNotesList(notes) {
   scNotesCountEl.textContent = notes.length;
   if (notes.length === 0) {
@@ -322,19 +302,19 @@ function renderNotesList(notes) {
     card.innerHTML = `
       <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
         <div>
-          <span style="font-size:12px; font-weight:600; color:var(--text-primary);">${escapeHtml(note.chatId)}</span>
-          <span style="font-size:11px; color:var(--text-muted); margin-left:10px;">${words} words · ${chars} chars · ${escapeHtml(lastmod)}</span>
+          <span style="font-size:12px; font-weight:600; color:var(--text-primary);">${escHtml(note.chatId)}</span>
+          <span style="font-size:11px; color:var(--text-muted); margin-left:10px;">${words} words · ${chars} chars · ${escHtml(lastmod)}</span>
         </div>
         <div style="display:flex; gap:6px; flex-shrink:0;">
-          <button class="btn-ghost sc-note-edit-btn" style="font-size:11px; padding:3px 10px;" data-chat-id="${escapeHtml(note.chatId)}">Edit</button>
-          <button class="btn-ghost sc-note-delete-btn" style="font-size:11px; padding:3px 10px; color:#ef4444; border-color:rgba(239,68,68,0.4);" data-chat-id="${escapeHtml(note.chatId)}">Delete</button>
+          <button class="btn-ghost sc-note-edit-btn" style="font-size:11px; padding:3px 10px;" data-chat-id="${escHtml(note.chatId)}">Edit</button>
+          <button class="btn-ghost sc-note-delete-btn" style="font-size:11px; padding:3px 10px; color:#ef4444; border-color:rgba(239,68,68,0.4);" data-chat-id="${escHtml(note.chatId)}">Delete</button>
         </div>
       </div>
       <div class="sc-note-editor" style="display:none;">
-        <textarea class="form-input sc-note-textarea" rows="8" style="font-family:ui-monospace,monospace; font-size:12px; resize:vertical; width:100%; box-sizing:border-box;">${escapeHtml(note.text)}</textarea>
+        <textarea class="form-input sc-note-textarea" rows="8" style="font-family:ui-monospace,monospace; font-size:12px; resize:vertical; width:100%; box-sizing:border-box;">${escHtml(note.text)}</textarea>
         <div style="display:flex; gap:8px; margin-top:6px;">
-          <button class="btn-primary sc-note-save-btn" style="padding:6px 16px; font-size:12px;" data-chat-id="${escapeHtml(note.chatId)}">Save</button>
-          <button class="btn-ghost sc-note-cancel-btn" style="font-size:12px; padding:6px 14px;" data-chat-id="${escapeHtml(note.chatId)}">Cancel</button>
+          <button class="btn-primary sc-note-save-btn" style="padding:6px 16px; font-size:12px;" data-chat-id="${escHtml(note.chatId)}">Save</button>
+          <button class="btn-ghost sc-note-cancel-btn" style="font-size:12px; padding:6px 14px;" data-chat-id="${escHtml(note.chatId)}">Cancel</button>
           <span class="save-feedback sc-note-save-feedback" style="margin-left:4px;"></span>
         </div>
       </div>

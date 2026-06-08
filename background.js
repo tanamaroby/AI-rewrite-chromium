@@ -4,21 +4,9 @@
 const DEFAULT_COMMANDS = [
   {
     keyword: "//re",
-    prompt:
-      "Rewrite the following text to be clearer and more polished. Keep the same meaning and tone. Return only the rewritten text, no explanations.",
     label: "Rewrite",
-  },
-  {
-    keyword: "//bt",
     prompt:
-      "Rewrite the following text to sound better — more professional, articulate, and compelling. Return only the rewritten text, no explanations.",
-    label: "Better",
-  },
-  {
-    keyword: "//slime",
-    prompt:
-      "Rewrite the following text as if you are an enthusiastic, gooey slime character. Be playful, wobbly, and oozy in your language. Return only the rewritten text, no explanations.",
-    label: "Slime",
+      "Rewrite the text. Improve clarity, flow, and word choice—keep it simple and natural. Preserve all meaning, tone, and character voices. Do not add plot, characters, or events. Return only the rewritten text.",
   },
 ];
 

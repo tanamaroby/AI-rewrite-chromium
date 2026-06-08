@@ -293,7 +293,7 @@
         <span id="sc-np-lastmod"></span>
       </div>
       <div id="sc-np-body">
-        <textarea id="sc-np-textarea" placeholder="Start typing your notes for this chat\u2026&#10;&#10;Supports Markdown \u2014 click \ud83d\udc41\ufe0f to preview. Ctrl+S to save now."></textarea>
+        <textarea id="sc-np-textarea" data-ai-rewriter-ignore="1" placeholder="Start typing your notes for this chat\u2026&#10;&#10;Supports Markdown \u2014 click \ud83d\udc41\ufe0f to preview. Ctrl+S to save now."></textarea>
         <div id="sc-np-preview"></div>
         <div id="sc-np-clear-confirm">
           <strong>Clear this note?</strong>

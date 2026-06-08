@@ -397,8 +397,7 @@
 
   function isEditableElement(el) {
     if (!el) return false;
-    // Never touch the SpicyChat notes panel textarea
-    if (el.id === "sc-np-textarea") return false;
+    if (el.dataset.aiRewriterIgnore) return false;
     if (el.isContentEditable) return true;
     const tag = el.tagName?.toLowerCase();
     if (tag === "textarea") return true;
