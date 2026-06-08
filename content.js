@@ -177,20 +177,31 @@
   // ─── Text formatter (no AI) ─────────────────────────────────────────────────
 
   function formatText(text) {
-    // Strip all existing asterisks first to normalise before re-applying formatting
-    text = text.replace(/\*/g, "");
-    // Normalise curly/smart quotes to straight quotes
-    text = text.replace(/[""]/g, '"');
-    // Trim leading/trailing whitespace from every paragraph (line)
-    text = text
-      .split("\n")
-      .map((line) => line.trim())
-      .join("\n");
-    // Normalise all paragraph breaks: any run of newlines → exactly one blank line
-    text = text.replace(/\n+/g, "\n\n");
+    if (fmtStripAsterisks) text = text.replace(/\*/g, "");
+    if (fmtNormaliseQuotes) text = text.replace(/[""]/g, '"');
+    if (fmtNormaliseApostrophes) text = text.replace(/['']/g, "'");
+    if (fmtNormaliseEllipsis) text = text.replace(/\.{3}/g, "…");
+    if (fmtCollapseSpaces) text = text.replace(/[ \t]{2,}/g, " ");
+    if (fmtCapitaliseI) text = text.replace(/\bi\b/g, "I");
+    if (fmtTrimLines) {
+      text = text
+        .split("\n")
+        .map((line) => line.trim())
+        .join("\n");
+    }
+    if (fmtNormaliseNewlines) text = text.replace(/\n+/g, "\n\n");
+    if (fmtCapitaliseSentences) text = capitaliseSentences(text);
+
+    const patterns = ['"[^"]*"'];
+    if (fmtUnwrapBrackets) patterns.push("\\[[^\\]]*\\]");
+    for (const [open, close] of parseDelimiterPairs(fmtExtraDelimiters)) {
+      patterns.push(
+        `${escapeRegex(open)}[^${escapeForCharClass(close)}]*${escapeRegex(close)}`,
+      );
+    }
+    const regex = new RegExp(patterns.join("|"), "g");
+
     const parts = [];
-    // Match straight-quoted strings OR square-bracketed strings
-    const regex = /"[^"]*"|\[[^\]]*\]/g;
     let lastIndex = 0;
     let match;
     while ((match = regex.exec(text)) !== null) {
@@ -207,8 +218,6 @@
   }
 
   function wrapOutsideText(str) {
-    // Wrap each individual line separately so paragraph breaks don't end up
-    // inside a single asterisk pair (e.g. *line1\n\nline2* → *line1*\n\n*line2*)
     return str.replace(/[^\n]+/g, (chunk) => {
       const trimmed = chunk.trim();
       if (!trimmed) return chunk;
@@ -216,6 +225,35 @@
       const trailWS = chunk.slice(chunk.trimEnd().length);
       return leadWS + "*" + trimmed + "*" + trailWS;
     });
+  }
+
+  function capitaliseSentences(text) {
+    // Capitalise first letter of each paragraph
+    text = text.replace(
+      /(^|\n\n)([a-z])/g,
+      (_, sep, ch) => sep + ch.toUpperCase(),
+    );
+    // Capitalise after .  ! or ? but NOT after … or ...
+    text = text.replace(
+      /([^.…])([.!?]) +([a-z])/g,
+      (_, pre, punc, ch) => pre + punc + " " + ch.toUpperCase(),
+    );
+    return text;
+  }
+
+  function parseDelimiterPairs(str) {
+    const pairs = [];
+    for (let i = 0; i + 1 < str.length; i += 2)
+      pairs.push([str[i], str[i + 1]]);
+    return pairs;
+  }
+
+  function escapeRegex(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function escapeForCharClass(ch) {
+    return ch.replace(/[\\^\]]/g, "\\$&");
   }
 
   // ─── Format button & overlay ─────────────────────────────────────────────────
