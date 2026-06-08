@@ -24,6 +24,7 @@
   let rpPersonaEnabled = false;
   let rpPersonaName = "";
   let rpPersonaPrepend = "";
+  let rpGlobalStyle = "";
   let lastRewrite = null; // { el, before, after, label, ts }
   let lastFocusedEl = null; // last focused SpicyChat input
   let fmtShortcut = "m"; // keyboard shortcut key for format (Ctrl+key)
@@ -53,6 +54,7 @@
         "rpPersonaEnabled",
         "rpPersonaName",
         "rpPersonaPrepend",
+        "rpGlobalStyle",
         "fmtShortcut",
       ],
       (data) => {
@@ -76,6 +78,7 @@
         rpPersonaEnabled = data.rpPersonaEnabled === true;
         rpPersonaName = data.rpPersonaName || "";
         rpPersonaPrepend = data.rpPersonaPrepend || "";
+        rpGlobalStyle = data.rpGlobalStyle || "";
         fmtShortcut = data.fmtShortcut || "m";
       },
     );
@@ -409,14 +412,29 @@
   // ─── Persona prompt builder ─────────────────────────────────────────────────
 
   function buildPrompt(basePrompt) {
-    if (!isSpicyChat || !rpPersonaEnabled || !rpPersonaPrepend.trim())
-      return basePrompt;
-    const name = rpPersonaName || "{{user}}";
-    const resolved = rpPersonaPrepend.replace(/\{\{user\}\}/gi, name);
-    const framing =
-      `[Context: The following is the persona of ${name}, the character the user is playing in this roleplay. Rewrite in a way that matches their voice and style.]\n` +
-      resolved.trim();
-    return framing + "\n\n" + basePrompt;
+    if (!isSpicyChat) return basePrompt;
+    const parts = [];
+
+    // 1. Persona context (who is writing — always 1st person)
+    if (rpPersonaEnabled && rpPersonaPrepend.trim()) {
+      const name = rpPersonaName || "the user";
+      const resolved = rpPersonaPrepend.replace(/\{\{user\}\}/gi, name);
+      parts.push(
+        `[Character context: The text you are rewriting is written in first-person by ${name}. ` +
+          `You are rewriting their words — stay in their voice and perspective throughout. ` +
+          `${name}'s persona:\n${resolved.trim()}]`,
+      );
+    }
+
+    // 2. Global style rules (how to write)
+    if (rpGlobalStyle.trim()) {
+      parts.push(rpGlobalStyle.trim());
+    }
+
+    // 3. Specific command prompt
+    parts.push(basePrompt);
+
+    return parts.join("\n\n");
   }
 
   // ─── Main rewrite handler ───────────────────────────────────────────────────
@@ -637,8 +655,6 @@
     chrome.storage.local.remove("sc_last_rewrite");
     document.dispatchEvent(new CustomEvent("sc-rp-undo-done"));
   });
-
-  // ─── Snippet inject (triggered by RP Tools drawer) ───────────────────────────
 
   document.addEventListener("sc-rp-inject", (e) => {
     if (!isSpicyChat) return;

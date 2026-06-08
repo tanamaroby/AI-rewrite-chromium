@@ -40,9 +40,9 @@
     /* ── Drawer panel ── */
     #sc-np {
       position: fixed;
-      top: 56px; right: 0;
+      top: 0; right: 0;
       width: var(--sc-np-w, ${DEFAULT_W}px);
-      height: calc(100dvh - 56px);
+      height: 100dvh;
       background: #0f0e1a;
       border-left: 1px solid rgba(108, 99, 255, 0.28);
       box-shadow: -6px 0 32px rgba(0,0,0,0.55);
@@ -79,21 +79,21 @@
       transition: right 0.26s cubic-bezier(0.4,0,0.2,1), background 0.15s;
     }
     #sc-np-tab:hover { background: #271f4a; }
-    body.sc-np-open #sc-np-tab { right: var(--sc-np-w, ${DEFAULT_W}px); }
+    html.sc-np-open #sc-np-tab { right: var(--sc-np-w, ${DEFAULT_W}px); }
 
     /* ── Resize handle (fixed, above everything) ── */
     #sc-np-resize {
       position: fixed;
-      top: 56px;
+      top: 0;
       right: var(--sc-np-w, ${DEFAULT_W}px);
       width: 10px;
-      height: calc(100dvh - 56px);
+      height: 100dvh;
       cursor: ew-resize;
       z-index: 9001;
       background: transparent;
       display: none;
     }
-    body.sc-np-open #sc-np-resize { display: block; }
+    html.sc-np-open #sc-np-resize { display: block; }
     #sc-np-resize::after {
       content: '';
       position: absolute;
@@ -220,6 +220,19 @@
     #sc-np-preview a { color: #818cf8; text-decoration: underline; }
     #sc-np-preview hr { border: none; border-top: 1px solid rgba(108,99,255,0.2); margin: 12px 0; }
     #sc-np-preview p { margin: 0.5em 0; }
+
+    /* ── Page shrink ── */
+    /* transform: translateX(0) (non-none) makes body the containing block   */
+    /* for position:fixed children, so they shrink with body's width.         */
+    body {
+      transition: width 0.26s cubic-bezier(0.4,0,0.2,1);
+    }
+    html.sc-np-open body {
+      transform: translateX(0);
+      width: calc(100vw - var(--sc-np-w, ${DEFAULT_W}px));
+      max-width: calc(100vw - var(--sc-np-w, ${DEFAULT_W}px));
+      overflow-x: hidden;
+    }
 
     /* ── Scrollbar ── */
     #sc-np-textarea::-webkit-scrollbar,
@@ -456,6 +469,15 @@
               <span id="sc-rp-oneshot-status" class="rp-hint"></span>
             </div>
           </div>
+          <div class="rp-section-label">Global Style Rules</div>
+          <div class="rp-card">
+            <div class="rp-hint" style="margin-bottom:6px;">Applied to <em>every</em> rewrite on SpicyChat — defines your universal writing style and constraints.</div>
+            <textarea id="sc-rp-global-style" class="rp-input rp-textarea" style="min-height:88px;" data-ai-rewriter-ignore="1" placeholder="e.g. Rewrite text for clarity, flow, and word choice—simple and natural, not poetic. Speech distortions apply only to spoken dialogue (in quotes). Don&#39;t add plot, characters, events, paragraphs, or sentences. Max 3 sentences per paragraph."></textarea>
+            <div class="rp-autosave" id="sc-rp-gs-autosave">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Saved
+            </div>
+          </div>
           <div class="rp-section-label">Persona</div>
           <div class="rp-card">
             <div class="rp-toggle-row">
@@ -516,9 +538,9 @@
     resizeHandle.id = "sc-np-resize";
     resizeHandle.title = "Drag to resize";
 
-    document.body.appendChild(drawer);
-    document.body.appendChild(tab);
-    document.body.appendChild(resizeHandle);
+    document.documentElement.appendChild(drawer);
+    document.documentElement.appendChild(tab);
+    document.documentElement.appendChild(resizeHandle);
 
     /* ── Element refs ── */
     const textarea = document.getElementById("sc-np-textarea");
@@ -560,6 +582,8 @@
     const oneshotPromptTa = document.getElementById("sc-rp-oneshot-prompt");
     const oneshotRunBtn = document.getElementById("sc-rp-oneshot-run");
     const oneshotStatusEl = document.getElementById("sc-rp-oneshot-status");
+    const rpGlobalStyleTa = document.getElementById("sc-rp-global-style");
+    const rpGsAutosaveEl = document.getElementById("sc-rp-gs-autosave");
 
     /* ── State ── */
     let isOpen = false;
@@ -681,7 +705,7 @@
     function setOpen(val) {
       isOpen = val;
       drawer.classList.toggle("sc-np-open", val);
-      document.body.classList.toggle("sc-np-open", val);
+      document.documentElement.classList.toggle("sc-np-open", val);
       if (val && activeTab === "notes") textarea.focus();
     }
 
@@ -848,6 +872,38 @@
     /* Load last rewrite state (persists across page loads) */
     chrome.storage.local.get("sc_last_rewrite", (data) => {
       if (data.sc_last_rewrite) showRewriteState(data.sc_last_rewrite);
+    });
+
+    /* ── Global Style Rules ── */
+    let rpGsSaveTimer = null;
+    let rpGsAutosaveTimer = null;
+
+    const DEFAULT_GLOBAL_STYLE =
+      "Rewrite text for clarity, flow, and word choice\u2014simple and natural, not poetic. " +
+      "Speech distortions apply only to spoken dialogue (in quotes). " +
+      "Don't add plot, characters, events, paragraphs, or sentences. " +
+      "Max 3 sentences per paragraph.";
+
+    function saveGlobalStyle() {
+      chrome.storage.sync.set({ rpGlobalStyle: rpGlobalStyleTa.value });
+      rpGsAutosaveEl.classList.add("visible");
+      clearTimeout(rpGsAutosaveTimer);
+      rpGsAutosaveTimer = setTimeout(
+        () => rpGsAutosaveEl.classList.remove("visible"),
+        1800,
+      );
+    }
+
+    rpGlobalStyleTa.addEventListener("input", () => {
+      clearTimeout(rpGsSaveTimer);
+      rpGsSaveTimer = setTimeout(saveGlobalStyle, 600);
+    });
+
+    chrome.storage.sync.get("rpGlobalStyle", (data) => {
+      rpGlobalStyleTa.value =
+        data.rpGlobalStyle !== undefined
+          ? data.rpGlobalStyle
+          : DEFAULT_GLOBAL_STYLE;
     });
 
     /* ── Input counter ── */
