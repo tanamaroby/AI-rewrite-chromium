@@ -395,6 +395,7 @@ const autoFormatAfterRewriteToggle = document.getElementById(
 const fmtExtraDelimitersInput = document.getElementById(
   "fmtExtraDelimitersInput",
 );
+const fmtShortcutInput = document.getElementById("fmtShortcutInput");
 const saveFormatterBtn = document.getElementById("saveFormatter");
 const formatterSaveFeedback = document.getElementById("formatterSaveFeedback");
 
@@ -426,6 +427,7 @@ chrome.storage.sync.get(
     "formatterKeyword",
     "autoFormatAfterRewrite",
     "fmtExtraDelimiters",
+    "fmtShortcut",
     ...FMT_TOGGLES,
   ],
   (data) => {
@@ -434,6 +436,7 @@ chrome.storage.sync.get(
     autoFormatAfterRewriteToggle.checked =
       data.autoFormatAfterRewrite !== false;
     fmtExtraDelimitersInput.value = data.fmtExtraDelimiters || "";
+    fmtShortcutInput.value = (data.fmtShortcut || "m").toUpperCase();
     for (const key of FMT_TOGGLES) {
       const el = document.getElementById(key);
       if (el) el.checked = data[key] !== false;
@@ -443,6 +446,17 @@ chrome.storage.sync.get(
 );
 
 formatterToggle.addEventListener("change", syncAutoFormatRowState);
+
+// Key capture for shortcut input
+fmtShortcutInput.addEventListener("keydown", (e) => {
+  if (/^[a-zA-Z0-9]$/.test(e.key)) {
+    e.preventDefault();
+    fmtShortcutInput.value = e.key.toUpperCase();
+  } else if (e.key !== "Tab" && e.key !== "Shift" && e.key !== "CapsLock") {
+    e.preventDefault();
+  }
+});
+fmtShortcutInput.addEventListener("focus", () => fmtShortcutInput.select());
 
 saveFormatterBtn.addEventListener("click", () => {
   const kw = formatterKeywordInput.value.trim();
@@ -457,6 +471,7 @@ saveFormatterBtn.addEventListener("click", () => {
     formatterKeyword: kw || "//format",
     autoFormatAfterRewrite: autoFormatAfterRewriteToggle.checked,
     fmtExtraDelimiters: fmtExtraDelimitersInput.value.trim(),
+    fmtShortcut: fmtShortcutInput.value.trim().slice(0, 1).toLowerCase() || "m",
   };
   for (const key of FMT_TOGGLES) {
     const el = document.getElementById(key);

@@ -346,6 +346,31 @@
     }
     #sc-rp-undo-btn:hover { background: rgba(108,99,255,0.22); border-color: rgba(108,99,255,0.55); }
     #sc-rp-undo-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* ── Input counter ── */
+    .rp-counter-stats { font-size: 12.5px; color: #334155; font-weight: 500; transition: color 0.2s; }
+    .rp-counter-stats.active { color: #a78bfa; }
+
+    /* ── Snippets ── */
+    .rp-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0; }
+    .rp-section-header .rp-section-label { margin-bottom: 0; }
+    .rp-micro-btn { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: #64748b; background: none; border: 1px solid rgba(108,99,255,0.22); border-radius: 5px; padding: 2px 8px; cursor: pointer; font-family: inherit; transition: color 0.12s, border-color 0.12s, background 0.12s; }
+    .rp-micro-btn:hover { color: #a78bfa; border-color: rgba(108,99,255,0.45); }
+    .rp-micro-btn.active { color: #a78bfa; border-color: rgba(108,99,255,0.5); background: rgba(108,99,255,0.1); }
+    .rp-snip-chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 20px; }
+    .rp-snip-chip { padding: 5px 12px; border-radius: 100px; border: 1px solid rgba(108,99,255,0.3); background: rgba(108,99,255,0.1); color: #c4b5fd; font-size: 11.5px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.12s, border-color 0.12s, transform 0.08s; white-space: nowrap; }
+    .rp-snip-chip:hover { background: rgba(108,99,255,0.22); border-color: rgba(108,99,255,0.55); }
+    .rp-snip-chip:active { transform: scale(0.94); }
+    .rp-snip-row { display: flex; flex-direction: column; gap: 5px; padding-bottom: 10px; border-bottom: 1px solid rgba(108,99,255,0.08); margin-bottom: 10px; }
+    .rp-snip-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .rp-snip-row-num { font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #334155; }
+
+    /* ── One-shot + shared action button ── */
+    .rp-action-btn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(108,99,255,0.3); background: rgba(108,99,255,0.12); color: #a78bfa; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; transition: background 0.12s, border-color 0.12s; flex-shrink: 0; }
+    .rp-action-btn:hover:not(:disabled) { background: rgba(108,99,255,0.22); border-color: rgba(108,99,255,0.5); }
+    .rp-action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .rp-status-ok { color: #22c55e !important; }
+    .rp-status-err { color: #f87171 !important; }
     `;
     document.head.appendChild(style);
 
@@ -398,6 +423,39 @@
         </div>
         </div>
         <div id="sc-np-rp-panel">
+          <div class="rp-section-label">Focused Input</div>
+          <div class="rp-card" style="padding:10px 14px;">
+            <span id="sc-rp-ic-stats" class="rp-counter-stats">No input focused</span>
+          </div>
+          <div class="rp-section-header">
+            <div class="rp-section-label">Quick Snippets</div>
+            <button id="sc-rp-snip-edit-btn" class="rp-micro-btn">Edit</button>
+          </div>
+          <div class="rp-card" id="sc-rp-snip-chips-card">
+            <div id="sc-rp-snip-chips" class="rp-snip-chips"></div>
+          </div>
+          <div class="rp-card" id="sc-rp-snip-edit-card" style="display:none;">
+            <div id="sc-rp-snip-rows"></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+              <button id="sc-rp-snip-save-btn" class="rp-action-btn">Save</button>
+              <div class="rp-autosave" id="sc-rp-snip-saved">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                Saved
+              </div>
+            </div>
+          </div>
+          <div class="rp-section-label">One-Shot Rewrite</div>
+          <div class="rp-card">
+            <div class="rp-hint" style="margin-bottom:6px;">Custom prompt — runs on the focused chat input. Persona prepend applies if enabled.</div>
+            <textarea id="sc-rp-oneshot-prompt" class="rp-input rp-textarea" style="min-height:60px;" placeholder="e.g. Make this more poetic and melancholy." data-ai-rewriter-ignore="1"></textarea>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <button id="sc-rp-oneshot-run" class="rp-action-btn">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Run
+              </button>
+              <span id="sc-rp-oneshot-status" class="rp-hint"></span>
+            </div>
+          </div>
           <div class="rp-section-label">Persona</div>
           <div class="rp-card">
             <div class="rp-toggle-row">
@@ -491,6 +549,17 @@
     const rpBeforeTextEl = document.getElementById("sc-rp-before-text");
     const rpAfterTextEl = document.getElementById("sc-rp-after-text");
     const rpUndoBtn = document.getElementById("sc-rp-undo-btn");
+    const rpIcStats = document.getElementById("sc-rp-ic-stats");
+    const snipChipsCard = document.getElementById("sc-rp-snip-chips-card");
+    const snipEditCard = document.getElementById("sc-rp-snip-edit-card");
+    const snipChipsEl = document.getElementById("sc-rp-snip-chips");
+    const snipRowsEl = document.getElementById("sc-rp-snip-rows");
+    const snipEditBtn = document.getElementById("sc-rp-snip-edit-btn");
+    const snipSaveBtn = document.getElementById("sc-rp-snip-save-btn");
+    const snipSavedEl = document.getElementById("sc-rp-snip-saved");
+    const oneshotPromptTa = document.getElementById("sc-rp-oneshot-prompt");
+    const oneshotRunBtn = document.getElementById("sc-rp-oneshot-run");
+    const oneshotStatusEl = document.getElementById("sc-rp-oneshot-status");
 
     /* ── State ── */
     let isOpen = false;
@@ -500,6 +569,12 @@
     let activeTab = "notes";
     let rpSaveTimer = null;
     let rpAutosaveTimer = null;
+    const MAX_SNIPPETS = 5;
+    let rpSnippets = Array.from({ length: MAX_SNIPPETS }, () => ({
+      label: "",
+      text: "",
+    }));
+    let snipEditMode = false;
 
     /* ── CSS variable init ── */
     document.documentElement.style.setProperty("--sc-np-w", DRAWER_W + "px");
@@ -773,6 +848,151 @@
     /* Load last rewrite state (persists across page loads) */
     chrome.storage.local.get("sc_last_rewrite", (data) => {
       if (data.sc_last_rewrite) showRewriteState(data.sc_last_rewrite);
+    });
+
+    /* ── Input counter ── */
+    document.addEventListener("sc-rp-input-stats", (e) => {
+      const { chars, words } = e.detail;
+      rpIcStats.textContent = `${chars.toLocaleString()} chars \u00b7 ${words.toLocaleString()} words`;
+      rpIcStats.classList.add("active");
+    });
+
+    document.addEventListener("sc-rp-input-blur", () => {
+      rpIcStats.textContent = "No input focused";
+      rpIcStats.classList.remove("active");
+    });
+
+    /* ── Snippets ── */
+    function renderSnippetChips() {
+      snipChipsEl.innerHTML = "";
+      const hasSome = rpSnippets.some((s) => s.label.trim() || s.text.trim());
+      if (!hasSome) {
+        const empty = document.createElement("span");
+        empty.className = "rp-empty-state";
+        empty.style.padding = "8px 0";
+        empty.textContent = "No snippets \u2014 click Edit to add.";
+        snipChipsEl.appendChild(empty);
+        return;
+      }
+      rpSnippets.forEach((s, i) => {
+        if (!s.label.trim() && !s.text.trim()) return;
+        const btn = document.createElement("button");
+        btn.className = "rp-snip-chip";
+        btn.textContent = s.label.trim() || `Snippet ${i + 1}`;
+        btn.title = s.text.slice(0, 120);
+        btn.addEventListener("click", () => {
+          document.dispatchEvent(
+            new CustomEvent("sc-rp-inject", { detail: { text: s.text } }),
+          );
+        });
+        snipChipsEl.appendChild(btn);
+      });
+    }
+
+    function buildSnippetEditor() {
+      snipRowsEl.innerHTML = "";
+      rpSnippets.forEach((s, i) => {
+        const row = document.createElement("div");
+        row.className = "rp-snip-row";
+        const num = document.createElement("span");
+        num.className = "rp-snip-row-num";
+        num.textContent = `Snippet ${i + 1}`;
+        const labelIn = document.createElement("input");
+        labelIn.type = "text";
+        labelIn.className = "rp-input rp-snip-label-input";
+        labelIn.placeholder = "Label (e.g. Scene intro)";
+        labelIn.value = s.label;
+        labelIn.maxLength = 30;
+        labelIn.setAttribute("data-ai-rewriter-ignore", "1");
+        const textTa = document.createElement("textarea");
+        textTa.className = "rp-input rp-textarea rp-snip-text-input";
+        textTa.placeholder = "Text to insert\u2026";
+        textTa.style.minHeight = "52px";
+        textTa.setAttribute("data-ai-rewriter-ignore", "1");
+        textTa.value = s.text;
+        row.appendChild(num);
+        row.appendChild(labelIn);
+        row.appendChild(textTa);
+        snipRowsEl.appendChild(row);
+      });
+    }
+
+    function readSnippetsFromEditor() {
+      snipRowsEl.querySelectorAll(".rp-snip-row").forEach((row, i) => {
+        rpSnippets[i] = {
+          label: row.querySelector(".rp-snip-label-input").value,
+          text: row.querySelector(".rp-snip-text-input").value,
+        };
+      });
+    }
+
+    function setSnipEditMode(on) {
+      snipEditMode = on;
+      snipEditBtn.textContent = on ? "Done" : "Edit";
+      snipEditBtn.classList.toggle("active", on);
+      snipChipsCard.style.display = on ? "none" : "";
+      snipEditCard.style.display = on ? "" : "none";
+      if (on) buildSnippetEditor();
+      else renderSnippetChips();
+    }
+
+    snipEditBtn.addEventListener("click", () => {
+      if (snipEditMode) {
+        readSnippetsFromEditor();
+        chrome.storage.sync.set({ rpSnippets });
+        setSnipEditMode(false);
+      } else {
+        setSnipEditMode(true);
+      }
+    });
+
+    snipSaveBtn.addEventListener("click", () => {
+      readSnippetsFromEditor();
+      chrome.storage.sync.set({ rpSnippets });
+      renderSnippetChips();
+      snipSavedEl.classList.add("visible");
+      clearTimeout(snipSaveBtn._t);
+      snipSaveBtn._t = setTimeout(
+        () => snipSavedEl.classList.remove("visible"),
+        1800,
+      );
+    });
+
+    chrome.storage.sync.get("rpSnippets", (data) => {
+      if (Array.isArray(data.rpSnippets)) {
+        data.rpSnippets.forEach((s, i) => {
+          if (i < MAX_SNIPPETS)
+            rpSnippets[i] = { label: s.label || "", text: s.text || "" };
+        });
+      }
+      renderSnippetChips();
+    });
+
+    /* ── One-shot ── */
+    oneshotRunBtn.addEventListener("click", () => {
+      const prompt = oneshotPromptTa.value.trim();
+      if (!prompt) {
+        oneshotStatusEl.textContent = "Enter a prompt first.";
+        oneshotStatusEl.className = "rp-hint rp-status-err";
+        return;
+      }
+      oneshotRunBtn.disabled = true;
+      oneshotStatusEl.textContent = "Running\u2026";
+      oneshotStatusEl.className = "rp-hint";
+      document.dispatchEvent(
+        new CustomEvent("sc-rp-run-oneshot", { detail: { prompt } }),
+      );
+    });
+
+    document.addEventListener("sc-rp-oneshot-result", (e) => {
+      oneshotRunBtn.disabled = false;
+      if (e.detail.error) {
+        oneshotStatusEl.textContent = e.detail.error;
+        oneshotStatusEl.className = "rp-hint rp-status-err";
+      } else {
+        oneshotStatusEl.textContent = `\u2713 Done \u00b7 ${e.detail.model} \u00b7 ${e.detail.elapsed}s`;
+        oneshotStatusEl.className = "rp-hint rp-status-ok";
+      }
     });
 
     /* ── Drag-to-resize ── */

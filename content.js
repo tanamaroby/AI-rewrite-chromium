@@ -25,6 +25,8 @@
   let rpPersonaName = "";
   let rpPersonaPrepend = "";
   let lastRewrite = null; // { el, before, after, label, ts }
+  let lastFocusedEl = null; // last focused SpicyChat input
+  let fmtShortcut = "m"; // keyboard shortcut key for format (Ctrl+key)
   const isSpicyChat = location.hostname.includes("spicychat.ai");
 
   // Load settings from storage
@@ -51,6 +53,7 @@
         "rpPersonaEnabled",
         "rpPersonaName",
         "rpPersonaPrepend",
+        "fmtShortcut",
       ],
       (data) => {
         commands = data.commands || [];
@@ -73,6 +76,7 @@
         rpPersonaEnabled = data.rpPersonaEnabled === true;
         rpPersonaName = data.rpPersonaName || "";
         rpPersonaPrepend = data.rpPersonaPrepend || "";
+        fmtShortcut = data.fmtShortcut || "m";
       },
     );
   }
@@ -407,11 +411,12 @@
   function buildPrompt(basePrompt) {
     if (!isSpicyChat || !rpPersonaEnabled || !rpPersonaPrepend.trim())
       return basePrompt;
-    const resolved = rpPersonaPrepend.replace(
-      /\{\{user\}\}/gi,
-      rpPersonaName || "{{user}}",
-    );
-    return resolved.trim() + "\n\n" + basePrompt;
+    const name = rpPersonaName || "{{user}}";
+    const resolved = rpPersonaPrepend.replace(/\{\{user\}\}/gi, name);
+    const framing =
+      `[Context: The following is the persona of ${name}, the character the user is playing in this roleplay. Rewrite in a way that matches their voice and style.]\n` +
+      resolved.trim();
+    return framing + "\n\n" + basePrompt;
   }
 
   // ─── Main rewrite handler ───────────────────────────────────────────────────
@@ -483,6 +488,19 @@
     }
   }
 
+  // ─── Input stats for RP Tools (SpicyChat) ────────────────────────────────
+
+  function dispatchInputStats(el) {
+    const text = el.isContentEditable
+      ? el.innerText || el.textContent || ""
+      : el.value || "";
+    const chars = text.length;
+    const words = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+    document.dispatchEvent(
+      new CustomEvent("sc-rp-input-stats", { detail: { chars, words } }),
+    );
+  }
+
   // ─── Event listeners ────────────────────────────────────────────────────────
 
   // Debounce to avoid triggering on every keystroke
@@ -491,6 +509,7 @@
   function onInput(e) {
     const el = e.target;
     if (!isEditableElement(el)) return;
+    if (isSpicyChat) dispatchInputStats(el);
 
     // Clear any existing pending check for this element
     if (pending.has(el)) {
@@ -536,6 +555,10 @@
     (e) => {
       if (isEditableElement(e.target)) {
         showFormatButton(e.target);
+        if (isSpicyChat) {
+          lastFocusedEl = e.target;
+          dispatchInputStats(e.target);
+        }
       }
     },
     true,
@@ -543,8 +566,20 @@
 
   document.addEventListener(
     "focusout",
-    () => {
+    (e) => {
       removeFormatButton(false);
+      if (isSpicyChat && isEditableElement(e.target)) {
+        setTimeout(() => {
+          const active = document.activeElement;
+          const drawer = document.getElementById("sc-np");
+          if (
+            !isEditableElement(active) &&
+            !(drawer && drawer.contains(active))
+          ) {
+            document.dispatchEvent(new CustomEvent("sc-rp-input-blur"));
+          }
+        }, 200);
+      }
     },
     true,
   );
@@ -569,6 +604,22 @@
     { passive: true },
   );
 
+  // ─── Format keyboard shortcut ───────────────────────────────────────────────────
+
+  document.addEventListener(
+    "keydown",
+    (e) => {
+      if (!fmtShortcut || !isEditableElement(document.activeElement)) return;
+      if (e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) {
+        if (e.key.toLowerCase() === fmtShortcut.toLowerCase()) {
+          e.preventDefault();
+          handleFormat(document.activeElement);
+        }
+      }
+    },
+    true,
+  );
+
   // ─── Rewrite undo (triggered by RP Tools drawer) ────────────────────────────
 
   document.addEventListener("sc-rp-undo", () => {
@@ -585,5 +636,123 @@
     lastRewrite = null;
     chrome.storage.local.remove("sc_last_rewrite");
     document.dispatchEvent(new CustomEvent("sc-rp-undo-done"));
+  });
+
+  // ─── Snippet inject (triggered by RP Tools drawer) ───────────────────────────
+
+  document.addEventListener("sc-rp-inject", (e) => {
+    if (!isSpicyChat) return;
+    if (!lastFocusedEl || !document.contains(lastFocusedEl)) {
+      showToast("Click the chat input first, then inject a snippet.", true);
+      return;
+    }
+    const text = e.detail.text || "";
+    if (!text) return;
+    const el = lastFocusedEl;
+    if (el.isContentEditable) {
+      el.focus();
+      const existing = (el.innerText || el.textContent || "").trimEnd();
+      el.innerText = existing ? existing + text : text;
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    } else {
+      el.focus();
+      el.value = (el.value || "").trimEnd() + text;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+      el.selectionStart = el.selectionEnd = el.value.length;
+    }
+    showToast("\u2713 Snippet inserted");
+  });
+
+  // ─── One-shot rewrite (triggered by RP Tools drawer) ────────────────────────
+
+  document.addEventListener("sc-rp-run-oneshot", async (e) => {
+    if (!isSpicyChat) return;
+    if (!lastFocusedEl || !document.contains(lastFocusedEl)) {
+      document.dispatchEvent(
+        new CustomEvent("sc-rp-oneshot-result", {
+          detail: {
+            error: "No input focused \u2014 click inside the chat box first.",
+          },
+        }),
+      );
+      return;
+    }
+    const el = lastFocusedEl;
+    const rawText = el.isContentEditable
+      ? el.innerText || el.textContent || ""
+      : el.value || "";
+    const trimmed = rawText.trim();
+    if (!trimmed) {
+      document.dispatchEvent(
+        new CustomEvent("sc-rp-oneshot-result", {
+          detail: { error: "Input is empty." },
+        }),
+      );
+      return;
+    }
+    createOverlay(el);
+    const startTime = Date.now();
+    try {
+      const result = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+          {
+            type: "REWRITE_TEXT",
+            text: trimmed,
+            prompt: buildPrompt(e.detail.prompt),
+            apiKey,
+            model,
+          },
+          (response) => {
+            if (chrome.runtime.lastError) {
+              reject(new Error(chrome.runtime.lastError.message));
+            } else if (response.success) {
+              resolve(response);
+            } else {
+              reject(new Error(response.error));
+            }
+          },
+        );
+      });
+      const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1);
+      let finalText = result.text;
+      if (autoFormatAfterRewrite && formatterEnabled)
+        finalText = formatText(result.text);
+      replaceText(el, finalText);
+      const rewriteDetail = {
+        before: trimmed,
+        after: finalText,
+        label: "One-Shot",
+        ts: Date.now(),
+      };
+      lastRewrite = { el, ...rewriteDetail };
+      chrome.storage.local.set({ sc_last_rewrite: rewriteDetail });
+      document.dispatchEvent(
+        new CustomEvent("sc-rp-rewrite-done", { detail: rewriteDetail }),
+      );
+      const modelShort = (result.model || model || "unknown").split("/").pop();
+      document.dispatchEvent(
+        new CustomEvent("sc-rp-oneshot-result", {
+          detail: { ok: true, elapsed: elapsedSec, model: modelShort },
+        }),
+      );
+      showToast(`\u2713 One-Shot \u00b7 ${modelShort} \u00b7 ${elapsedSec}s`);
+    } catch (err) {
+      replaceText(el, trimmed);
+      document.dispatchEvent(
+        new CustomEvent("sc-rp-oneshot-result", {
+          detail: { error: err.message },
+        }),
+      );
+      showToast(`\u2717 One-Shot \u2014 ${err.message}`, true);
+    } finally {
+      removeOverlay(el);
+    }
   });
 })();

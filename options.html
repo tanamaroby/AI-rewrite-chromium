@@ -496,6 +496,24 @@
           <p class="form-hint">Characters to leave unwrapped, as pairs. E.g. <code>()</code> to leave <code>(parentheses)</code> bare. Multiple pairs: <code>(){}</code>.</p>
         </div>
 
+        <div class="form-group" style="margin-top: 16px;">
+          <label class="form-label">Format Keyboard Shortcut</label>
+          <div class="input-row">
+            <span style="font-size:13px;color:var(--text-secondary);flex-shrink:0;padding-right:6px;line-height:1;">Ctrl +</span>
+            <input
+              type="text"
+              id="fmtShortcutInput"
+              class="form-input"
+              style="max-width:64px;text-transform:uppercase;text-align:center;letter-spacing:0.12em;font-weight:700;"
+              maxlength="1"
+              placeholder="M"
+              spellcheck="false"
+              autocomplete="off"
+            />
+          </div>
+          <p class="form-hint">Click the field and press any letter or number key. Fires the formatter on the currently focused text input on any page. Default: Ctrl+M.</p>
+        </div>
+
         <div class="form-actions">
           <button class="btn-primary" id="saveFormatter">Save</button>
           <span class="save-feedback" id="formatterSaveFeedback"></span>
