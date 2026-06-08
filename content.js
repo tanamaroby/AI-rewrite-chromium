@@ -78,13 +78,7 @@
         rpPersonaEnabled = data.rpPersonaEnabled === true;
         rpPersonaName = data.rpPersonaName || "";
         rpPersonaPrepend = data.rpPersonaPrepend || "";
-        rpGlobalStyle =
-          data.rpGlobalStyle !== undefined
-            ? data.rpGlobalStyle
-            : "Rewrite text for clarity, flow, and word choice\u2014simple and natural, not poetic. " +
-              "Speech distortions apply only to spoken dialogue (in quotes). " +
-              "Don't add plot, characters, events, paragraphs, or sentences. " +
-              "Max 3 sentences per paragraph.";
+        rpGlobalStyle = data.rpGlobalStyle || "";
         fmtShortcut = data.fmtShortcut || "m";
       },
     );

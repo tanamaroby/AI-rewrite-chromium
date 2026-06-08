@@ -878,12 +878,6 @@
     let rpGsSaveTimer = null;
     let rpGsAutosaveTimer = null;
 
-    const DEFAULT_GLOBAL_STYLE =
-      "Rewrite text for clarity, flow, and word choice\u2014simple and natural, not poetic. " +
-      "Speech distortions apply only to spoken dialogue (in quotes). " +
-      "Don't add plot, characters, events, paragraphs, or sentences. " +
-      "Max 3 sentences per paragraph.";
-
     function saveGlobalStyle() {
       chrome.storage.sync.set({ rpGlobalStyle: rpGlobalStyleTa.value });
       rpGsAutosaveEl.classList.add("visible");
@@ -900,10 +894,7 @@
     });
 
     chrome.storage.sync.get("rpGlobalStyle", (data) => {
-      rpGlobalStyleTa.value =
-        data.rpGlobalStyle !== undefined
-          ? data.rpGlobalStyle
-          : DEFAULT_GLOBAL_STYLE;
+      rpGlobalStyleTa.value = data.rpGlobalStyle || "";
     });
 
     /* ── Input counter ── */
