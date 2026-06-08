@@ -6,8 +6,7 @@ Thumbs.db
 *.zip
 
 # Personal userscripts (local only)
-ai-rewriter.user.js
-ai-rewriter-iphone.user.js
+ai-rewriter-mobile.user.js
 
 # Editor
 .vscode/settings.json

@@ -25,9 +25,7 @@
       (data) => {
         commands = data.commands || [];
         apiKey = data.apiKey || "";
-        model =
-          data.model ||
-          "cognitivecomputations/dolphin-mistral-24b-venice-edition:free";
+        model = data.model || "openrouter/free";
         formatterEnabled = data.formatterEnabled !== false;
         formatterKeyword = data.formatterKeyword || "//format";
         autoFormatAfterRewrite = data.autoFormatAfterRewrite !== false;
@@ -317,7 +315,7 @@
   // ─── Main rewrite handler ───────────────────────────────────────────────────
 
   async function handleRewrite(el, match) {
-    const overlay = createOverlay(el);
+    createOverlay(el);
     const startTime = Date.now();
 
     try {
