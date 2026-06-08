@@ -15,6 +15,7 @@
   let fmtNormaliseApostrophes = true;
   let fmtNormaliseEllipsis = true;
   let fmtCollapseSpaces = true;
+  let fmtCapitaliseI = true;
   let fmtTrimLines = true;
   let fmtNormaliseNewlines = true;
   let fmtCapitaliseSentences = true;
@@ -36,6 +37,7 @@
         "fmtNormaliseApostrophes",
         "fmtNormaliseEllipsis",
         "fmtCollapseSpaces",
+        "fmtCapitaliseI",
         "fmtTrimLines",
         "fmtNormaliseNewlines",
         "fmtCapitaliseSentences",
@@ -54,6 +56,7 @@
         fmtNormaliseApostrophes = data.fmtNormaliseApostrophes !== false;
         fmtNormaliseEllipsis = data.fmtNormaliseEllipsis !== false;
         fmtCollapseSpaces = data.fmtCollapseSpaces !== false;
+        fmtCapitaliseI = data.fmtCapitaliseI !== false;
         fmtTrimLines = data.fmtTrimLines !== false;
         fmtNormaliseNewlines = data.fmtNormaliseNewlines !== false;
         fmtCapitaliseSentences = data.fmtCapitaliseSentences !== false;

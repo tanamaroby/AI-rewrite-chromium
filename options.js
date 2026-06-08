@@ -404,6 +404,7 @@ const FMT_TOGGLES = [
   "fmtNormaliseApostrophes",
   "fmtNormaliseEllipsis",
   "fmtCollapseSpaces",
+  "fmtCapitaliseI",
   "fmtTrimLines",
   "fmtNormaliseNewlines",
   "fmtCapitaliseSentences",
