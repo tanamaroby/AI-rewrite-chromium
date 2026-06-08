@@ -196,8 +196,8 @@
 
   function formatText(text) {
     if (fmtStripAsterisks) text = text.replace(/\*/g, "");
-    if (fmtNormaliseQuotes) text = text.replace(/[""]/g, '"');
-    if (fmtNormaliseApostrophes) text = text.replace(/['']/g, "'");
+    if (fmtNormaliseQuotes) text = text.replace(/[\u201C\u201D]/g, '"');
+    if (fmtNormaliseApostrophes) text = text.replace(/[\u2018\u2019]/g, "'");
     if (fmtNormaliseEllipsis) text = text.replace(/\.{3}/g, "…");
     if (fmtCollapseSpaces) text = text.replace(/[ \t]{2,}/g, " ");
     if (fmtCapitaliseI) text = text.replace(/\bi\b/g, "I");
