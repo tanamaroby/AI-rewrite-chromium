@@ -392,8 +392,23 @@ const formatterKeywordInput = document.getElementById("formatterKeywordInput");
 const autoFormatAfterRewriteToggle = document.getElementById(
   "autoFormatAfterRewriteToggle",
 );
+const fmtExtraDelimitersInput = document.getElementById(
+  "fmtExtraDelimitersInput",
+);
 const saveFormatterBtn = document.getElementById("saveFormatter");
 const formatterSaveFeedback = document.getElementById("formatterSaveFeedback");
+
+const FMT_TOGGLES = [
+  "fmtStripAsterisks",
+  "fmtNormaliseQuotes",
+  "fmtNormaliseApostrophes",
+  "fmtNormaliseEllipsis",
+  "fmtCollapseSpaces",
+  "fmtTrimLines",
+  "fmtNormaliseNewlines",
+  "fmtCapitaliseSentences",
+  "fmtUnwrapBrackets",
+];
 
 function syncAutoFormatRowState() {
   const row = autoFormatAfterRewriteToggle.closest(".toggle-row");
@@ -405,12 +420,23 @@ function syncAutoFormatRowState() {
 }
 
 chrome.storage.sync.get(
-  ["formatterEnabled", "formatterKeyword", "autoFormatAfterRewrite"],
+  [
+    "formatterEnabled",
+    "formatterKeyword",
+    "autoFormatAfterRewrite",
+    "fmtExtraDelimiters",
+    ...FMT_TOGGLES,
+  ],
   (data) => {
     formatterToggle.checked = data.formatterEnabled !== false;
     formatterKeywordInput.value = data.formatterKeyword || "//format";
     autoFormatAfterRewriteToggle.checked =
       data.autoFormatAfterRewrite !== false;
+    fmtExtraDelimitersInput.value = data.fmtExtraDelimiters || "";
+    for (const key of FMT_TOGGLES) {
+      const el = document.getElementById(key);
+      if (el) el.checked = data[key] !== false;
+    }
     syncAutoFormatRowState();
   },
 );
@@ -425,16 +451,19 @@ saveFormatterBtn.addEventListener("click", () => {
     return;
   }
   formatterKeywordInput.style.borderColor = "";
-  chrome.storage.sync.set(
-    {
-      formatterEnabled: formatterToggle.checked,
-      formatterKeyword: kw || "//format",
-      autoFormatAfterRewrite: autoFormatAfterRewriteToggle.checked,
-    },
-    () => {
-      showFeedback(formatterSaveFeedback, "✓ Saved!", true);
-    },
-  );
+  const toSave = {
+    formatterEnabled: formatterToggle.checked,
+    formatterKeyword: kw || "//format",
+    autoFormatAfterRewrite: autoFormatAfterRewriteToggle.checked,
+    fmtExtraDelimiters: fmtExtraDelimitersInput.value.trim(),
+  };
+  for (const key of FMT_TOGGLES) {
+    const el = document.getElementById(key);
+    if (el) toSave[key] = el.checked;
+  }
+  chrome.storage.sync.set(toSave, () => {
+    showFeedback(formatterSaveFeedback, "✓ Saved!", true);
+  });
 });
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

@@ -10,6 +10,16 @@
   let formatterEnabled = true;
   let formatterKeyword = "//format";
   let autoFormatAfterRewrite = true;
+  let fmtStripAsterisks = true;
+  let fmtNormaliseQuotes = true;
+  let fmtNormaliseApostrophes = true;
+  let fmtNormaliseEllipsis = true;
+  let fmtCollapseSpaces = true;
+  let fmtTrimLines = true;
+  let fmtNormaliseNewlines = true;
+  let fmtCapitaliseSentences = true;
+  let fmtUnwrapBrackets = true;
+  let fmtExtraDelimiters = "";
 
   // Load settings from storage
   function loadSettings() {
@@ -21,6 +31,16 @@
         "formatterEnabled",
         "formatterKeyword",
         "autoFormatAfterRewrite",
+        "fmtStripAsterisks",
+        "fmtNormaliseQuotes",
+        "fmtNormaliseApostrophes",
+        "fmtNormaliseEllipsis",
+        "fmtCollapseSpaces",
+        "fmtTrimLines",
+        "fmtNormaliseNewlines",
+        "fmtCapitaliseSentences",
+        "fmtUnwrapBrackets",
+        "fmtExtraDelimiters",
       ],
       (data) => {
         commands = data.commands || [];
@@ -29,6 +49,16 @@
         formatterEnabled = data.formatterEnabled !== false;
         formatterKeyword = data.formatterKeyword || "//format";
         autoFormatAfterRewrite = data.autoFormatAfterRewrite !== false;
+        fmtStripAsterisks = data.fmtStripAsterisks !== false;
+        fmtNormaliseQuotes = data.fmtNormaliseQuotes !== false;
+        fmtNormaliseApostrophes = data.fmtNormaliseApostrophes !== false;
+        fmtNormaliseEllipsis = data.fmtNormaliseEllipsis !== false;
+        fmtCollapseSpaces = data.fmtCollapseSpaces !== false;
+        fmtTrimLines = data.fmtTrimLines !== false;
+        fmtNormaliseNewlines = data.fmtNormaliseNewlines !== false;
+        fmtCapitaliseSentences = data.fmtCapitaliseSentences !== false;
+        fmtUnwrapBrackets = data.fmtUnwrapBrackets !== false;
+        fmtExtraDelimiters = data.fmtExtraDelimiters || "";
       },
     );
   }

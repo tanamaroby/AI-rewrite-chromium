@@ -366,6 +366,93 @@
           </div>
         </div>
 
+        <div class="settings-group-label">NORMALISATION</div>
+        <div class="card">
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Strip existing asterisks</span>
+              <span class="toggle-hint">Remove all * before re-applying formatting, for a clean result</span>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" id="fmtStripAsterisks" /><span class="toggle-track"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Normalise curly quotes → <code>"..."</code></span>
+              <span class="toggle-hint">Convert “ and ” to straight double quotes</span>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" id="fmtNormaliseQuotes" /><span class="toggle-track"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Normalise curly apostrophes → <code>'</code></span>
+              <span class="toggle-hint">Convert ‘ and ’ to straight apostrophes</span>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" id="fmtNormaliseApostrophes" /><span class="toggle-track"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Normalise ellipsis <code>...</code> → <code>…</code></span>
+              <span class="toggle-hint">Convert three dots to the proper ellipsis character</span>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" id="fmtNormaliseEllipsis" /><span class="toggle-track"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Collapse multiple spaces</span>
+              <span class="toggle-hint">Replace two or more consecutive spaces with one</span>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" id="fmtCollapseSpaces" /><span class="toggle-track"></span></label>
+          </div>
+        </div>
+
+        <div class="settings-group-label">STRUCTURE</div>
+        <div class="card">
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Trim paragraph whitespace</span>
+              <span class="toggle-hint">Remove leading and trailing spaces from each line</span>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" id="fmtTrimLines" /><span class="toggle-track"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Normalise paragraph spacing</span>
+              <span class="toggle-hint">Ensure every paragraph is separated by exactly one blank line</span>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" id="fmtNormaliseNewlines" /><span class="toggle-track"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Capitalise sentences</span>
+              <span class="toggle-hint">Capitalise the first letter of each paragraph and after . ! ?</span>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" id="fmtCapitaliseSentences" /><span class="toggle-track"></span></label>
+          </div>
+        </div>
+
+        <div class="settings-group-label">WRAPPING</div>
+        <div class="card">
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Leave <code>[ ]</code> square brackets unwrapped</span>
+              <span class="toggle-hint">Text inside [brackets] is kept bare, not wrapped in asterisks</span>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" id="fmtUnwrapBrackets" /><span class="toggle-track"></span></label>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 16px;">
+          <label class="form-label" for="fmtExtraDelimitersInput">Extra unwrapped delimiter pairs</label>
+          <input
+            type="text"
+            id="fmtExtraDelimitersInput"
+            class="form-input"
+            placeholder="e.g. ()"
+            spellcheck="false"
+          />
+          <p class="form-hint">Characters to leave unwrapped, as pairs. E.g. <code>()</code> to leave <code>(parentheses)</code> bare. Multiple pairs: <code>(){}</code>.</p>
+        </div>
+
         <div class="form-actions">
           <button class="btn-primary" id="saveFormatter">Save</button>
           <span class="save-feedback" id="formatterSaveFeedback"></span>

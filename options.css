@@ -786,3 +786,32 @@ body {
   transform: translateX(18px);
   background: var(--accent2);
 }
+
+/* ── Settings group label (formatter sub-sections) ─────────────────────── */
+
+.settings-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+  margin-bottom: 8px;
+  margin-top: 20px;
+}
+
+/* Divider between stacked toggle rows within one card */
+.toggle-row + .toggle-row {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+  margin-top: 14px;
+}
+
+/* Code spans inside toggle labels / hints */
+.toggle-label code,
+.toggle-hint code {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: rgba(108, 99, 255, 0.1);
+  color: var(--accent2);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
