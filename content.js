@@ -153,6 +153,8 @@
       .split("\n")
       .map((line) => line.trim())
       .join("\n");
+    // Normalise all paragraph breaks: any run of newlines → exactly one blank line
+    text = text.replace(/\n+/g, "\n\n");
     const parts = [];
     // Match straight-quoted strings OR square-bracketed strings
     const regex = /"[^"]*"|\[[^\]]*\]/g;
