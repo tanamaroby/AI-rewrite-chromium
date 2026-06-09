@@ -1813,10 +1813,9 @@
         resetBtn.textContent = "RST";
         resetBtn.addEventListener("click", () => {
           a.current = a.max;
-          curEl.textContent = a.current;
-          curEl.style.opacity = "1";
           saveAbl();
           addLog(`[${a.name || "Ability"} restored — ${a.current}/${a.max}]`);
+          renderAbl();
         });
 
         const delBtn = document.createElement("button");
