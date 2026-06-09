@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Toolbar Preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1a1230;
+    color: #e2e0ff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    padding-top: 90px;
+    padding-bottom: 40px;
+    min-height: 100vh;
+  }
+  .content {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  h2 { font-size: 14px; color: rgba(167,139,250,0.7); letter-spacing: 0.1em; text-transform: uppercase; }
+  p { font-size: 14px; color: rgba(224,222,255,0.5); line-height: 1.6; }
+  textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 10px;
+    color: #e2e0ff;
+    font-size: 14px;
+    padding: 12px;
+    resize: vertical;
+    min-height: 100px;
+    outline: none;
+    font-family: inherit;
+    line-height: 1.5;
+  }
+  textarea:focus { border-color: rgba(139,92,246,0.65); }
+  .note {
+    font-size: 12px;
+    color: rgba(167,139,250,0.55);
+    text-align: center;
+    margin-top: 8px;
+  }
+
+  /* ─────────────────────── TOOLBAR ─────────────────────── */
+  #ai-mobile-toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    will-change: transform;
+    z-index: 2147483647;
+    background: rgba(8, 5, 20, 0.97);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+    border-bottom: 1px solid rgba(139, 92, 246, 0.4);
+    box-shadow: 0 0 0 1px rgba(109, 40, 217, 0.15),
+                0 6px 32px rgba(0, 0, 0, 0.7),
+                0 0 60px rgba(109, 40, 217, 0.12);
+    display: flex;
+    flex-direction: column;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+  }
+
+  /* ─── Main row ─── */
+  #ai-tb-main-row {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    height: 68px;
+  }
+
+  /* ─── Format button — pinned left, full height ─── */
+  #ai-tb-fmt-pin {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    gap: 4px;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    background: linear-gradient(160deg, rgba(16, 185, 129, 0.18) 0%, rgba(5, 12, 10, 0.0) 100%);
+    border-right: 1px solid rgba(52, 211, 153, 0.25);
+    border: none;
+    position: relative;
+    transition: background 0.15s;
+    border-right: 1px solid rgba(52, 211, 153, 0.25);
+  }
+  #ai-tb-fmt-pin:active, #ai-tb-fmt-pin.demo-active {
+    background: linear-gradient(160deg, rgba(16, 185, 129, 0.35) 0%, rgba(5, 30, 20, 0.6) 100%);
+  }
+  #ai-tb-fmt-pin .ai-tb-fmt-emoji {
+    font-size: 22px;
+    line-height: 1;
+    position: relative;
+    display: block;
+  }
+  #ai-tb-fmt-pin .ai-tb-fmt-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #34d399;
+    text-transform: uppercase;
+  }
+  #ai-tb-fmt-pin.ai-tb-running .ai-tb-fmt-emoji { visibility: hidden; }
+  #ai-tb-fmt-pin.ai-tb-running .ai-tb-fmt-emoji::after {
+    content: '';
+    visibility: visible;
+    position: absolute;
+    top: 50%; left: 50%;
+    margin: -9px 0 0 -9px;
+    width: 18px; height: 18px;
+    border: 2px solid rgba(52, 211, 153, 0.2);
+    border-top-color: #34d399;
+    border-radius: 50%;
+    animation: ai-tb-spin 0.65s linear infinite;
+  }
+  #ai-tb-fmt-pin.ai-tb-busy { opacity: 0.35; pointer-events: none; }
+
+  /* ─── Right section ─── */
+  #ai-tb-right {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ─── Status bar ─── */
+  #ai-tb-status-row {
+    display: flex;
+    align-items: center;
+    padding: 5px 12px 2px;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  #ai-tb-label {
+    font-size: 9px;
+    font-weight: 800;
+    color: rgba(139, 92, 246, 0.7);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  #ai-tb-status {
+    font-size: 11px;
+    color: rgba(224, 222, 255, 0.35);
+    flex: 1;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color 0.2s;
+  }
+  #ai-tb-status.ai-tb-working { color: #a78bfa; }
+  #ai-tb-status.ai-tb-error   { color: #f87171; }
+  #ai-tb-status.ai-tb-done    { color: #6ee7b7; }
+
+  /* ─── Scrollable command buttons ─── */
+  #ai-tb-buttons {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 7px;
+    padding: 4px 12px 10px;
+    flex: 1;
+    align-items: center;
+  }
+  #ai-tb-buttons::-webkit-scrollbar { display: none; }
+
+  /* ─── Command buttons ─── */
+  .ai-tb-btn {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    min-width: 58px;
+    padding: 7px 11px 6px;
+    border-radius: 12px;
+    border: 1px solid rgba(109, 40, 217, 0.4);
+    background: linear-gradient(145deg, rgba(30, 20, 60, 0.95) 0%, rgba(20, 14, 40, 0.95) 100%);
+    color: #ddd6fe;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background 0.12s, border-color 0.12s, transform 0.08s, opacity 0.15s, box-shadow 0.12s;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(167, 139, 250, 0.06);
+  }
+  .ai-tb-btn:active, .ai-tb-btn.demo-active {
+    background: linear-gradient(145deg, rgba(109, 40, 217, 0.55) 0%, rgba(76, 29, 149, 0.7) 100%);
+    border-color: rgba(167, 139, 250, 0.8);
+    box-shadow: 0 0 16px rgba(139, 92, 246, 0.45), inset 0 1px 0 rgba(167, 139, 250, 0.12);
+    transform: scale(0.91);
+  }
+  .ai-tb-btn.ai-tb-busy { opacity: 0.28; pointer-events: none; }
+  .ai-tb-btn.ai-tb-running {
+    opacity: 1 !important;
+    border-color: rgba(167, 139, 250, 0.65);
+    background: linear-gradient(145deg, rgba(76, 29, 149, 0.5) 0%, rgba(45, 18, 90, 0.7) 100%);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.35), inset 0 1px 0 rgba(167, 139, 250, 0.1);
+    pointer-events: none;
+  }
+
+  /* ─── Emoji slot ─── */
+  .ai-tb-btn-emoji {
+    display: block;
+    position: relative;
+    font-size: 18px;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+  .ai-tb-btn.ai-tb-running .ai-tb-btn-emoji { visibility: hidden; }
+  .ai-tb-btn.ai-tb-running .ai-tb-btn-emoji::after {
+    content: '';
+    visibility: visible;
+    position: absolute;
+    top: 50%; left: 50%;
+    margin: -8px 0 0 -8px;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(196, 181, 253, 0.2);
+    border-top-color: #c4b5fd;
+    border-radius: 50%;
+    animation: ai-tb-spin 0.65s linear infinite;
+  }
+
+  /* ─── Progress bar ─── */
+  #ai-tb-progress-track {
+    height: 2px;
+    overflow: hidden;
+    position: relative;
+    opacity: 0;
+    transition: opacity 0.25s;
+    flex-shrink: 0;
+  }
+  #ai-tb-progress-track.ai-tb-loading { opacity: 1; }
+  #ai-tb-progress-fill {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    width: 40%;
+    background: linear-gradient(90deg, transparent 0%, #7c3aed 20%, #a78bfa 50%, #34d399 80%, transparent 100%);
+    transform: translateX(-200%);
+  }
+  #ai-tb-progress-track.ai-tb-loading #ai-tb-progress-fill {
+    animation: ai-tb-shimmer 1.3s ease-in-out infinite;
+  }
+
+  @keyframes ai-tb-spin { to { transform: rotate(360deg); } }
+  @keyframes ai-tb-shimmer {
+    0%   { transform: translateX(-200%); }
+    100% { transform: translateX(360%); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── Toolbar ─── -->
+<div id="ai-mobile-toolbar">
+  <div id="ai-tb-main-row">
+    <button id="ai-tb-fmt-pin" onclick="demoFormat()">
+      <span class="ai-tb-fmt-emoji">✨</span>
+      <span class="ai-tb-fmt-label">Format</span>
+    </button>
+    <div id="ai-tb-right">
+      <div id="ai-tb-status-row">
+        <span id="ai-tb-label">AI Rewriter</span>
+        <span id="ai-tb-status">Ready</span>
+      </div>
+      <div id="ai-tb-buttons">
+        <button class="ai-tb-btn" onclick="demoCmd(this,'Rewrite')"><span class="ai-tb-btn-emoji">✏️</span>Rewrite</button>
+        <button class="ai-tb-btn" onclick="demoCmd(this,'Moan')"><span class="ai-tb-btn-emoji">💗</span>Moan</button>
+        <button class="ai-tb-btn" onclick="demoCmd(this,'Brain')"><span class="ai-tb-btn-emoji">🧠</span>Brain</button>
+        <button class="ai-tb-btn" onclick="demoCmd(this,'Open')"><span class="ai-tb-btn-emoji">😮</span>Open</button>
+        <button class="ai-tb-btn" onclick="demoCmd(this,'BJ')"><span class="ai-tb-btn-emoji">💦</span>BJ</button>
+        <button class="ai-tb-btn" onclick="demoCmd(this,'Slutty')"><span class="ai-tb-btn-emoji">🎀</span>Slutty</button>
+      </div>
+    </div>
+  </div>
+  <div id="ai-tb-progress-track"><div id="ai-tb-progress-fill"></div></div>
+</div>
+
+<!-- ─── Page content ─── -->
+<div class="content">
+  <h2>Toolbar Preview</h2>
+  <p>This is a static preview of the redesigned AI Rewriter toolbar above. The buttons below are interactive demos — click/tap them to simulate states.</p>
+  <textarea id="demo-text" placeholder="Type or paste some text here, then try the toolbar buttons above…">This is a sample text for previewing the toolbar. You can click any button above to see the loading state and status bar update in real time.</textarea>
+  <p class="note">Scroll the command buttons row horizontally →</p>
+</div>
+
+<script>
+  const statusEl = document.getElementById('ai-tb-status');
+  const progressTrack = document.getElementById('ai-tb-progress-track');
+  const fmtPin = document.getElementById('ai-tb-fmt-pin');
+  const allBtns = document.querySelectorAll('.ai-tb-btn');
+  let demoTimer = null;
+
+  function setStatus(text, type = '') {
+    statusEl.textContent = text;
+    statusEl.className = type ? 'ai-tb-' + type : '';
+  }
+
+  function setBusy(val, runningBtn = null) {
+    progressTrack.classList.toggle('ai-tb-loading', val);
+    allBtns.forEach(b => {
+      if (b === runningBtn) {
+        b.classList.toggle('ai-tb-running', val);
+        b.classList.remove('ai-tb-busy');
+      } else {
+        b.classList.toggle('ai-tb-busy', val);
+        b.classList.remove('ai-tb-running');
+      }
+    });
+    if (fmtPin !== runningBtn) {
+      fmtPin.classList.toggle('ai-tb-busy', val);
+      fmtPin.classList.remove('ai-tb-running');
+    }
+  }
+
+  function demoCmd(btn, label) {
+    if (demoTimer) return;
+    setStatus(label + '…', 'working');
+    setBusy(true, btn);
+    demoTimer = setTimeout(() => {
+      setBusy(false);
+      setStatus('✓ ' + label + ' · mimo-v2.5 · 2.3s', 'done');
+      demoTimer = null;
+    }, 2500);
+  }
+
+  function demoFormat() {
+    if (demoTimer) return;
+    fmtPin.classList.add('ai-tb-running');
+    setBusy(true, fmtPin);
+    setStatus('Formatting…', 'working');
+    setTimeout(() => {
+      fmtPin.classList.remove('ai-tb-running');
+      setBusy(false);
+      setStatus('✓ Formatted', 'done');
+    }, 400);
+  }
+</script>
+</body>
+</html>
