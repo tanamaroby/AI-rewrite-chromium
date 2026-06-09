@@ -1929,7 +1929,7 @@
       if (mod !== 0) {
         const sign = mod > 0 ? "+" : "";
         const parts = diceModifiers
-          .filter((mx) => mx.value !== 0)
+          .filter((mx) => mx.value !== 0 && mx.enabled !== false)
           .map((mx) =>
             `${mx.value > 0 ? "+" : ""}${mx.value} ${mx.name || "?"}`.trim(),
           )
@@ -1960,7 +1960,7 @@
       if (mod !== 0) {
         const modSign = mod > 0 ? "+" : "";
         const modItems = diceModifiers
-          .filter((mx) => mx.value !== 0)
+          .filter((mx) => mx.value !== 0 && mx.enabled !== false)
           .map(
             (mx) => `${mx.value > 0 ? "+" : ""}${mx.value} ${mx.name || "?"}`,
           )
