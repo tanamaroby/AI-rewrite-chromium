@@ -773,7 +773,8 @@
     if (el.isContentEditable) {
       el.focus();
       const existing = (el.innerText || el.textContent || "").trimEnd();
-      el.innerText = existing ? existing + text : text;
+      const insert = existing ? text : text.replace(/^\n+/, "");
+      el.innerText = existing ? existing + insert : insert;
       const range = document.createRange();
       const sel = window.getSelection();
       range.selectNodeContents(el);
@@ -783,7 +784,9 @@
       el.dispatchEvent(new Event("input", { bubbles: true }));
     } else {
       el.focus();
-      el.value = (el.value || "").trimEnd() + text;
+      const existing = (el.value || "").trimEnd();
+      const insert = existing ? text : text.replace(/^\n+/, "");
+      el.value = existing ? existing + insert : insert;
       el.dispatchEvent(new Event("input", { bubbles: true }));
       el.dispatchEvent(new Event("change", { bubbles: true }));
       el.selectionStart = el.selectionEnd = el.value.length;
