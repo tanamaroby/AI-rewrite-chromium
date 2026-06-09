@@ -269,6 +269,28 @@
       caret-color: #a78bfa; padding: 0; overflow: hidden; min-height: 0;
     }
     .ql-notes-input::placeholder { color: #334155; }
+    .ql-update-row {
+      display: flex; gap: 5px; align-items: center;
+      border-top: 1px solid rgba(108,99,255,0.07); padding-top: 5px; margin-top: 2px;
+    }
+    .ql-update-input {
+      flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+      color: #94a3b8; font-size: 11px; font-family: inherit; font-style: italic;
+      caret-color: #a78bfa;
+    }
+    .ql-update-input::placeholder { color: #2a3447; }
+    .ql-update-btn {
+      flex-shrink: 0; font-size: 9.5px; font-weight: 700; font-family: inherit;
+      padding: 2px 7px; border-radius: 4px; cursor: pointer;
+      background: rgba(108,99,255,0.1); border: 1px solid rgba(108,99,255,0.28); color: #a78bfa;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .ql-update-btn:hover { background: rgba(108,99,255,0.2); border-color: rgba(108,99,255,0.5); }
+    .ql-update-latest {
+      font-size: 10.5px; font-style: italic; color: #475569;
+      padding: 1px 0 3px; border-top: 1px solid rgba(108,99,255,0.07); margin-top: 2px;
+      white-space: pre-wrap; word-break: break-word;
+    }
     .ql-item-bottom { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
     .ql-state-btns { display: flex; gap: 4px; }
     .ql-state-chip {
@@ -1219,6 +1241,7 @@
         title: "",
         notes: "",
         state: "active",
+        update: "",
       };
     }
 
@@ -1337,6 +1360,47 @@
         bottom.append(stateRow, delBtn);
 
         card.append(top, bottom);
+
+        // Update row
+        const updateRow = document.createElement("div");
+        updateRow.className = "ql-update-row";
+        const updateIn = document.createElement("input");
+        updateIn.type = "text";
+        updateIn.className = "ql-update-input";
+        updateIn.placeholder =
+          "Post an update\u2026 e.g. found a lead at the tavern";
+        updateIn.maxLength = 120;
+        updateIn.setAttribute("data-ai-rewriter-ignore", "1");
+        const updateBtn = document.createElement("button");
+        updateBtn.className = "ql-update-btn";
+        updateBtn.textContent = "Log";
+        updateBtn.addEventListener("click", () => {
+          const txt = updateIn.value.trim();
+          if (!txt) return;
+          q.update = txt;
+          scheduleQuestSave();
+          addLog(`[Quest "${q.title || "(untitled)"}": ${txt}]`);
+          updateIn.value = "";
+          // refresh latest display
+          latestEl.textContent = txt;
+          latestEl.style.display = "";
+        });
+        updateIn.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            updateBtn.click();
+          }
+        });
+        updateRow.append(updateIn, updateBtn);
+        card.appendChild(updateRow);
+
+        // Latest update display
+        const latestEl = document.createElement("div");
+        latestEl.className = "ql-update-latest";
+        latestEl.style.display = q.update ? "" : "none";
+        latestEl.textContent = q.update || "";
+        card.appendChild(latestEl);
+
         questListEl.appendChild(card);
       });
     }
@@ -3051,7 +3115,8 @@
             : q.state === "failed"
               ? "\u2717"
               : "\u25cb";
-        return `${st} ${q.title || "(untitled)"}${q.notes ? " \u2014 " + q.notes : ""}`;
+        const upd = q.update ? ` > ${q.update}` : "";
+        return `${st} ${q.title || "(untitled)"}${q.notes ? " \u2014 " + q.notes : ""}${upd}`;
       });
       return `[Quests: ${parts.join(" | ")}]`;
     }
