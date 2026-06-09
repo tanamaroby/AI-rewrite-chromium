@@ -431,6 +431,80 @@
     .dice-history-chip.nat20 { background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.25); color: #4ade80; }
     .dice-history-chip.nat1  { background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.2); color: #f87171; }
 
+    /* ── Add form ── */
+    .af-form {
+      display: flex; flex-direction: column; gap: 6px;
+      padding: 8px 10px 10px; margin-bottom: 8px;
+      background: rgba(108,99,255,0.04); border: 1px solid rgba(108,99,255,0.18);
+      border-radius: 7px;
+    }
+    .af-row { display: flex; gap: 5px; align-items: center; }
+    .af-input {
+      flex: 1; min-width: 0; background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(108,99,255,0.18); border-radius: 5px;
+      color: #e2e8f0; font-size: 12px; font-family: inherit;
+      padding: 5px 8px; outline: none; transition: border-color 0.12s; caret-color: #a78bfa;
+    }
+    .af-input:focus { border-color: rgba(108,99,255,0.45); }
+    .af-input::placeholder { color: #2e3a4d; }
+    .af-textarea {
+      width: 100%; box-sizing: border-box; resize: none;
+      background: rgba(0,0,0,0.25); border: 1px solid rgba(108,99,255,0.18);
+      border-radius: 5px; color: #94a3b8; font-size: 11.5px; font-family: inherit;
+      padding: 5px 8px; outline: none; transition: border-color 0.12s;
+      caret-color: #a78bfa; overflow: hidden; min-height: 0;
+    }
+    .af-textarea:focus { border-color: rgba(108,99,255,0.4); }
+    .af-textarea::placeholder { color: #2e3a4d; }
+    .af-select {
+      flex: 1; min-width: 0; background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(108,99,255,0.18); border-radius: 5px;
+      color: #e2e8f0; font-size: 11.5px; font-family: inherit;
+      padding: 5px 7px; outline: none; transition: border-color 0.12s;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236c63ff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 7px center;
+      padding-right: 22px; cursor: pointer;
+    }
+    .af-select:focus { border-color: rgba(108,99,255,0.45); }
+    .af-select option { background: #1a1730; color: #e2e8f0; }
+    .af-number {
+      width: 52px; flex-shrink: 0; text-align: center;
+      background: rgba(0,0,0,0.25); border: 1px solid rgba(108,99,255,0.18);
+      border-radius: 5px; color: #a78bfa; font-size: 12px; font-weight: 700;
+      font-family: inherit; padding: 5px 4px; outline: none;
+      transition: border-color 0.12s; caret-color: #a78bfa;
+    }
+    .af-number:focus { border-color: rgba(108,99,255,0.45); }
+    .af-submit {
+      flex-shrink: 0; padding: 5px 12px; border-radius: 5px;
+      background: rgba(108,99,255,0.15); border: 1px solid rgba(108,99,255,0.35);
+      color: #a78bfa; font-size: 11px; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: background 0.12s, border-color 0.12s;
+    }
+    .af-submit:hover { background: rgba(108,99,255,0.25); border-color: rgba(108,99,255,0.6); }
+
+    /* ── Item display / edit toggle ── */
+    .item-disp-name {
+      flex: 1; min-width: 0; font-size: 12.5px; font-weight: 600; color: #e2e8f0;
+      line-height: 1.4; word-break: break-word;
+    }
+    .item-disp-note {
+      font-size: 11.5px; color: #94a3b8; font-style: italic;
+      line-height: 1.4; word-break: break-word; margin-top: 2px;
+    }
+    .item-edit-view { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 0; }
+    .item-toggle-btn {
+      flex-shrink: 0; background: none; border: 1px solid rgba(108,99,255,0.18);
+      border-radius: 4px; padding: 2px 7px; cursor: pointer;
+      font-size: 10.5px; font-family: inherit;
+      transition: color 0.12s, border-color 0.12s, background 0.12s;
+    }
+    .item-toggle-btn.edit { color: #475569; }
+    .item-toggle-btn.edit:hover { color: #a78bfa; border-color: rgba(108,99,255,0.4); }
+    .item-toggle-btn.save { color: #22c55e; border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.07); }
+    .item-toggle-btn.save:hover { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.5); }
+
     /* ── Collapsible quest sections ── */
     .ql-collapsible-hdr { cursor: pointer; user-select: none; }
     .ql-section-body.ql-collapsed { display: none; }
@@ -852,10 +926,7 @@
           <!-- Quest Log -->
           <div class="ql-section-header">
             <span class="ql-section-label">Quests</span>
-            <div style="display:flex;gap:5px;align-items:center;">
-              <button id="sc-np-quest-copy" class="ql-copy-btn">⎘ Insert</button>
-              <button id="sc-np-quest-add" class="ql-add-btn">+ Add Quest</button>
-            </div>
+            <button id="sc-np-quest-copy" class="ql-copy-btn">⎘ Insert</button>
           </div>
           <div id="sc-np-quest-list"></div>
           <!-- Dice Roller -->
@@ -886,7 +957,6 @@
             <div class="dmod-header">
               <span class="dmod-header-label">Modifiers</span>
               <span id="sc-np-dmod-total" class="dmod-total-pill">0</span>
-              <button id="sc-np-dmod-add" class="ql-add-btn" style="padding:2px 8px;font-size:11px;">+ Add</button>
             </div>
             <div id="sc-np-dmod-list" class="dmod-list"></div>
             <div id="sc-np-dice-result">
@@ -902,7 +972,6 @@
             <span class="ql-section-label">Resources</span>
             <div style="display:flex;gap:5px;align-items:center;">
               <button id="sc-np-res-copy" class="ql-copy-btn">⎘ Insert</button>
-              <button id="sc-np-res-add" class="ql-add-btn">+ Add</button>
               <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
             </div>
           </div>
@@ -928,7 +997,6 @@
             <span class="ql-section-label">Abilities</span>
             <div style="display:flex;gap:5px;align-items:center;">
               <button id="sc-np-abl-copy" class="ql-copy-btn">⎘ Insert</button>
-              <button id="sc-np-abl-add" class="ql-add-btn">+ Add</button>
               <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
             </div>
           </div>
@@ -940,7 +1008,6 @@
             <span class="ql-section-label">Party</span>
             <div style="display:flex;gap:5px;align-items:center;">
               <button id="sc-np-party-copy" class="ql-copy-btn">⎘ Insert</button>
-              <button id="sc-np-party-add" class="ql-add-btn">+ Add</button>
               <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
             </div>
           </div>
@@ -952,7 +1019,6 @@
             <span class="ql-section-label">NPCs</span>
             <div style="display:flex;gap:5px;align-items:center;">
               <button id="sc-np-npc-copy" class="ql-copy-btn">⎘ Insert</button>
-              <button id="sc-np-npc-add" class="ql-add-btn">+ Add</button>
               <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
             </div>
           </div>
@@ -1138,7 +1204,6 @@
     /* ── Element refs ── */
     const questsPanel = document.getElementById("sc-np-quests-panel");
     const questListEl = document.getElementById("sc-np-quest-list");
-    const questAddBtn = document.getElementById("sc-np-quest-add");
     const diceCountInput = document.getElementById("sc-np-dice-count");
     const diceLabelEl = document.getElementById("sc-np-dice-label");
     const diceRollBtn = document.getElementById("sc-np-dice-roll");
@@ -1172,29 +1237,47 @@
           item.className = "dmod-item";
           const top = document.createElement("div");
           top.className = "dmod-top";
-          const nameIn = document.createElement("input");
-          nameIn.type = "text";
-          nameIn.className = "dmod-name-input";
-          nameIn.value = m.name;
-          nameIn.placeholder = "Name\u2026 e.g. Poisoned, Proficiency, Sword";
-          nameIn.maxLength = 50;
-          nameIn.setAttribute("data-ai-rewriter-ignore", "1");
-          nameIn.addEventListener("input", () => {
-            m.name = nameIn.value;
+          // Name: display / edit
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "item-disp-name";
+          nameSpan.textContent = m.name || "(unnamed)";
+          nameSpan.style.flex = "1";
+          const nameEditIn = document.createElement("input");
+          nameEditIn.type = "text";
+          nameEditIn.className = "af-input";
+          nameEditIn.style.flex = "1";
+          nameEditIn.style.display = "none";
+          nameEditIn.value = m.name;
+          nameEditIn.placeholder = "Name\u2026 e.g. Poisoned";
+          nameEditIn.maxLength = 50;
+          nameEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+          nameEditIn.addEventListener("input", () => {
+            m.name = nameEditIn.value;
             saveDiceMods();
           });
-          const valIn = document.createElement("input");
-          valIn.type = "number";
-          valIn.className = "dmod-val-input";
-          valIn.value = m.value;
-          valIn.min = "-99";
-          valIn.max = "99";
-          valIn.setAttribute("data-ai-rewriter-ignore", "1");
-          valIn.addEventListener("change", () => {
-            m.value = parseInt(valIn.value, 10) || 0;
+          // Value: display / edit
+          const valSign = m.value > 0 ? "+" : "";
+          const valSpan = document.createElement("span");
+          valSpan.style.cssText = `font-weight:700;min-width:28px;text-align:center;color:${m.value > 0 ? "#4ade80" : m.value < 0 ? "#f87171" : "#94a3b8"};`;
+          valSpan.textContent = valSign + m.value;
+          const valEditIn = document.createElement("input");
+          valEditIn.type = "number";
+          valEditIn.className = "af-number";
+          valEditIn.style.width = "52px";
+          valEditIn.style.display = "none";
+          valEditIn.value = m.value;
+          valEditIn.min = "-99";
+          valEditIn.max = "99";
+          valEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+          valEditIn.addEventListener("input", () => {
+            m.value = parseInt(valEditIn.value, 10) || 0;
             saveDiceMods();
-            renderDiceMods();
           });
+          // Toggle
+          const toggleBtn = document.createElement("button");
+          toggleBtn.className = "item-toggle-btn edit";
+          toggleBtn.textContent = "✎";
+          let isEditing = false;
           const delBtn = document.createElement("button");
           delBtn.className = "dmod-delete-btn";
           delBtn.title = "Remove";
@@ -1208,20 +1291,67 @@
             saveDiceMods();
             renderDiceMods();
           });
-          top.append(nameIn, valIn, delBtn);
-          const notesIn = document.createElement("input");
-          notesIn.type = "text";
-          notesIn.className = "dmod-notes-input";
-          notesIn.value = m.notes;
-          notesIn.placeholder =
-            "Notes\u2026 e.g. status effect, item bonus, terrain";
-          notesIn.maxLength = 80;
-          notesIn.setAttribute("data-ai-rewriter-ignore", "1");
-          notesIn.addEventListener("input", () => {
-            m.notes = notesIn.value;
+          top.append(
+            nameSpan,
+            nameEditIn,
+            valSpan,
+            valEditIn,
+            toggleBtn,
+            delBtn,
+          );
+          // Notes: display / edit
+          const notesSpan = document.createElement("div");
+          notesSpan.style.cssText =
+            "color:#64748b;font-size:11.5px;font-family:inherit;padding:2px 0;";
+          notesSpan.textContent = m.notes;
+          notesSpan.style.display = m.notes ? "" : "none";
+          const notesEditIn = document.createElement("input");
+          notesEditIn.type = "text";
+          notesEditIn.className = "af-input";
+          notesEditIn.style.display = "none";
+          notesEditIn.value = m.notes;
+          notesEditIn.placeholder =
+            "Notes\u2026 status effect, item bonus\u2026";
+          notesEditIn.maxLength = 80;
+          notesEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+          notesEditIn.addEventListener("input", () => {
+            m.notes = notesEditIn.value;
             saveDiceMods();
           });
-          item.append(top, notesIn);
+          toggleBtn.addEventListener("click", () => {
+            isEditing = !isEditing;
+            if (isEditing) {
+              nameSpan.style.display = "none";
+              nameEditIn.style.display = "";
+              valSpan.style.display = "none";
+              valEditIn.style.display = "";
+              notesSpan.style.display = "none";
+              notesEditIn.style.display = "";
+              toggleBtn.className = "item-toggle-btn save";
+              toggleBtn.textContent = "✓ Save";
+              nameEditIn.value = m.name;
+              valEditIn.value = m.value;
+              notesEditIn.value = m.notes;
+              nameEditIn.focus();
+            } else {
+              nameEditIn.style.display = "none";
+              valEditIn.style.display = "none";
+              notesEditIn.style.display = "none";
+              toggleBtn.className = "item-toggle-btn edit";
+              toggleBtn.textContent = "✎";
+              nameSpan.style.display = "";
+              nameSpan.textContent = m.name || "(unnamed)";
+              const s = m.value > 0 ? "+" : "";
+              valSpan.textContent = s + m.value;
+              valSpan.style.color =
+                m.value > 0 ? "#4ade80" : m.value < 0 ? "#f87171" : "#94a3b8";
+              valSpan.style.display = "";
+              notesSpan.textContent = m.notes;
+              notesSpan.style.display = m.notes ? "" : "none";
+              renderDiceMods(); // refresh total pill
+            }
+          });
+          item.append(top, notesSpan, notesEditIn);
           dmodListEl.appendChild(item);
         });
       }
@@ -1252,38 +1382,67 @@
         renderDiceMods();
       });
     }
-    document.getElementById("sc-np-dmod-add").addEventListener("click", () => {
-      const m = newDiceMod();
-      diceModifiers.push(m);
-      saveDiceMods();
-      renderDiceMods();
-      const lastItem = dmodListEl.querySelector(".dmod-item:last-child");
-      if (lastItem) {
-        const nameIn = lastItem.querySelector(".dmod-name-input");
-        const notesIn = lastItem.querySelector(".dmod-notes-input");
-        if (nameIn) {
-          nameIn.focus();
-          let addLogged = false;
-          const doAddLog = () => {
-            if (addLogged) return;
-            addLogged = true;
-            nameIn.removeEventListener("blur", onNameBlur);
-            if (notesIn) notesIn.removeEventListener("blur", onNotesBlur);
-            const sign = m.value > 0 ? "+" : "";
-            const notesPart = m.notes ? ` \u2014 ${m.notes}` : "";
-            addLog(
-              `[Modifier added: ${m.name || "(unnamed)"} ${sign}${m.value}${notesPart}]`,
-            );
-          };
-          const onNameBlur = (e) => {
-            if (e.relatedTarget !== notesIn) doAddLog();
-          };
-          const onNotesBlur = () => doAddLog();
-          nameIn.addEventListener("blur", onNameBlur);
-          if (notesIn) notesIn.addEventListener("blur", onNotesBlur);
+    // Dice Mod add form (inserted before dmodListEl)
+    (function () {
+      const form = document.createElement("div");
+      form.className = "af-form";
+      const nameIn = document.createElement("input");
+      nameIn.type = "text";
+      nameIn.className = "af-input";
+      nameIn.placeholder = "e.g. Poisoned, DEX bonus, Sword\u2026";
+      nameIn.maxLength = 50;
+      nameIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const valIn = document.createElement("input");
+      valIn.type = "number";
+      valIn.className = "af-number";
+      valIn.value = "0";
+      valIn.min = "-99";
+      valIn.max = "99";
+      valIn.style.width = "60px";
+      valIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const notesIn = document.createElement("input");
+      notesIn.type = "text";
+      notesIn.className = "af-input";
+      notesIn.placeholder = "Notes\u2026 status effect, lasts until rest";
+      notesIn.maxLength = 80;
+      notesIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const submitBtn = document.createElement("button");
+      submitBtn.className = "af-submit";
+      submitBtn.textContent = "+ Add Modifier";
+      const row1 = document.createElement("div");
+      row1.className = "af-row";
+      row1.append(nameIn, valIn, submitBtn);
+      form.append(row1, notesIn);
+      dmodListEl.parentNode.insertBefore(form, dmodListEl);
+      const doAdd = () => {
+        const name = nameIn.value.trim();
+        const value = parseInt(valIn.value, 10) || 0;
+        const notes = notesIn.value.trim();
+        const mod = newDiceMod();
+        mod.name = name;
+        mod.value = value;
+        mod.notes = notes;
+        diceModifiers.push(mod);
+        saveDiceMods();
+        renderDiceMods();
+        const sign = value > 0 ? "+" : "";
+        const notesPart = notes ? ` \u2014 ${notes}` : "";
+        addLog(
+          `[Modifier added: ${name || "(unnamed)"} ${sign}${value}${notesPart}]`,
+        );
+        nameIn.value = "";
+        valIn.value = "0";
+        notesIn.value = "";
+        nameIn.focus();
+      };
+      submitBtn.addEventListener("click", doAdd);
+      nameIn.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          doAdd();
         }
-      }
-    });
+      });
+    })();
     const diceTotalEl = document.getElementById("sc-np-dice-total");
     const diceBreakdownEl = document.getElementById("sc-np-dice-breakdown");
     const diceNatEl = document.getElementById("sc-np-dice-nat");
@@ -1393,7 +1552,7 @@
       if (!quests.length) {
         const empty = document.createElement("div");
         empty.className = "ql-empty-state";
-        empty.textContent = "No quests yet — tap + Add Quest to begin.";
+        empty.textContent = "No quests yet.";
         questListEl.appendChild(empty);
         return;
       }
@@ -1408,7 +1567,7 @@
               : "");
         card.dataset.id = q.id;
 
-        // Status circle button
+        // Status circle button (always interactive)
         const statusBtn = document.createElement("button");
         statusBtn.className = "ql-status-btn";
         statusBtn.title = "Cycle status";
@@ -1419,45 +1578,65 @@
         statusBtn.addEventListener("click", () => {
           const cur = QUEST_STATES.indexOf(q.state);
           q.state = QUEST_STATES[(cur + 1) % QUEST_STATES.length];
-          addLog(`[Quest "${q.title || "(untitled)"}" → ${q.state}]`);
+          addLog(`[Quest "${q.title || "(untitled)"}" \u2192 ${q.state}]`);
           scheduleQuestSave();
           renderQuests();
         });
 
-        // Title row
+        // Display view
+        const nameSpan = document.createElement("div");
+        nameSpan.className = "item-disp-name";
+        nameSpan.textContent = q.title || "(untitled)";
+        if (q.state !== "active") {
+          nameSpan.style.textDecoration = "line-through";
+          nameSpan.style.color = "#64748b";
+        }
+        const notesSpan = document.createElement("div");
+        notesSpan.className = "item-disp-note";
+        notesSpan.textContent = q.notes;
+        notesSpan.style.display = q.notes ? "" : "none";
+        const dispView = document.createElement("div");
+        dispView.style.cssText =
+          "flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;";
+        dispView.append(nameSpan, notesSpan);
+
+        // Edit view (hidden by default)
+        const titleEditIn = document.createElement("input");
+        titleEditIn.type = "text";
+        titleEditIn.className = "af-input";
+        titleEditIn.value = q.title;
+        titleEditIn.placeholder = "Quest title\u2026";
+        titleEditIn.maxLength = 80;
+        titleEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+        titleEditIn.addEventListener("input", () => {
+          q.title = titleEditIn.value;
+          scheduleQuestSave();
+        });
+        const notesEditIn = document.createElement("textarea");
+        notesEditIn.className = "af-textarea";
+        notesEditIn.value = q.notes;
+        notesEditIn.placeholder = "Notes\u2026";
+        notesEditIn.rows = 1;
+        notesEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+        notesEditIn.addEventListener("input", () => {
+          q.notes = notesEditIn.value;
+          autoResizeTextarea(notesEditIn);
+          scheduleQuestSave();
+        });
+        const editView = document.createElement("div");
+        editView.className = "item-edit-view";
+        editView.style.display = "none";
+        editView.append(titleEditIn, notesEditIn);
+
         const titleWrap = document.createElement("div");
         titleWrap.className = "ql-title-wrap";
-        const titleInput = document.createElement("input");
-        titleInput.type = "text";
-        titleInput.className = "ql-title-input";
-        titleInput.placeholder = "Quest name…";
-        titleInput.value = q.title;
-        titleInput.maxLength = 80;
-        titleInput.setAttribute("data-ai-rewriter-ignore", "1");
-        titleInput.addEventListener("input", () => {
-          q.title = titleInput.value;
-          scheduleQuestSave();
-        });
-
-        const notesInput = document.createElement("textarea");
-        notesInput.className = "ql-notes-input";
-        notesInput.placeholder = "Notes (optional)…";
-        notesInput.value = q.notes;
-        notesInput.rows = 1;
-        notesInput.setAttribute("data-ai-rewriter-ignore", "1");
-        notesInput.addEventListener("input", () => {
-          q.notes = notesInput.value;
-          autoResizeTextarea(notesInput);
-          scheduleQuestSave();
-        });
-        setTimeout(() => autoResizeTextarea(notesInput), 0);
-        titleWrap.append(titleInput, notesInput);
+        titleWrap.append(dispView, editView);
 
         const top = document.createElement("div");
         top.className = "ql-item-top";
         top.append(statusBtn, titleWrap);
 
-        // Bottom row: state chips + delete
+        // State chips (always interactive)
         const stateRow = document.createElement("div");
         stateRow.className = "ql-state-btns";
         QUEST_STATES.forEach((st) => {
@@ -1468,11 +1647,41 @@
           chip.textContent = st.charAt(0).toUpperCase() + st.slice(1);
           chip.addEventListener("click", () => {
             q.state = st;
-            addLog(`[Quest "${q.title || "(untitled)"}" → ${st}]`);
+            addLog(`[Quest "${q.title || "(untitled)"}" \u2192 ${st}]`);
             scheduleQuestSave();
             renderQuests();
           });
           stateRow.appendChild(chip);
+        });
+
+        // Edit/save toggle
+        const toggleBtn = document.createElement("button");
+        toggleBtn.className = "item-toggle-btn edit";
+        toggleBtn.textContent = "✎";
+        let isEditing = false;
+        toggleBtn.addEventListener("click", () => {
+          isEditing = !isEditing;
+          if (isEditing) {
+            dispView.style.display = "none";
+            editView.style.display = "";
+            toggleBtn.className = "item-toggle-btn save";
+            toggleBtn.textContent = "\u2713 Save";
+            titleEditIn.value = q.title;
+            notesEditIn.value = q.notes;
+            setTimeout(() => autoResizeTextarea(notesEditIn), 0);
+            titleEditIn.focus();
+          } else {
+            editView.style.display = "none";
+            dispView.style.display = "";
+            toggleBtn.className = "item-toggle-btn edit";
+            toggleBtn.textContent = "\u270e";
+            nameSpan.textContent = q.title || "(untitled)";
+            const active = q.state === "active";
+            nameSpan.style.textDecoration = active ? "" : "line-through";
+            nameSpan.style.color = active ? "" : "#64748b";
+            notesSpan.textContent = q.notes;
+            notesSpan.style.display = q.notes ? "" : "none";
+          }
         });
 
         const delBtn = document.createElement("button");
@@ -1488,11 +1697,10 @@
 
         const bottom = document.createElement("div");
         bottom.className = "ql-item-bottom";
-        bottom.append(stateRow, delBtn);
-
+        bottom.append(stateRow, toggleBtn, delBtn);
         card.append(top, bottom);
 
-        // Update row
+        // Update row (always interactive)
         const updateRow = document.createElement("div");
         updateRow.className = "ql-update-row";
         const updateIn = document.createElement("input");
@@ -1512,7 +1720,6 @@
           scheduleQuestSave();
           addLog(`[Quest "${q.title || "(untitled)"}": ${txt}]`);
           updateIn.value = "";
-          // refresh latest display
           latestEl.textContent = txt;
           latestEl.style.display = "";
         });
@@ -1525,7 +1732,6 @@
         updateRow.append(updateIn, updateBtn);
         card.appendChild(updateRow);
 
-        // Latest update display
         const latestEl = document.createElement("div");
         latestEl.className = "ql-update-latest";
         latestEl.style.display = q.update ? "" : "none";
@@ -1536,23 +1742,54 @@
       });
     }
 
-    questAddBtn.addEventListener("click", () => {
-      const q = newQuest();
-      quests.unshift(q);
-      saveQuests();
-      renderQuests();
-      // Log with title + notes once the user fills the title field
-      const first = questListEl.querySelector(".ql-title-input");
-      if (first) {
-        first.focus();
-        const logOnBlur = () => {
-          first.removeEventListener("blur", logOnBlur);
-          const notesPart = q.notes ? ` — ${q.notes}` : "";
-          addLog(`[Quest added: ${q.title || "(untitled)"}${notesPart}]`);
-        };
-        first.addEventListener("blur", logOnBlur);
-      }
-    });
+    // Quest add form (inserted before list)
+    (function () {
+      const form = document.createElement("div");
+      form.className = "af-form";
+      const titleIn = document.createElement("input");
+      titleIn.type = "text";
+      titleIn.className = "af-input";
+      titleIn.placeholder = "Quest title\u2026";
+      titleIn.maxLength = 80;
+      titleIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const notesIn = document.createElement("textarea");
+      notesIn.className = "af-textarea";
+      notesIn.rows = 1;
+      notesIn.placeholder = "Notes (optional)\u2026";
+      notesIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const submitBtn = document.createElement("button");
+      submitBtn.className = "af-submit";
+      submitBtn.textContent = "+ Add Quest";
+      const row = document.createElement("div");
+      row.className = "af-row";
+      row.append(titleIn, submitBtn);
+      form.append(row, notesIn);
+      questListEl.parentNode.insertBefore(form, questListEl);
+      const doAdd = () => {
+        const title = titleIn.value.trim();
+        const notes = notesIn.value.trim();
+        const q = newQuest();
+        q.title = title;
+        q.notes = notes;
+        quests.unshift(q);
+        saveQuests();
+        renderQuests();
+        const notesPart = notes ? ` \u2014 ${notes}` : "";
+        addLog(`[Quest added: ${title || "(untitled)"}${notesPart}]`);
+        titleIn.value = "";
+        notesIn.value = "";
+        autoResizeTextarea(notesIn);
+        titleIn.focus();
+      };
+      submitBtn.addEventListener("click", doAdd);
+      titleIn.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          doAdd();
+        }
+      });
+      notesIn.addEventListener("input", () => autoResizeTextarea(notesIn));
+    })();
 
     function loadQuests() {
       chrome.storage.local.get(QUEST_KEY, (data) => {
@@ -1729,7 +1966,6 @@
     let resources = [];
     let resSaveTimer = null;
     const resListEl = document.getElementById("sc-np-res-list");
-    const resAddBtn = document.getElementById("sc-np-res-add");
 
     function newRes() {
       return { id: Date.now() + Math.random(), name: "", value: 0, notes: "" };
@@ -1784,25 +2020,39 @@
         const row = document.createElement("div");
         row.className = "res-item";
         row.dataset.resId = r.id;
-        // Top row: name + value + delete
+
+        // Top row: display name / edit input + value (always) + toggle + delete
         const topRow = document.createElement("div");
         topRow.className = "res-item-top";
-        const nameIn = document.createElement("input");
-        nameIn.type = "text";
-        nameIn.className = "res-name-input";
-        nameIn.value = r.name;
-        nameIn.placeholder = "Resource name\u2026";
-        nameIn.maxLength = 40;
-        nameIn.setAttribute("data-ai-rewriter-ignore", "1");
-        nameIn.addEventListener("input", () => {
-          r.name = nameIn.value;
+
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "item-disp-name";
+        nameSpan.textContent = r.name || "(unnamed)";
+
+        const nameEditIn = document.createElement("input");
+        nameEditIn.type = "text";
+        nameEditIn.className = "af-input";
+        nameEditIn.value = r.name;
+        nameEditIn.placeholder = "Resource name\u2026";
+        nameEditIn.maxLength = 40;
+        nameEditIn.style.display = "none";
+        nameEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+        nameEditIn.addEventListener("input", () => {
+          r.name = nameEditIn.value;
           scheduleResSave();
           rebuildResSelect(r.id);
         });
+
         const valEl = document.createElement("span");
         valEl.className = "res-value";
         valEl.textContent = r.value;
         row._valEl = valEl;
+
+        const toggleBtn = document.createElement("button");
+        toggleBtn.className = "item-toggle-btn edit";
+        toggleBtn.textContent = "\u270e";
+        let isEditing = false;
+
         const delBtn = document.createElement("button");
         delBtn.className = "res-delete-btn";
         delBtn.title = "Remove";
@@ -1813,24 +2063,116 @@
           saveRes();
           renderRes();
         });
-        topRow.append(nameIn, valEl, delBtn);
-        // Notes input
-        const noteIn = document.createElement("input");
-        noteIn.type = "text";
-        noteIn.className = "res-note-input";
-        noteIn.value = r.notes || "";
-        noteIn.placeholder = "Notes\u2026 e.g. used for healing, max 100";
-        noteIn.maxLength = 80;
-        noteIn.setAttribute("data-ai-rewriter-ignore", "1");
-        noteIn.addEventListener("input", () => {
-          r.notes = noteIn.value;
+
+        topRow.append(nameSpan, nameEditIn, valEl, toggleBtn, delBtn);
+
+        // Notes below: display span / edit input
+        const notesSpan = document.createElement("div");
+        notesSpan.className = "item-disp-note";
+        notesSpan.textContent = r.notes;
+        notesSpan.style.display = r.notes ? "" : "none";
+
+        const notesEditIn = document.createElement("input");
+        notesEditIn.type = "text";
+        notesEditIn.className = "af-input";
+        notesEditIn.value = r.notes || "";
+        notesEditIn.style.display = "none";
+        notesEditIn.placeholder = "Notes\u2026 e.g. used for healing, max 100";
+        notesEditIn.maxLength = 80;
+        notesEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+        notesEditIn.addEventListener("input", () => {
+          r.notes = notesEditIn.value;
           scheduleResSave();
         });
-        row.append(topRow, noteIn);
+
+        toggleBtn.addEventListener("click", () => {
+          isEditing = !isEditing;
+          if (isEditing) {
+            nameSpan.style.display = "none";
+            nameEditIn.style.display = "";
+            notesSpan.style.display = "none";
+            notesEditIn.style.display = "";
+            toggleBtn.className = "item-toggle-btn save";
+            toggleBtn.textContent = "\u2713 Save";
+            nameEditIn.value = r.name;
+            notesEditIn.value = r.notes || "";
+            nameEditIn.focus();
+          } else {
+            nameEditIn.style.display = "none";
+            nameSpan.style.display = "";
+            notesEditIn.style.display = "none";
+            toggleBtn.className = "item-toggle-btn edit";
+            toggleBtn.textContent = "\u270e";
+            nameSpan.textContent = r.name || "(unnamed)";
+            notesSpan.textContent = r.notes;
+            notesSpan.style.display = r.notes ? "" : "none";
+          }
+        });
+
+        row.append(topRow, notesSpan, notesEditIn);
         resListEl.appendChild(row);
       });
       rebuildResSelect();
     }
+
+    // Resource add form (inserted before list)
+    (function () {
+      const form = document.createElement("div");
+      form.className = "af-form";
+      const nameIn = document.createElement("input");
+      nameIn.type = "text";
+      nameIn.className = "af-input";
+      nameIn.placeholder = "Resource name\u2026";
+      nameIn.maxLength = 40;
+      nameIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const valIn = document.createElement("input");
+      valIn.type = "number";
+      valIn.className = "af-number";
+      valIn.value = "0";
+      valIn.min = "0";
+      valIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const notesIn = document.createElement("input");
+      notesIn.type = "text";
+      notesIn.className = "af-input";
+      notesIn.placeholder = "Notes (optional)\u2026";
+      notesIn.maxLength = 80;
+      notesIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const submitBtn = document.createElement("button");
+      submitBtn.className = "af-submit";
+      submitBtn.textContent = "+ Add Resource";
+      const row1 = document.createElement("div");
+      row1.className = "af-row";
+      row1.append(nameIn, valIn, submitBtn);
+      form.append(row1, notesIn);
+      resListEl.parentNode.insertBefore(form, resListEl);
+      const doAdd = () => {
+        const name = nameIn.value.trim();
+        const value = parseInt(valIn.value, 10) || 0;
+        const notes = notesIn.value.trim();
+        const r = newRes();
+        r.name = name;
+        r.value = value;
+        r.notes = notes;
+        resources.push(r);
+        saveRes();
+        renderRes();
+        const notesPart = notes ? ` \u2014 ${notes}` : "";
+        addLog(
+          `[Resource added: ${name || "(unnamed)"}${notesPart} (value: ${value})]`,
+        );
+        nameIn.value = "";
+        valIn.value = "0";
+        notesIn.value = "";
+        nameIn.focus();
+      };
+      submitBtn.addEventListener("click", doAdd);
+      nameIn.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          doAdd();
+        }
+      });
+    })();
 
     function applyResOp(op) {
       const id = resSelectEl.value;
@@ -1877,38 +2219,6 @@
       .getElementById("sc-np-res-op-set")
       .addEventListener("click", () => applyResOp("set"));
 
-    resAddBtn.addEventListener("click", () => {
-      const r = newRes();
-      resources.push(r);
-      saveRes();
-      renderRes();
-      const lastRow = resListEl.lastElementChild;
-      if (lastRow && lastRow.classList.contains("res-item")) {
-        const nameIn = lastRow.querySelector(".res-name-input");
-        const noteIn = lastRow.querySelector(".res-note-input");
-        if (nameIn) {
-          nameIn.focus();
-          let addLogged = false;
-          const doAddLog = () => {
-            if (addLogged) return;
-            addLogged = true;
-            nameIn.removeEventListener("blur", onNameBlur);
-            if (noteIn) noteIn.removeEventListener("blur", onNoteBlur);
-            const notesPart = r.notes ? ` \u2014 ${r.notes}` : "";
-            addLog(
-              `[Resource added: ${r.name || "(unnamed)"}${notesPart} (value: ${r.value})]`,
-            );
-          };
-          const onNameBlur = (e) => {
-            if (e.relatedTarget !== noteIn) doAddLog();
-          };
-          const onNoteBlur = () => doAddLog();
-          nameIn.addEventListener("blur", onNameBlur);
-          if (noteIn) noteIn.addEventListener("blur", onNoteBlur);
-        }
-      }
-    });
-
     function loadRes() {
       chrome.storage.local.get(RES_KEY, (d) => {
         resources = Array.isArray(d[RES_KEY]) ? d[RES_KEY] : [];
@@ -1921,7 +2231,6 @@
     let abilities = [];
     let ablSaveTimer = null;
     const ablListEl = document.getElementById("sc-np-abl-list");
-    const ablAddBtn = document.getElementById("sc-np-abl-add");
 
     function newAbl() {
       return {
@@ -1956,18 +2265,25 @@
           "display:flex;flex-direction:column;gap:4px;padding:5px 0;border-bottom:1px solid rgba(108,99,255,0.07);";
         if (idx === abilities.length - 1) wrapper.style.borderBottom = "none";
 
-        // Top row: name + current/max + reset + delete
+        // Top row: name (display/edit) + cur/max + RST + toggle + delete
         const topRow = document.createElement("div");
         topRow.className = "abl-item";
-        const nameIn = document.createElement("input");
-        nameIn.type = "text";
-        nameIn.className = "abl-name-input";
-        nameIn.value = a.name;
-        nameIn.placeholder = "Ability name\u2026";
-        nameIn.maxLength = 40;
-        nameIn.setAttribute("data-ai-rewriter-ignore", "1");
-        nameIn.addEventListener("input", () => {
-          a.name = nameIn.value;
+
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "item-disp-name";
+        nameSpan.style.fontSize = "12px";
+        nameSpan.textContent = a.name || "(unnamed)";
+
+        const nameEditIn = document.createElement("input");
+        nameEditIn.type = "text";
+        nameEditIn.className = "af-input";
+        nameEditIn.value = a.name;
+        nameEditIn.placeholder = "Ability name\u2026";
+        nameEditIn.maxLength = 40;
+        nameEditIn.style.display = "none";
+        nameEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+        nameEditIn.addEventListener("input", () => {
+          a.name = nameEditIn.value;
           scheduleAblSave();
         });
 
@@ -1980,15 +2296,21 @@
         sep.className = "abl-sep";
         sep.textContent = "/";
 
-        const maxIn = document.createElement("input");
-        maxIn.type = "number";
-        maxIn.className = "abl-max-input";
-        maxIn.value = a.max;
-        maxIn.min = 1;
-        maxIn.max = 99;
-        maxIn.setAttribute("data-ai-rewriter-ignore", "1");
-        maxIn.addEventListener("input", () => {
-          a.max = Math.max(1, parseInt(maxIn.value, 10) || 1);
+        // Max: static display by default, editable only in edit mode
+        const maxSpan = document.createElement("span");
+        maxSpan.className = "abl-sep";
+        maxSpan.textContent = a.max;
+
+        const maxEditIn = document.createElement("input");
+        maxEditIn.type = "number";
+        maxEditIn.className = "abl-max-input";
+        maxEditIn.value = a.max;
+        maxEditIn.min = 1;
+        maxEditIn.max = 99;
+        maxEditIn.style.display = "none";
+        maxEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+        maxEditIn.addEventListener("input", () => {
+          a.max = Math.max(1, parseInt(maxEditIn.value, 10) || 1);
           scheduleAblSave();
         });
 
@@ -2000,10 +2322,15 @@
           saveAbl();
           const notesPart = a.notes ? ` (${a.notes})` : "";
           addLog(
-            `[${a.name || "Ability"} restored — ${a.current}/${a.max}${notesPart}]`,
+            `[${a.name || "Ability"} restored \u2014 ${a.current}/${a.max}${notesPart}]`,
           );
           renderAbl();
         });
+
+        const toggleBtn = document.createElement("button");
+        toggleBtn.className = "item-toggle-btn edit";
+        toggleBtn.textContent = "\u270e";
+        let isEditing = false;
 
         const delBtn = document.createElement("button");
         delBtn.className = "abl-delete-btn";
@@ -2017,30 +2344,77 @@
           renderAbl();
         });
 
-        topRow.append(nameIn, curEl, sep, maxIn, resetBtn, delBtn);
+        topRow.append(
+          nameSpan,
+          nameEditIn,
+          curEl,
+          sep,
+          maxSpan,
+          maxEditIn,
+          resetBtn,
+          toggleBtn,
+          delBtn,
+        );
 
-        // Notes input (shown between top row and use buttons)
-        const notesIn = document.createElement("textarea");
-        notesIn.className = "abl-notes-input";
-        notesIn.value = a.notes || "";
-        notesIn.placeholder =
+        // Notes: display span / edit textarea
+        const notesSpan = document.createElement("div");
+        notesSpan.className = "item-disp-note";
+        notesSpan.textContent = a.notes;
+        notesSpan.style.display = a.notes ? "" : "none";
+
+        const notesEditIn = document.createElement("textarea");
+        notesEditIn.className = "af-textarea";
+        notesEditIn.value = a.notes || "";
+        notesEditIn.placeholder =
           "Describe this ability, its effect, duration\u2026";
-        notesIn.rows = 1;
-        notesIn.setAttribute("data-ai-rewriter-ignore", "1");
-        notesIn.addEventListener("input", () => {
-          a.notes = notesIn.value;
-          autoResizeTextarea(notesIn);
+        notesEditIn.rows = 1;
+        notesEditIn.style.display = "none";
+        notesEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+        notesEditIn.addEventListener("input", () => {
+          a.notes = notesEditIn.value;
+          autoResizeTextarea(notesEditIn);
           scheduleAblSave();
         });
-        setTimeout(() => autoResizeTextarea(notesIn), 0);
 
-        // Bottom row: use buttons (one per remaining slot)
+        toggleBtn.addEventListener("click", () => {
+          isEditing = !isEditing;
+          if (isEditing) {
+            nameSpan.style.display = "none";
+            nameEditIn.style.display = "";
+            maxSpan.style.display = "none";
+            maxEditIn.style.display = "";
+            notesSpan.style.display = "none";
+            notesEditIn.style.display = "";
+            toggleBtn.className = "item-toggle-btn save";
+            toggleBtn.textContent = "\u2713 Save";
+            nameEditIn.value = a.name;
+            maxEditIn.value = a.max;
+            notesEditIn.value = a.notes || "";
+            setTimeout(() => autoResizeTextarea(notesEditIn), 0);
+            nameEditIn.focus();
+          } else {
+            nameEditIn.style.display = "none";
+            nameSpan.style.display = "";
+            maxEditIn.style.display = "none";
+            maxSpan.style.display = "";
+            notesEditIn.style.display = "none";
+            toggleBtn.className = "item-toggle-btn edit";
+            toggleBtn.textContent = "\u270e";
+            nameSpan.textContent = a.name || "(unnamed)";
+            maxSpan.textContent = a.max;
+            notesSpan.textContent = a.notes;
+            notesSpan.style.display = a.notes ? "" : "none";
+          }
+        });
+
+        // Use buttons row (always visible)
         const useRow = document.createElement("div");
         useRow.style.cssText = "display:flex;flex-wrap:wrap;gap:4px;";
         const useCount = Math.min(a.max, 10);
         for (let i = 0; i < useCount; i++) {
           const btn = document.createElement("button");
-          btn.style.cssText = `flex:1;min-width:28px;padding:4px 0;border-radius:5px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;border:1px solid;transition:background 0.12s,opacity 0.12s;`;
+          btn.style.cssText =
+            "flex:1;min-width:28px;padding:4px 0;border-radius:5px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;border:1px solid;transition:background 0.12s,opacity 0.12s;";
           const used = i >= a.current;
           btn.style.background = used
             ? "rgba(108,99,255,0.04)"
@@ -2058,11 +2432,10 @@
             curEl.textContent = a.current;
             curEl.style.opacity = a.current === 0 ? "0.35" : "1";
             saveAbl();
-            const notesPart = a.notes ? ` — ${a.notes}` : "";
+            const notesPart = a.notes ? ` \u2014 ${a.notes}` : "";
             addLog(
-              `[${a.name || "Ability"} used — ${a.current}/${a.max} remaining${notesPart}]`,
+              `[${a.name || "Ability"} used \u2014 ${a.current}/${a.max} remaining${notesPart}]`,
             );
-            // re-render just the use row
             renderAbl();
           });
           useRow.appendChild(btn);
@@ -2075,42 +2448,72 @@
           useRow.appendChild(more);
         }
 
-        wrapper.append(topRow, notesIn, useRow);
+        wrapper.append(topRow, notesSpan, notesEditIn, useRow);
         ablListEl.appendChild(wrapper);
       });
     }
 
-    ablAddBtn.addEventListener("click", () => {
-      const abl = newAbl();
-      abilities.push(abl);
-      saveAbl();
-      renderAbl();
-      const lastWrapper = ablListEl.lastElementChild;
-      if (lastWrapper) {
-        const nameIn = lastWrapper.querySelector(".abl-name-input");
-        const notesIn = lastWrapper.querySelector(".abl-notes-input");
-        if (nameIn) {
-          nameIn.focus();
-          let addLogged = false;
-          const doAddLog = () => {
-            if (addLogged) return;
-            addLogged = true;
-            nameIn.removeEventListener("blur", onNameBlur);
-            if (notesIn) notesIn.removeEventListener("blur", onNotesBlur);
-            const notesPart = abl.notes ? ` — ${abl.notes}` : "";
-            addLog(
-              `[Ability added: ${abl.name || "(unnamed)"}${notesPart} (${abl.current}/${abl.max} uses)]`,
-            );
-          };
-          const onNameBlur = (e) => {
-            if (e.relatedTarget !== notesIn) doAddLog();
-          };
-          const onNotesBlur = () => doAddLog();
-          nameIn.addEventListener("blur", onNameBlur);
-          if (notesIn) notesIn.addEventListener("blur", onNotesBlur);
+    // Ability add form (inserted before list)
+    (function () {
+      const form = document.createElement("div");
+      form.className = "af-form";
+      const nameIn = document.createElement("input");
+      nameIn.type = "text";
+      nameIn.className = "af-input";
+      nameIn.placeholder = "Ability name\u2026";
+      nameIn.maxLength = 40;
+      nameIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const maxIn = document.createElement("input");
+      maxIn.type = "number";
+      maxIn.className = "af-number";
+      maxIn.value = "3";
+      maxIn.min = "1";
+      maxIn.max = "99";
+      maxIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const notesIn = document.createElement("textarea");
+      notesIn.className = "af-textarea";
+      notesIn.rows = 1;
+      notesIn.placeholder = "Description, effect, duration (optional)\u2026";
+      notesIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const submitBtn = document.createElement("button");
+      submitBtn.className = "af-submit";
+      submitBtn.textContent = "+ Add Ability";
+      const row = document.createElement("div");
+      row.className = "af-row";
+      row.append(nameIn, maxIn, submitBtn);
+      form.append(row, notesIn);
+      ablListEl.parentNode.insertBefore(form, ablListEl);
+      const doAdd = () => {
+        const name = nameIn.value.trim();
+        const max = Math.max(1, parseInt(maxIn.value, 10) || 3);
+        const notes = notesIn.value.trim();
+        const abl = newAbl();
+        abl.name = name;
+        abl.max = max;
+        abl.current = max;
+        abl.notes = notes;
+        abilities.push(abl);
+        saveAbl();
+        renderAbl();
+        const notesPart = notes ? ` \u2014 ${notes}` : "";
+        addLog(
+          `[Ability added: ${name || "(unnamed)"}${notesPart} (${max}/${max} uses)]`,
+        );
+        nameIn.value = "";
+        maxIn.value = "3";
+        notesIn.value = "";
+        autoResizeTextarea(notesIn);
+        nameIn.focus();
+      };
+      submitBtn.addEventListener("click", doAdd);
+      nameIn.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          doAdd();
         }
-      }
-    });
+      });
+      notesIn.addEventListener("input", () => autoResizeTextarea(notesIn));
+    })();
 
     function loadAbl() {
       chrome.storage.local.get(ABL_KEY, (d) => {
@@ -2125,7 +2528,6 @@
     let party = [];
     let partySaveTimer = null;
     const partyListEl = document.getElementById("sc-np-party-list");
-    const partyAddBtn = document.getElementById("sc-np-party-add");
 
     function newPartyMember() {
       return { id: Date.now() + Math.random(), name: "", status: "active" };
@@ -2165,16 +2567,41 @@
           saveParty();
           addLog(`[Party: ${m.name || "(unnamed)"} → ${m.status}]`);
         });
-        const nameIn = document.createElement("input");
-        nameIn.type = "text";
-        nameIn.className = "party-name-input";
-        nameIn.value = m.name;
-        nameIn.placeholder = "Name\u2026";
-        nameIn.maxLength = 40;
-        nameIn.setAttribute("data-ai-rewriter-ignore", "1");
-        nameIn.addEventListener("input", () => {
-          m.name = nameIn.value;
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "item-disp-name";
+        nameSpan.textContent = m.name || "(unnamed)";
+        const nameEditIn = document.createElement("input");
+        nameEditIn.type = "text";
+        nameEditIn.className = "af-input";
+        nameEditIn.value = m.name;
+        nameEditIn.placeholder = "Name\u2026";
+        nameEditIn.maxLength = 40;
+        nameEditIn.style.display = "none";
+        nameEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+        nameEditIn.addEventListener("input", () => {
+          m.name = nameEditIn.value;
           schedulePartySave();
+        });
+        const toggleBtn = document.createElement("button");
+        toggleBtn.className = "item-toggle-btn edit";
+        toggleBtn.textContent = "✎";
+        let isEditing = false;
+        toggleBtn.addEventListener("click", () => {
+          isEditing = !isEditing;
+          if (isEditing) {
+            nameSpan.style.display = "none";
+            nameEditIn.style.display = "";
+            toggleBtn.className = "item-toggle-btn save";
+            toggleBtn.textContent = "✓ Save";
+            nameEditIn.value = m.name;
+            nameEditIn.focus();
+          } else {
+            nameEditIn.style.display = "none";
+            nameSpan.style.display = "";
+            toggleBtn.className = "item-toggle-btn edit";
+            toggleBtn.textContent = "✎";
+            nameSpan.textContent = m.name || "(unnamed)";
+          }
         });
         const delBtn = document.createElement("button");
         delBtn.className = "party-delete-btn";
@@ -2186,29 +2613,61 @@
           saveParty();
           renderParty();
         });
-        row.append(statusBtn, nameIn, delBtn);
+        row.append(statusBtn, nameSpan, nameEditIn, toggleBtn, delBtn);
         partyListEl.appendChild(row);
       });
     }
 
-    partyAddBtn.addEventListener("click", () => {
-      const member = newPartyMember();
-      party.push(member);
-      saveParty();
-      renderParty();
-      const inputs = partyListEl.querySelectorAll(".party-name-input");
-      if (inputs.length) {
-        const lastInput = inputs[inputs.length - 1];
-        lastInput.focus();
-        const logOnBlur = () => {
-          lastInput.removeEventListener("blur", logOnBlur);
-          addLog(
-            `[Party: ${member.name || "(unnamed)"} joined — ${member.status}]`,
-          );
-        };
-        lastInput.addEventListener("blur", logOnBlur);
-      }
-    });
+    // Party add form
+    (function () {
+      const form = document.createElement("div");
+      form.className = "af-form";
+      const nameIn = document.createElement("input");
+      nameIn.type = "text";
+      nameIn.className = "af-input";
+      nameIn.placeholder = "Member name\u2026";
+      nameIn.maxLength = 40;
+      nameIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const statusSel = document.createElement("select");
+      statusSel.className = "af-select";
+      statusSel.style.maxWidth = "90px";
+      statusSel.setAttribute("data-ai-rewriter-ignore", "1");
+      PARTY_STATUSES.forEach((s) => {
+        const opt = document.createElement("option");
+        opt.value = s;
+        opt.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+        statusSel.appendChild(opt);
+      });
+      const submitBtn = document.createElement("button");
+      submitBtn.className = "af-submit";
+      submitBtn.textContent = "+ Add";
+      const row = document.createElement("div");
+      row.className = "af-row";
+      row.append(nameIn, statusSel, submitBtn);
+      form.appendChild(row);
+      partyListEl.parentNode.insertBefore(form, partyListEl);
+      const doAdd = () => {
+        const name = nameIn.value.trim();
+        const status = statusSel.value || "active";
+        const member = newPartyMember();
+        member.name = name;
+        member.status = status;
+        party.push(member);
+        saveParty();
+        renderParty();
+        addLog(`[Party: ${name || "(unnamed)"} joined — ${status}]`);
+        nameIn.value = "";
+        statusSel.value = "active";
+        nameIn.focus();
+      };
+      submitBtn.addEventListener("click", doAdd);
+      nameIn.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          doAdd();
+        }
+      });
+    })();
 
     function loadParty() {
       chrome.storage.local.get(PARTY_KEY, (d) => {
@@ -2228,7 +2687,6 @@
     let npcs = [];
     let npcSaveTimer = null;
     const npcListEl = document.getElementById("sc-np-npc-list");
-    const npcAddBtn = document.getElementById("sc-np-npc-add");
 
     function newNpc() {
       return {
@@ -2273,17 +2731,26 @@
           addLog(`[NPC ${n.name || "(unnamed)"} \u2192 ${n.disp}]`);
           saveNpcs();
         });
-        const nameIn = document.createElement("input");
-        nameIn.type = "text";
-        nameIn.className = "npc-name-input";
-        nameIn.value = n.name;
-        nameIn.placeholder = "NPC name\u2026";
-        nameIn.maxLength = 40;
-        nameIn.setAttribute("data-ai-rewriter-ignore", "1");
-        nameIn.addEventListener("input", () => {
-          n.name = nameIn.value;
+        // Name: display / edit
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "item-disp-name";
+        nameSpan.textContent = n.name || "(unnamed)";
+        const nameEditIn = document.createElement("input");
+        nameEditIn.type = "text";
+        nameEditIn.className = "af-input";
+        nameEditIn.value = n.name;
+        nameEditIn.placeholder = "NPC name\u2026";
+        nameEditIn.maxLength = 40;
+        nameEditIn.style.display = "none";
+        nameEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+        nameEditIn.addEventListener("input", () => {
+          n.name = nameEditIn.value;
           scheduleNpcSave();
         });
+        const toggleBtn = document.createElement("button");
+        toggleBtn.className = "item-toggle-btn edit";
+        toggleBtn.textContent = "✎";
+        let isEditing = false;
         const delBtn = document.createElement("button");
         delBtn.className = "npc-delete-btn";
         delBtn.title = "Remove";
@@ -2294,54 +2761,114 @@
           saveNpcs();
           renderNpcs();
         });
-        top.append(dispBtn, nameIn, delBtn);
-        const noteIn = document.createElement("input");
-        noteIn.type = "text";
-        noteIn.className = "npc-note-input";
-        noteIn.value = n.note;
-        noteIn.placeholder = "Short note\u2026";
-        noteIn.maxLength = 80;
-        noteIn.setAttribute("data-ai-rewriter-ignore", "1");
-        noteIn.addEventListener("input", () => {
-          n.note = noteIn.value;
+        top.append(dispBtn, nameSpan, nameEditIn, toggleBtn, delBtn);
+        // Note: display / edit
+        const noteSpan = document.createElement("div");
+        noteSpan.style.cssText =
+          "color:#64748b;font-size:11.5px;font-family:inherit;padding:2px 0;";
+        noteSpan.textContent = n.note;
+        noteSpan.style.display = n.note ? "" : "none";
+        const noteEditIn = document.createElement("input");
+        noteEditIn.type = "text";
+        noteEditIn.className = "af-input";
+        noteEditIn.value = n.note;
+        noteEditIn.placeholder = "Short note\u2026";
+        noteEditIn.maxLength = 80;
+        noteEditIn.style.display = "none";
+        noteEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+        noteEditIn.addEventListener("input", () => {
+          n.note = noteEditIn.value;
           scheduleNpcSave();
         });
-        card.append(top, noteIn);
+        toggleBtn.addEventListener("click", () => {
+          isEditing = !isEditing;
+          if (isEditing) {
+            nameSpan.style.display = "none";
+            nameEditIn.style.display = "";
+            noteSpan.style.display = "none";
+            noteEditIn.style.display = "";
+            toggleBtn.className = "item-toggle-btn save";
+            toggleBtn.textContent = "✓ Save";
+            nameEditIn.value = n.name;
+            noteEditIn.value = n.note;
+            nameEditIn.focus();
+          } else {
+            nameEditIn.style.display = "none";
+            noteEditIn.style.display = "none";
+            toggleBtn.className = "item-toggle-btn edit";
+            toggleBtn.textContent = "✎";
+            nameSpan.style.display = "";
+            nameSpan.textContent = n.name || "(unnamed)";
+            noteSpan.textContent = n.note;
+            noteSpan.style.display = n.note ? "" : "none";
+          }
+        });
+        card.append(top, noteSpan, noteEditIn);
         npcListEl.appendChild(card);
       });
     }
 
-    npcAddBtn.addEventListener("click", () => {
-      const npc = newNpc();
-      npcs.push(npc);
-      saveNpcs();
-      renderNpcs();
-      const lastCard = npcListEl.lastElementChild;
-      if (lastCard && lastCard.classList.contains("npc-item")) {
-        const nameIn = lastCard.querySelector(".npc-name-input");
-        const noteIn = lastCard.querySelector(".npc-note-input");
-        if (nameIn) {
-          nameIn.focus();
-          let addLogged = false;
-          const doAddLog = () => {
-            if (addLogged) return;
-            addLogged = true;
-            nameIn.removeEventListener("blur", onNameBlur);
-            if (noteIn) noteIn.removeEventListener("blur", onNoteBlur);
-            const notePart = npc.note ? ` — ${npc.note}` : "";
-            addLog(
-              `[NPC met: ${npc.name || "(unnamed)"} [${npc.disp}]${notePart}]`,
-            );
-          };
-          const onNameBlur = (e) => {
-            if (e.relatedTarget !== noteIn) doAddLog();
-          };
-          const onNoteBlur = () => doAddLog();
-          nameIn.addEventListener("blur", onNameBlur);
-          if (noteIn) noteIn.addEventListener("blur", onNoteBlur);
+    // NPC add form
+    (function () {
+      const form = document.createElement("div");
+      form.className = "af-form";
+      const nameIn = document.createElement("input");
+      nameIn.type = "text";
+      nameIn.className = "af-input";
+      nameIn.placeholder = "NPC name\u2026";
+      nameIn.maxLength = 40;
+      nameIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const noteIn = document.createElement("input");
+      noteIn.type = "text";
+      noteIn.className = "af-input";
+      noteIn.placeholder = "Note (optional)\u2026";
+      noteIn.maxLength = 80;
+      noteIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const dispSel = document.createElement("select");
+      dispSel.className = "af-select";
+      dispSel.style.maxWidth = "90px";
+      dispSel.setAttribute("data-ai-rewriter-ignore", "1");
+      NPC_DISPS.forEach((d) => {
+        const opt = document.createElement("option");
+        opt.value = d;
+        opt.textContent = DISP_LABELS[d];
+        dispSel.appendChild(opt);
+      });
+      dispSel.value = "neutral";
+      const submitBtn = document.createElement("button");
+      submitBtn.className = "af-submit";
+      submitBtn.textContent = "+ Add NPC";
+      const row1 = document.createElement("div");
+      row1.className = "af-row";
+      row1.append(nameIn, dispSel, submitBtn);
+      form.append(row1, noteIn);
+      npcListEl.parentNode.insertBefore(form, npcListEl);
+      const doAdd = () => {
+        const name = nameIn.value.trim();
+        const note = noteIn.value.trim();
+        const disp = dispSel.value || "neutral";
+        const npc = newNpc();
+        npc.name = name;
+        npc.note = note;
+        npc.disp = disp;
+        npcs.push(npc);
+        saveNpcs();
+        renderNpcs();
+        const notePart = note ? ` \u2014 ${note}` : "";
+        addLog(`[NPC met: ${name || "(unnamed)"} [${disp}]${notePart}]`);
+        nameIn.value = "";
+        noteIn.value = "";
+        dispSel.value = "neutral";
+        nameIn.focus();
+      };
+      submitBtn.addEventListener("click", doAdd);
+      nameIn.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          doAdd();
         }
-      }
-    });
+      });
+    })();
 
     function loadNpcs() {
       chrome.storage.local.get(NPC_KEY, (d) => {
