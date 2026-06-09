@@ -416,10 +416,11 @@
 
     /* ── Resource counters ── */
     .res-item {
-      display: flex; align-items: center; gap: 8px;
-      padding: 4px 0; border-bottom: 1px solid rgba(108,99,255,0.07);
+      display: flex; flex-direction: column; gap: 4px;
+      padding: 5px 0; border-bottom: 1px solid rgba(108,99,255,0.07);
     }
     .res-item:last-child { border-bottom: none; }
+    .res-item-top { display: flex; align-items: center; gap: 8px; width: 100%; }
     .res-name-input {
       flex: 1; background: transparent; border: none; outline: none;
       color: #e2e8f0; font-size: 12px; font-family: inherit; caret-color: #a78bfa; min-width: 0;
@@ -435,6 +436,13 @@
       transition: color 0.12s; display: flex; align-items: center;
     }
     .res-delete-btn:hover { color: #f87171; }
+    .res-note-input {
+      width: 100%; box-sizing: border-box; background: transparent;
+      border: none; border-top: 1px solid rgba(108,99,255,0.07); outline: none;
+      color: #64748b; font-size: 11px; font-family: inherit; font-style: italic;
+      padding: 3px 0 1px; caret-color: #a78bfa;
+    }
+    .res-note-input::placeholder { color: #2a3447; }
     /* bulk adjust panel */
     .res-adjust-panel {
       display: flex; flex-direction: column; gap: 6px;
@@ -893,7 +901,7 @@
                 </div>
                 <div class="res-adjust-row">
                   <button id="sc-np-res-op-add" class="res-op-btn res-op-add">+ Add</button>
-                  <button id="sc-np-res-op-sub" class="res-op-btn res-op-sub">− Subtract</button>
+                  <button id="sc-np-res-op-sub" class="res-op-btn res-op-sub">− Use</button>
                   <button id="sc-np-res-op-set" class="res-op-btn res-op-set">= Set</button>
                   <span class="res-feedback" id="sc-np-res-fb"></span>
                 </div>
@@ -1598,7 +1606,7 @@
     const resAddBtn = document.getElementById("sc-np-res-add");
 
     function newRes() {
-      return { id: Date.now() + Math.random(), name: "", value: 0 };
+      return { id: Date.now() + Math.random(), name: "", value: 0, notes: "" };
     }
     function saveRes() {
       chrome.storage.local.set({ [RES_KEY]: resources });
@@ -1650,6 +1658,9 @@
         const row = document.createElement("div");
         row.className = "res-item";
         row.dataset.resId = r.id;
+        // Top row: name + value + delete
+        const topRow = document.createElement("div");
+        topRow.className = "res-item-top";
         const nameIn = document.createElement("input");
         nameIn.type = "text";
         nameIn.className = "res-name-input";
@@ -1675,7 +1686,20 @@
           saveRes();
           renderRes();
         });
-        row.append(nameIn, valEl, delBtn);
+        topRow.append(nameIn, valEl, delBtn);
+        // Notes input
+        const noteIn = document.createElement("input");
+        noteIn.type = "text";
+        noteIn.className = "res-note-input";
+        noteIn.value = r.notes || "";
+        noteIn.placeholder = "Notes\u2026 e.g. used for healing, max 100";
+        noteIn.maxLength = 80;
+        noteIn.setAttribute("data-ai-rewriter-ignore", "1");
+        noteIn.addEventListener("input", () => {
+          r.notes = noteIn.value;
+          scheduleResSave();
+        });
+        row.append(topRow, noteIn);
         resListEl.appendChild(row);
       });
       rebuildResSelect();
@@ -1700,12 +1724,14 @@
       saveRes();
       const label =
         op === "add"
-          ? "+" + amount
+          ? "gained " + amount
           : op === "sub"
-            ? "\u2212" + amount
-            : "=" + amount;
+            ? "used " + amount
+            : "set to " + amount;
       showResFeedback(label + " \u2192 " + r.value);
-      addLog(`[${r.name || "Resource"}: ${label} \u2192 ${r.value}]`);
+      addLog(
+        `[${r.name || "Resource"}: ${label} \u2192 ${r.value}${r.notes ? " (" + r.notes + ")" : ""}]`,
+      );
     }
 
     document
@@ -3035,7 +3061,10 @@
 
     function exportResources() {
       if (!resources.length) return "[Resources: none]";
-      const parts = resources.map((r) => `${r.name || "(unnamed)"} ${r.value}`);
+      const parts = resources.map((r) => {
+        const note = r.notes ? ` (${r.notes})` : "";
+        return `${r.name || "(unnamed)"} ${r.value}${note}`;
+      });
       return `[Resources: ${parts.join(" | ")}]`;
     }
 
