@@ -144,6 +144,62 @@
     #sc-np-header button:hover { background: rgba(255,255,255,0.07); color: #e2e8f0; }
     #sc-np-header button.active { color: #a78bfa; background: rgba(108,99,255,0.15); }
 
+    /* ── Activity log strip ── */
+    #sc-np-log-strip {
+      flex-shrink: 0;
+      background: rgba(0,0,0,0.28);
+      border-bottom: 1px solid rgba(108,99,255,0.14);
+      padding: 0;
+      display: flex; flex-direction: column;
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+    #sc-np-log-strip.has-entries { max-height: 148px; }
+    #sc-np-log-strip-inner {
+      display: flex; flex-direction: column; gap: 0;
+      overflow-y: auto; max-height: 118px;
+      padding: 5px 10px 4px;
+    }
+    #sc-np-log-strip-inner::-webkit-scrollbar { width: 3px; }
+    #sc-np-log-strip-inner::-webkit-scrollbar-thumb { background: rgba(108,99,255,0.25); border-radius: 2px; }
+    .log-entry {
+      font-size: 10.5px; color: #64748b; line-height: 1.45;
+      padding: 2px 0; border-bottom: 1px solid rgba(108,99,255,0.05);
+      display: flex; align-items: baseline; gap: 5px; white-space: pre-wrap; word-break: break-word;
+    }
+    .log-entry:last-child { border-bottom: none; }
+    .log-ts { font-size: 9px; color: #334155; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+    .log-msg { flex: 1; }
+    .log-copy-btn {
+      flex-shrink: 0; font-size: 9px; color: #334155; cursor: pointer;
+      background: none; border: none; padding: 1px 3px; border-radius: 3px;
+      transition: color 0.12s; font-family: inherit;
+    }
+    .log-copy-btn:hover { color: #a78bfa; }
+    #sc-np-log-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 3px 10px; border-top: 1px solid rgba(108,99,255,0.08);
+      flex-shrink: 0;
+    }
+    #sc-np-log-bar-label { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #334155; }
+    #sc-np-log-clear-btn {
+      font-size: 9px; color: #334155; cursor: pointer;
+      background: none; border: none; padding: 1px 4px; font-family: inherit;
+      transition: color 0.12s;
+    }
+    #sc-np-log-clear-btn:hover { color: #f87171; }
+
+    /* ── Copy / export buttons ── */
+    .ql-copy-btn {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 7px; border-radius: 5px; border: 1px solid rgba(108,99,255,0.22);
+      background: transparent; color: #475569; font-size: 9.5px;
+      font-weight: 700; font-family: inherit; cursor: pointer; letter-spacing: 0.03em;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+    }
+    .ql-copy-btn:hover { background: rgba(108,99,255,0.1); border-color: rgba(108,99,255,0.4); color: #a78bfa; }
+    .ql-copy-btn.copied { color: #22c55e; border-color: rgba(34,197,94,0.35); }
+
     /* ── Body ── */
     #sc-np-body {
       flex: 1;
@@ -481,6 +537,13 @@
       color: #293548; border-radius: 3px; transition: color 0.12s; display: flex; align-items: center;
     }
     .abl-delete-btn:hover { color: #f87171; }
+    .abl-notes-input {
+      width: 100%; box-sizing: border-box; background: transparent;
+      border: none; border-top: 1px solid rgba(108,99,255,0.07); outline: none; resize: none;
+      color: #64748b; font-size: 11px; font-family: inherit; line-height: 1.4;
+      caret-color: #a78bfa; overflow: hidden; min-height: 0; padding: 4px 0 2px;
+    }
+    .abl-notes-input::placeholder { color: #2a3447; }
 
     /* ── Party Tracker ── */
     .party-item {
@@ -733,18 +796,35 @@
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
+      <div id="sc-np-log-strip">
+        <div id="sc-np-log-strip-inner"></div>
+        <div id="sc-np-log-bar">
+          <span id="sc-np-log-bar-label">Activity Log</span>
+          <button id="sc-np-log-clear-btn">Clear</button>
+        </div>
+      </div>
       <div id="sc-np-body">
         <div id="sc-np-quests-panel">
+          <!-- Export All -->
+          <div style="display:flex;justify-content:flex-end;">
+            <button id="sc-np-export-all" class="ql-copy-btn">⎘ Export All</button>
+          </div>
           <!-- Quest Log -->
           <div class="ql-section-header">
             <span class="ql-section-label">Quests</span>
-            <button id="sc-np-quest-add" class="ql-add-btn">+ Add Quest</button>
+            <div style="display:flex;gap:5px;align-items:center;">
+              <button id="sc-np-quest-copy" class="ql-copy-btn">⎘ Copy</button>
+              <button id="sc-np-quest-add" class="ql-add-btn">+ Add Quest</button>
+            </div>
           </div>
           <div id="sc-np-quest-list"></div>
           <!-- Inventory -->
-          <div style="margin-top:4px;display:flex;flex-direction:column;gap:5px;">
+          <div class="ql-section-header" style="margin-top:4px;">
             <span class="ql-section-label">Inventory</span>
-            <button id="sc-np-inv-add" class="ql-add-btn" style="width:100%;justify-content:center;padding:5px 0;">+ Add Item</button>
+            <div style="display:flex;gap:5px;align-items:center;">
+              <button id="sc-np-inv-copy" class="ql-copy-btn">⎘ Copy</button>
+              <button id="sc-np-inv-add" class="ql-add-btn">+ Add Item</button>
+            </div>
           </div>
           <div class="rp-card" style="padding:8px 10px;gap:6px;">
             <div id="sc-np-inv-list"></div>
@@ -756,6 +836,7 @@
           <!-- Dice Roller -->
           <div class="ql-section-header" style="margin-top:4px;">
             <span class="ql-section-label">Dice Roller</span>
+            <button id="sc-np-dice-copy" class="ql-copy-btn">⎘ Copy Last</button>
           </div>
           <div class="rp-card" id="sc-np-dice-section">
             <div class="dice-faces-row">
@@ -787,6 +868,7 @@
           <div class="ql-section-header ql-collapsible-hdr" data-section="sc-np-res-body">
             <span class="ql-section-label">Resources</span>
             <div style="display:flex;gap:5px;align-items:center;">
+              <button id="sc-np-res-copy" class="ql-copy-btn">⎘ Copy</button>
               <button id="sc-np-res-add" class="ql-add-btn">+ Add</button>
               <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
             </div>
@@ -812,6 +894,7 @@
           <div class="ql-section-header ql-collapsible-hdr" data-section="sc-np-abl-body">
             <span class="ql-section-label">Abilities</span>
             <div style="display:flex;gap:5px;align-items:center;">
+              <button id="sc-np-abl-copy" class="ql-copy-btn">⎘ Copy</button>
               <button id="sc-np-abl-add" class="ql-add-btn">+ Add</button>
               <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
             </div>
@@ -823,6 +906,7 @@
           <div class="ql-section-header ql-collapsible-hdr" data-section="sc-np-party-body">
             <span class="ql-section-label">Party</span>
             <div style="display:flex;gap:5px;align-items:center;">
+              <button id="sc-np-party-copy" class="ql-copy-btn">⎘ Copy</button>
               <button id="sc-np-party-add" class="ql-add-btn">+ Add</button>
               <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
             </div>
@@ -834,6 +918,7 @@
           <div class="ql-section-header ql-collapsible-hdr" data-section="sc-np-npc-body">
             <span class="ql-section-label">NPCs</span>
             <div style="display:flex;gap:5px;align-items:center;">
+              <button id="sc-np-npc-copy" class="ql-copy-btn">⎘ Copy</button>
               <button id="sc-np-npc-add" class="ql-add-btn">+ Add</button>
               <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
             </div>
@@ -845,6 +930,7 @@
           <div class="ql-section-header ql-collapsible-hdr" data-section="sc-np-rumour-body">
             <span class="ql-section-label">Rumours</span>
             <div style="display:flex;gap:5px;align-items:center;">
+              <button id="sc-np-rumour-copy" class="ql-copy-btn">⎘ Copy</button>
               <button id="sc-np-rumour-add" class="ql-add-btn">+ Add</button>
               <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
             </div>
@@ -1161,6 +1247,7 @@
         statusBtn.addEventListener("click", () => {
           const cur = QUEST_STATES.indexOf(q.state);
           q.state = QUEST_STATES[(cur + 1) % QUEST_STATES.length];
+          addLog(`[Quest "${q.title || "(untitled)"}" → ${q.state}]`);
           scheduleQuestSave();
           renderQuests();
         });
@@ -1209,6 +1296,7 @@
           chip.textContent = st.charAt(0).toUpperCase() + st.slice(1);
           chip.addEventListener("click", () => {
             q.state = st;
+            addLog(`[Quest "${q.title || "(untitled)"}" → ${st}]`);
             scheduleQuestSave();
             renderQuests();
           });
@@ -1339,9 +1427,11 @@
     }
 
     invAddBtn.addEventListener("click", () => {
-      inventory.push(newInvItem());
+      const item = newInvItem();
+      inventory.push(item);
       saveInv();
       renderInv();
+      addLog("[Inventory: new item added]");
       const inputs = invListEl.querySelectorAll(".inv-name-input");
       if (inputs.length) inputs[inputs.length - 1].focus();
     });
@@ -1449,7 +1539,6 @@
 
       // History chip
       const label = faceArr.map((f) => count + "d" + f).join("+");
-      const chipClass = "dice-history-chip" + (natClass ? " " + natClass : "");
       diceHistory.unshift({ label, total, natClass });
       if (diceHistory.length > MAX_HIST) diceHistory.pop();
       diceHistoryEl.innerHTML = "";
@@ -1460,6 +1549,14 @@
         chip.textContent = h.label + ": " + h.total;
         diceHistoryEl.appendChild(chip);
       });
+
+      // Log the roll
+      const logLine = natMsg
+        ? `[Roll ${label}: ${total} — ${natMsg}]`
+        : breakdown
+          ? `[Roll ${label}: ${total} ${breakdown}]`
+          : `[Roll ${label}: ${total}]`;
+      addLog(logLine);
     });
 
     updateDiceLabel();
@@ -1625,7 +1722,13 @@
     const ablAddBtn = document.getElementById("sc-np-abl-add");
 
     function newAbl() {
-      return { id: Date.now() + Math.random(), name: "", current: 3, max: 3 };
+      return {
+        id: Date.now() + Math.random(),
+        name: "",
+        notes: "",
+        current: 3,
+        max: 3,
+      };
     }
     function saveAbl() {
       chrome.storage.local.set({ [ABL_KEY]: abilities });
@@ -1646,8 +1749,14 @@
         return;
       }
       abilities.forEach((a, idx) => {
-        const row = document.createElement("div");
-        row.className = "abl-item";
+        const wrapper = document.createElement("div");
+        wrapper.style.cssText =
+          "display:flex;flex-direction:column;gap:4px;padding:5px 0;border-bottom:1px solid rgba(108,99,255,0.07);";
+        if (idx === abilities.length - 1) wrapper.style.borderBottom = "none";
+
+        // Top row: name + current/max + reset + delete
+        const topRow = document.createElement("div");
+        topRow.className = "abl-item";
         const nameIn = document.createElement("input");
         nameIn.type = "text";
         nameIn.className = "abl-name-input";
@@ -1659,22 +1768,16 @@
           a.name = nameIn.value;
           scheduleAblSave();
         });
-        const useBtn = document.createElement("button");
-        useBtn.className = "abl-use-btn";
-        useBtn.textContent = "\u2212";
+
         const curEl = document.createElement("span");
         curEl.className = "abl-cur";
         curEl.textContent = a.current;
         curEl.style.opacity = a.current === 0 ? "0.35" : "1";
-        useBtn.addEventListener("click", () => {
-          a.current = Math.max(0, a.current - 1);
-          curEl.textContent = a.current;
-          curEl.style.opacity = a.current === 0 ? "0.35" : "1";
-          saveAbl();
-        });
+
         const sep = document.createElement("span");
         sep.className = "abl-sep";
         sep.textContent = "/";
+
         const maxIn = document.createElement("input");
         maxIn.type = "number";
         maxIn.className = "abl-max-input";
@@ -1686,6 +1789,7 @@
           a.max = Math.max(1, parseInt(maxIn.value, 10) || 1);
           scheduleAblSave();
         });
+
         const resetBtn = document.createElement("button");
         resetBtn.className = "abl-reset-btn";
         resetBtn.textContent = "RST";
@@ -1694,7 +1798,9 @@
           curEl.textContent = a.current;
           curEl.style.opacity = "1";
           saveAbl();
+          addLog(`[${a.name || "Ability"} restored — ${a.current}/${a.max}]`);
         });
+
         const delBtn = document.createElement("button");
         delBtn.className = "abl-delete-btn";
         delBtn.title = "Remove";
@@ -1704,8 +1810,67 @@
           saveAbl();
           renderAbl();
         });
-        row.append(nameIn, useBtn, curEl, sep, maxIn, resetBtn, delBtn);
-        ablListEl.appendChild(row);
+
+        topRow.append(nameIn, curEl, sep, maxIn, resetBtn, delBtn);
+
+        // Notes input (shown between top row and use buttons)
+        const notesIn = document.createElement("textarea");
+        notesIn.className = "abl-notes-input";
+        notesIn.value = a.notes || "";
+        notesIn.placeholder =
+          "Describe this ability, dice modifier, effect\u2026";
+        notesIn.rows = 1;
+        notesIn.setAttribute("data-ai-rewriter-ignore", "1");
+        notesIn.addEventListener("input", () => {
+          a.notes = notesIn.value;
+          autoResizeTextarea(notesIn);
+          scheduleAblSave();
+        });
+        setTimeout(() => autoResizeTextarea(notesIn), 0);
+
+        // Bottom row: use buttons (one per remaining slot)
+        const useRow = document.createElement("div");
+        useRow.style.cssText = "display:flex;flex-wrap:wrap;gap:4px;";
+        const useCount = Math.min(a.max, 10);
+        for (let i = 0; i < useCount; i++) {
+          const btn = document.createElement("button");
+          btn.style.cssText = `flex:1;min-width:28px;padding:4px 0;border-radius:5px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;border:1px solid;transition:background 0.12s,opacity 0.12s;`;
+          const used = i >= a.current;
+          btn.style.background = used
+            ? "rgba(108,99,255,0.04)"
+            : "rgba(108,99,255,0.15)";
+          btn.style.borderColor = used
+            ? "rgba(108,99,255,0.1)"
+            : "rgba(108,99,255,0.4)";
+          btn.style.color = used ? "#334155" : "#a78bfa";
+          btn.style.opacity = used ? "0.4" : "1";
+          btn.textContent = "Use";
+          btn.disabled = a.current === 0;
+          btn.addEventListener("click", () => {
+            if (a.current <= 0) return;
+            a.current--;
+            curEl.textContent = a.current;
+            curEl.style.opacity = a.current === 0 ? "0.35" : "1";
+            saveAbl();
+            const notesPart = a.notes ? ` — ${a.notes}` : "";
+            addLog(
+              `[${a.name || "Ability"} used — ${a.current}/${a.max} remaining${notesPart}]`,
+            );
+            // re-render just the use row
+            renderAbl();
+          });
+          useRow.appendChild(btn);
+        }
+        if (a.max > 10) {
+          const more = document.createElement("span");
+          more.style.cssText =
+            "font-size:9.5px;color:#334155;align-self:center;padding:0 4px;";
+          more.textContent = `+${a.max - 10} more`;
+          useRow.appendChild(more);
+        }
+
+        wrapper.append(topRow, notesIn, useRow);
+        ablListEl.appendChild(wrapper);
       });
     }
 
@@ -1798,6 +1963,7 @@
       party.push(newPartyMember());
       saveParty();
       renderParty();
+      addLog("[Party: new member added]");
       const inputs = partyListEl.querySelectorAll(".party-name-input");
       if (inputs.length) inputs[inputs.length - 1].focus();
     });
@@ -1862,6 +2028,7 @@
           n.disp = NPC_DISPS[(cur + 1) % NPC_DISPS.length];
           dispBtn.className = "npc-disp-btn npc-disp-" + n.disp;
           dispBtn.textContent = DISP_LABELS[n.disp];
+          addLog(`[NPC ${n.name || "(unnamed)"} \u2192 ${n.disp}]`);
           saveNpcs();
         });
         const nameIn = document.createElement("input");
@@ -1905,6 +2072,7 @@
       npcs.push(newNpc());
       saveNpcs();
       renderNpcs();
+      addLog("[NPC: new character added]");
       const inputs = npcListEl.querySelectorAll(".npc-name-input");
       if (inputs.length) inputs[inputs.length - 1].focus();
     });
@@ -1954,6 +2122,9 @@
           check.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
         check.addEventListener("click", () => {
           r.done = !r.done;
+          addLog(
+            `[Rumour ${r.done ? "followed up" : "reopened"}: "${(r.text || "(empty)").slice(0, 40)}"]`,
+          );
           saveRumours();
           renderRumours();
         });
@@ -1987,6 +2158,7 @@
       rumours.push(newRumour());
       saveRumours();
       renderRumours();
+      addLog("[Rumour: new lead added]");
       const inputs = rumourListEl.querySelectorAll(".rumour-text-input");
       if (inputs.length) inputs[inputs.length - 1].focus();
     });
@@ -2731,6 +2903,198 @@
       if (activeTab === "fmt" && FMT_KEYS_TO_WATCH.some((k) => k in changes)) {
         loadFormatterPanel();
       }
+    });
+
+    /* ════════════════ ACTIVITY LOG ════════════════ */
+    const logStripEl = document.getElementById("sc-np-log-strip");
+    const logInnerEl = document.getElementById("sc-np-log-strip-inner");
+    const logClearBtn = document.getElementById("sc-np-log-clear-btn");
+    const MAX_LOG = 10;
+    let activityLog = [];
+
+    function fmtTs() {
+      return new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+
+    function copyText(text) {
+      navigator.clipboard.writeText(text).catch(() => {});
+    }
+
+    function flashCopyBtn(btn) {
+      btn.classList.add("copied");
+      btn.textContent = "\u2714 Copied";
+      setTimeout(() => {
+        btn.classList.remove("copied");
+        btn.textContent = "\u2398 Copy";
+      }, 1400);
+    }
+    function flashCopyBtnLabel(btn, label) {
+      btn.classList.add("copied");
+      const orig = btn.textContent;
+      btn.textContent = "\u2714 Copied";
+      setTimeout(() => {
+        btn.classList.remove("copied");
+        btn.textContent = orig;
+      }, 1400);
+    }
+
+    function addLog(msg) {
+      const ts = fmtTs();
+      activityLog.unshift({ ts, msg });
+      if (activityLog.length > MAX_LOG) activityLog.pop();
+      renderLog();
+      document.dispatchEvent(
+        new CustomEvent("sc-rp-inject", {
+          detail: { text: "\n" + msg, silent: true },
+        }),
+      );
+    }
+
+    function renderLog() {
+      logInnerEl.innerHTML = "";
+      logStripEl.classList.toggle("has-entries", activityLog.length > 0);
+      activityLog.forEach(({ ts, msg }) => {
+        const row = document.createElement("div");
+        row.className = "log-entry";
+        const tsEl = document.createElement("span");
+        tsEl.className = "log-ts";
+        tsEl.textContent = ts;
+        const msgEl = document.createElement("span");
+        msgEl.className = "log-msg";
+        msgEl.textContent = msg;
+        const cpBtn = document.createElement("button");
+        cpBtn.className = "log-copy-btn";
+        cpBtn.textContent = "\u2398";
+        cpBtn.title = "Copy this line";
+        cpBtn.addEventListener("click", () => {
+          copyText(msg);
+          cpBtn.textContent = "\u2714";
+          setTimeout(() => {
+            cpBtn.textContent = "\u2398";
+          }, 1000);
+        });
+        row.append(tsEl, msgEl, cpBtn);
+        logInnerEl.appendChild(row);
+      });
+    }
+
+    logClearBtn.addEventListener("click", () => {
+      activityLog = [];
+      renderLog();
+    });
+
+    /* ════════════════ EXPORT FUNCTIONS ════════════════ */
+    function exportQuests() {
+      if (!quests.length) return "[Quests: none]";
+      const lines = quests.map((q) => {
+        const st =
+          q.state === "done"
+            ? "\u2713"
+            : q.state === "failed"
+              ? "\u2717"
+              : "\u25cb";
+        return `  ${st} ${q.title || "(untitled)"}${q.notes ? " \u2014 " + q.notes : ""}`;
+      });
+      return "[Quests]\n" + lines.join("\n");
+    }
+
+    function exportInventory() {
+      if (!inventory.length) return "[Inventory: empty]";
+      const lines = inventory.map(
+        (i) =>
+          `  ${i.qty}x ${i.name || "(unnamed)"}${i.notes ? " (" + i.notes + ")" : ""}`,
+      );
+      return "[Inventory]\n" + lines.join("\n");
+    }
+
+    function exportResources() {
+      if (!resources.length) return "[Resources: none]";
+      const lines = resources.map(
+        (r) => `  ${r.name || "(unnamed)"}: ${r.value}`,
+      );
+      return "[Resources]\n" + lines.join("\n");
+    }
+
+    function exportAbilities() {
+      if (!abilities.length) return "[Abilities: none]";
+      const lines = abilities.map((a) => {
+        const note = a.notes ? ` (${a.notes})` : "";
+        return `  ${a.name || "(unnamed)"}: ${a.current}/${a.max}${note}`;
+      });
+      return "[Abilities]\n" + lines.join("\n");
+    }
+
+    function exportParty() {
+      if (!party.length) return "[Party: none]";
+      const lines = party.map(
+        (m) => `  ${m.name || "(unnamed)"} \u2014 ${m.status}`,
+      );
+      return "[Party]\n" + lines.join("\n");
+    }
+
+    function exportNpcs() {
+      if (!npcs.length) return "[NPCs: none]";
+      const lines = npcs.map(
+        (n) =>
+          `  ${n.name || "(unnamed)"} [${n.disp}]${n.note ? " \u2014 " + n.note : ""}`,
+      );
+      return "[NPCs]\n" + lines.join("\n");
+    }
+
+    function exportRumours() {
+      if (!rumours.length) return "[Rumours: none]";
+      const lines = rumours.map(
+        (r) => `  ${r.done ? "\u2713" : "\u25cb"} ${r.text || "(empty)"}`,
+      );
+      return "[Rumours]\n" + lines.join("\n");
+    }
+
+    function exportDiceLast() {
+      if (!activityLog.length) return "[Dice: no roll yet]";
+      const diceEntry = activityLog.find((e) => e.msg.startsWith("[Roll"));
+      return diceEntry ? diceEntry.msg : "[Dice: no roll yet]";
+    }
+
+    function exportAll() {
+      return [
+        exportQuests(),
+        exportInventory(),
+        exportResources(),
+        exportAbilities(),
+        exportParty(),
+        exportNpcs(),
+        exportRumours(),
+      ].join("\n\n");
+    }
+
+    function bindCopyBtn(id, exportFn) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.addEventListener("click", () => {
+        const text = exportFn();
+        copyText(text);
+        flashCopyBtnLabel(btn, btn.textContent);
+      });
+    }
+
+    bindCopyBtn("sc-np-export-all", exportAll);
+    bindCopyBtn("sc-np-quest-copy", exportQuests);
+    bindCopyBtn("sc-np-inv-copy", exportInventory);
+    bindCopyBtn("sc-np-res-copy", exportResources);
+    bindCopyBtn("sc-np-abl-copy", exportAbilities);
+    bindCopyBtn("sc-np-party-copy", exportParty);
+    bindCopyBtn("sc-np-npc-copy", exportNpcs);
+    bindCopyBtn("sc-np-rumour-copy", exportRumours);
+
+    // Dice copy — copies last roll from log
+    document.getElementById("sc-np-dice-copy").addEventListener("click", () => {
+      const btn = document.getElementById("sc-np-dice-copy");
+      const text = exportDiceLast();
+      copyText(text);
+      flashCopyBtnLabel(btn, btn.textContent);
     });
 
     /* ── Boot ── */

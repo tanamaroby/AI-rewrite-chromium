@@ -761,8 +761,10 @@
 
   document.addEventListener("sc-rp-inject", (e) => {
     if (!isSpicyChat) return;
+    const silent = !!e.detail.silent;
     if (!lastFocusedEl || !document.contains(lastFocusedEl)) {
-      showToast("Click the chat input first, then inject a snippet.", true);
+      if (!silent)
+        showToast("Click the chat input first, then inject a snippet.", true);
       return;
     }
     const text = e.detail.text || "";
@@ -786,7 +788,7 @@
       el.dispatchEvent(new Event("change", { bubbles: true }));
       el.selectionStart = el.selectionEnd = el.value.length;
     }
-    showToast("\u2713 Snippet inserted");
+    if (!silent) showToast("✓ Snippet inserted");
   });
 
   // ─── One-shot rewrite (triggered by RP Tools drawer) ────────────────────────
