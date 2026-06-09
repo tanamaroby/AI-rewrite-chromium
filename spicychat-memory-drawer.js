@@ -390,6 +390,24 @@
     }
     .dice-context-input::placeholder { color: #2a3447; }
     .dice-context-input:focus { border-color: rgba(108,99,255,0.4); color: #e2e8f0; font-style: normal; }
+    .dice-mod-row {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .dice-mod-label { font-size: 11px; color: #475569; flex-shrink: 0; }
+    .dice-mod-input {
+      width: 54px; flex-shrink: 0; text-align: center; background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(108,99,255,0.2); border-radius: 5px;
+      color: #a78bfa; font-size: 12.5px; font-weight: 700; font-family: inherit;
+      padding: 5px 4px; outline: none; transition: border-color 0.12s; caret-color: #a78bfa;
+    }
+    .dice-mod-input:focus { border-color: rgba(108,99,255,0.5); }
+    .dice-mod-note {
+      flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+      color: #64748b; font-size: 11px; font-family: inherit; font-style: italic;
+      caret-color: #a78bfa;
+    }
+    .dice-mod-note::placeholder { color: #2a3447; }
+    .dice-result-modifier { font-size: 11px; color: #64748b; text-align: center; }
     .dice-roll-btn {
       flex: 1; padding: 7px 10px; border-radius: 7px;
       border: 1px solid rgba(108,99,255,0.4); background: rgba(108,99,255,0.15);
@@ -901,6 +919,7 @@
               <div class="dice-result-total" id="sc-np-dice-total">—</div>
               <div class="dice-result-breakdown" id="sc-np-dice-breakdown"></div>
               <div class="dice-result-nat" id="sc-np-dice-nat"></div>
+              <div class="dice-result-modifier" id="sc-np-dice-mod-display"></div>
             </div>
             <div class="dice-history" id="sc-np-dice-history"></div>
           </div>
@@ -1153,6 +1172,30 @@
     const diceLabelEl = document.getElementById("sc-np-dice-label");
     const diceRollBtn = document.getElementById("sc-np-dice-roll");
     const diceContextInput = document.getElementById("sc-np-dice-context");
+    const diceModInput = document.getElementById("sc-np-dice-mod");
+    const diceModNoteInput = document.getElementById("sc-np-dice-mod-note");
+    const diceModDisplayEl = document.getElementById("sc-np-dice-mod-display");
+    const DICE_MOD_KEY = "sc_dice_mod_v1_" + chatId;
+
+    // Load saved modifier
+    chrome.storage.local.get(DICE_MOD_KEY, (d) => {
+      const saved = d[DICE_MOD_KEY];
+      if (saved) {
+        if (saved.mod !== undefined) diceModInput.value = saved.mod;
+        if (saved.note) diceModNoteInput.value = saved.note;
+      }
+    });
+
+    function saveDiceMod() {
+      chrome.storage.local.set({
+        [DICE_MOD_KEY]: {
+          mod: parseInt(diceModInput.value, 10) || 0,
+          note: diceModNoteInput.value,
+        },
+      });
+    }
+    diceModInput.addEventListener("change", saveDiceMod);
+    diceModNoteInput.addEventListener("input", saveDiceMod);
     const diceTotalEl = document.getElementById("sc-np-dice-total");
     const diceBreakdownEl = document.getElementById("sc-np-dice-breakdown");
     const diceNatEl = document.getElementById("sc-np-dice-nat");
@@ -1582,7 +1625,9 @@
         }
       });
 
-      const total = allRolls.reduce((a, b) => a + b, 0);
+      const rawTotal = allRolls.reduce((a, b) => a + b, 0);
+      const mod = parseInt(diceModInput.value, 10) || 0;
+      const total = rawTotal + mod;
 
       // Breakdown text
       let breakdown = "";
@@ -1619,10 +1664,19 @@
       diceNatEl.textContent = natMsg;
       diceNatEl.className =
         "dice-result-nat" + (natClass ? " " + natClass : "");
+      const modNote = diceModNoteInput.value.trim();
+      if (mod !== 0) {
+        const sign = mod > 0 ? "+" : "";
+        diceModDisplayEl.textContent = `${sign}${mod} mod${rawTotal !== total ? " (" + rawTotal + " raw)" : ""}${modNote ? " — " + modNote : ""}`;
+      } else {
+        diceModDisplayEl.textContent = "";
+      }
 
       // History chip
       const label = faceArr.map((f) => count + "d" + f).join("+");
-      diceHistory.unshift({ label, total, natClass });
+      const modSuffix = mod !== 0 ? (mod > 0 ? "+" + mod : String(mod)) : "";
+      const chipLabel = modSuffix ? `${label}${modSuffix}` : label;
+      diceHistory.unshift({ label: chipLabel, total, natClass });
       if (diceHistory.length > MAX_HIST) diceHistory.pop();
       diceHistoryEl.innerHTML = "";
       diceHistory.forEach((h) => {
@@ -1635,17 +1689,22 @@
 
       // Log the roll
       const ctx = diceContextInput.value.trim();
+      const modNoteTrim = diceModNoteInput.value.trim();
+      const modPart =
+        mod !== 0
+          ? ` (${mod > 0 ? "+" : ""}${mod}${modNoteTrim ? " " + modNoteTrim : ""})`
+          : "";
       const logLine = ctx
         ? natMsg
-          ? `[${ctx} — Roll ${label}: ${total} — ${natMsg}]`
+          ? `[${ctx} \u2014 Roll ${chipLabel}: ${total}${modPart} \u2014 ${natMsg}]`
           : breakdown
-            ? `[${ctx} — Roll ${label}: ${total} ${breakdown}]`
-            : `[${ctx} — Roll ${label}: ${total}]`
+            ? `[${ctx} \u2014 Roll ${chipLabel}: ${total}${modPart} ${breakdown}]`
+            : `[${ctx} \u2014 Roll ${chipLabel}: ${total}${modPart}]`
         : natMsg
-          ? `[Roll ${label}: ${total} — ${natMsg}]`
+          ? `[Roll ${chipLabel}: ${total}${modPart} \u2014 ${natMsg}]`
           : breakdown
-            ? `[Roll ${label}: ${total} ${breakdown}]`
-            : `[Roll ${label}: ${total}]`;
+            ? `[Roll ${chipLabel}: ${total}${modPart} ${breakdown}]`
+            : `[Roll ${chipLabel}: ${total}${modPart}]`;
       addLog(logLine);
     });
 
