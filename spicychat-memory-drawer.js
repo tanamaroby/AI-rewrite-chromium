@@ -1714,6 +1714,7 @@
       const amount = Math.max(0, parseInt(resAmountEl.value, 10) || 0);
       const r = resources.find((x) => String(x.id) === id);
       if (!r) return;
+      const before = r.value;
       if (op === "add") r.value += amount;
       else if (op === "sub") r.value = Math.max(0, r.value - amount);
       else if (op === "set") r.value = amount;
@@ -1722,16 +1723,21 @@
       if (row && row._valEl) row._valEl.textContent = r.value;
       rebuildResSelect(id);
       saveRes();
-      const label =
-        op === "add"
-          ? "gained " + amount
-          : op === "sub"
-            ? "used " + amount
-            : "set to " + amount;
-      showResFeedback(label + " \u2192 " + r.value);
-      addLog(
-        `[${r.name || "Resource"}: ${label} \u2192 ${r.value}${r.notes ? " (" + r.notes + ")" : ""}]`,
+      const notePart = r.notes ? ` (${r.notes})` : "";
+      let logMsg;
+      if (op === "add") {
+        logMsg = `[${r.name || "Resource"}: gained ${amount}, ${before} \u2192 ${r.value} left${notePart}]`;
+      } else if (op === "sub") {
+        logMsg = `[${r.name || "Resource"}: used ${amount}, ${before} \u2192 ${r.value} left${notePart}]`;
+      } else {
+        logMsg = `[${r.name || "Resource"}: set to ${r.value}${notePart}]`;
+      }
+      showResFeedback(
+        op === "set"
+          ? `= ${r.value}`
+          : `${op === "add" ? "+" : "-"}${amount} \u2192 ${r.value}`,
       );
+      addLog(logMsg);
     }
 
     document
