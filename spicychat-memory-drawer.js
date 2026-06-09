@@ -915,6 +915,11 @@
               </button>
             </div>
             <input id="sc-np-dice-context" type="text" class="dice-context-input" maxlength="80" placeholder="Context… e.g. attempting to pick the lock" data-ai-rewriter-ignore="1" />
+            <div class="dice-mod-row">
+              <span class="dice-mod-label">Mod</span>
+              <input id="sc-np-dice-mod" type="number" class="dice-mod-input" value="0" min="-99" max="99" data-ai-rewriter-ignore="1" />
+              <input id="sc-np-dice-mod-note" type="text" class="dice-mod-note" maxlength="50" placeholder="e.g. +3 proficiency, DEX bonus…" data-ai-rewriter-ignore="1" />
+            </div>
             <div id="sc-np-dice-result">
               <div class="dice-result-total" id="sc-np-dice-total">—</div>
               <div class="dice-result-breakdown" id="sc-np-dice-breakdown"></div>
