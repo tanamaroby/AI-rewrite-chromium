@@ -18,15 +18,12 @@
     const MIN_W = 260;
     const MAX_W = 780;
     const DEFAULT_W = 360;
-    const SAVE_DEBOUNCE = 800;
-    const NOTE_PREFIX = "sc_note_v1_";
     const WIDTH_KEY = "sc_note_width_v1";
 
     /* Chat ID = last path segment, e.g. /chat/abc123 → "abc123" */
     const chatId =
       location.pathname.replace(/^\/chat\//, "").replace(/\/$/, "") ||
       "default";
-    const storageKey = NOTE_PREFIX + chatId;
 
     /* Restore saved width */
     let DRAWER_W =
@@ -147,83 +144,206 @@
     #sc-np-header button:hover { background: rgba(255,255,255,0.07); color: #e2e8f0; }
     #sc-np-header button.active { color: #a78bfa; background: rgba(108,99,255,0.15); }
 
-    /* ── Status bar ── */
-    #sc-np-status {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 4px 12px;
-      font-size: 10.5px;
-      color: #475569;
-      border-bottom: 1px solid rgba(108,99,255,0.1);
-      flex-shrink: 0;
-      gap: 8px;
-    }
-    #sc-np-status-left { display: flex; align-items: center; gap: 8px; }
-    #sc-np-autosave {
-      display: flex; align-items: center; gap: 4px;
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-    #sc-np-autosave.visible { opacity: 1; }
-    #sc-np-autosave svg { color: #22c55e; }
-
     /* ── Body ── */
     #sc-np-body {
       flex: 1;
       overflow: hidden;
       position: relative;
     }
-    #sc-np-textarea {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      background: transparent;
-      border: none;
-      outline: none;
-      resize: none;
-      color: #e2e8f0;
-      font-size: 13.5px;
-      line-height: 1.65;
-      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, monospace;
-      padding: 14px 16px;
-      box-sizing: border-box;
-      caret-color: #a78bfa;
+
+    /* ── Quest Log panel ── */
+    #sc-np-quests-panel {
+      position: absolute; inset: 0; overflow-y: auto;
+      padding: 12px; box-sizing: border-box;
+      display: flex; flex-direction: column; gap: 10px;
     }
-    #sc-np-textarea::selection { background: rgba(108,99,255,0.35); }
-    #sc-np-textarea::placeholder { color: #334155; }
-    #sc-np-preview {
-      position: absolute;
-      inset: 0;
-      overflow-y: auto;
-      padding: 14px 16px;
-      box-sizing: border-box;
-      color: #cbd5e1;
-      font-size: 13.5px;
-      line-height: 1.7;
-      display: none;
+    #sc-np-quests-panel.sc-np-hidden { display: none; }
+    #sc-np-quests-panel::-webkit-scrollbar { width: 5px; }
+    #sc-np-quests-panel::-webkit-scrollbar-track { background: transparent; }
+    #sc-np-quests-panel::-webkit-scrollbar-thumb { background: rgba(108,99,255,0.3); border-radius: 3px; }
+
+    /* Quest section headers */
+    .ql-section-header { display: flex; align-items: center; justify-content: space-between; }
+    .ql-section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #475569; }
+    .ql-add-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 9px; border-radius: 5px; border: 1px solid rgba(108,99,255,0.3);
+      background: rgba(108,99,255,0.1); color: #a78bfa; font-size: 10px;
+      font-weight: 700; font-family: inherit; cursor: pointer; letter-spacing: 0.03em;
+      transition: background 0.12s, border-color 0.12s;
     }
-    #sc-np-preview.visible { display: block; }
-    #sc-np-preview h1,#sc-np-preview h2,#sc-np-preview h3 { color: #a78bfa; margin: 0.9em 0 0.4em; font-weight: 600; }
-    #sc-np-preview h1 { font-size: 1.3em; }
-    #sc-np-preview h2 { font-size: 1.15em; }
-    #sc-np-preview h3 { font-size: 1em; }
-    #sc-np-preview strong { color: #e2e8f0; }
-    #sc-np-preview em { color: #c4b5fd; font-style: italic; }
-    #sc-np-preview code { background: rgba(108,99,255,0.18); border-radius: 3px; padding: 1px 5px; font-size: 0.9em; font-family: ui-monospace, monospace; color: #a78bfa; }
-    #sc-np-preview pre { background: rgba(0,0,0,0.35); border-radius: 6px; padding: 10px 14px; overflow-x: auto; border: 1px solid rgba(108,99,255,0.2); }
-    #sc-np-preview pre code { background: none; padding: 0; }
-    #sc-np-preview blockquote { border-left: 3px solid rgba(108,99,255,0.5); margin: 0; padding-left: 12px; color: #94a3b8; }
-    #sc-np-preview ul,#sc-np-preview ol { padding-left: 20px; }
-    #sc-np-preview li { margin: 2px 0; }
-    #sc-np-preview a { color: #818cf8; text-decoration: underline; }
-    #sc-np-preview hr { border: none; border-top: 1px solid rgba(108,99,255,0.2); margin: 12px 0; }
-    #sc-np-preview p { margin: 0.5em 0; }
+    .ql-add-btn:hover { background: rgba(108,99,255,0.2); border-color: rgba(108,99,255,0.5); }
+
+    /* Quest item card */
+    .ql-item {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(108,99,255,0.16);
+      border-radius: 8px; padding: 10px 12px;
+      display: flex; flex-direction: column; gap: 6px;
+      transition: border-color 0.15s, opacity 0.15s;
+      position: relative;
+    }
+    .ql-item.ql-done { opacity: 0.45; border-color: rgba(34,197,94,0.2); }
+    .ql-item.ql-failed { opacity: 0.35; border-color: rgba(239,68,68,0.2); }
+    .ql-item-top { display: flex; align-items: flex-start; gap: 8px; }
+    .ql-status-btn {
+      flex-shrink: 0; width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid rgba(108,99,255,0.4); background: transparent;
+      cursor: pointer; padding: 0; margin-top: 2px;
+      transition: background 0.15s, border-color 0.15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ql-status-btn:hover { border-color: rgba(108,99,255,0.75); background: rgba(108,99,255,0.12); }
+    .ql-item.ql-done .ql-status-btn { background: rgba(34,197,94,0.25); border-color: #22c55e; }
+    .ql-item.ql-failed .ql-status-btn { background: rgba(239,68,68,0.2); border-color: #ef4444; }
+    .ql-status-icon { width: 8px; height: 8px; pointer-events: none; }
+    .ql-title-wrap { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .ql-title-input {
+      width: 100%; box-sizing: border-box; background: transparent;
+      border: none; outline: none; color: #e2e8f0; font-size: 12.5px;
+      font-weight: 600; font-family: inherit; caret-color: #a78bfa;
+      padding: 0; line-height: 1.4;
+    }
+    .ql-item.ql-done .ql-title-input { text-decoration: line-through; color: #64748b; }
+    .ql-item.ql-failed .ql-title-input { text-decoration: line-through; color: #64748b; }
+    .ql-title-input::placeholder { color: #334155; }
+    .ql-notes-input {
+      width: 100%; box-sizing: border-box; background: transparent;
+      border: none; outline: none; resize: none; color: #94a3b8;
+      font-size: 11.5px; font-family: inherit; line-height: 1.5;
+      caret-color: #a78bfa; padding: 0; overflow: hidden; min-height: 0;
+    }
+    .ql-notes-input::placeholder { color: #334155; }
+    .ql-item-bottom { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+    .ql-state-btns { display: flex; gap: 4px; }
+    .ql-state-chip {
+      font-size: 9.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+      padding: 2px 7px; border-radius: 100px; border: 1px solid transparent;
+      cursor: pointer; font-family: inherit; background: transparent;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+    }
+    .ql-state-chip.active-chip { pointer-events: none; }
+    .ql-state-active  { color: #a78bfa; border-color: rgba(108,99,255,0.35); }
+    .ql-state-active.active-chip  { background: rgba(108,99,255,0.2); }
+    .ql-state-active:not(.active-chip):hover  { background: rgba(108,99,255,0.1); }
+    .ql-state-done    { color: #22c55e; border-color: rgba(34,197,94,0.3); }
+    .ql-state-done.active-chip    { background: rgba(34,197,94,0.15); }
+    .ql-state-done:not(.active-chip):hover    { background: rgba(34,197,94,0.08); }
+    .ql-state-failed  { color: #f87171; border-color: rgba(239,68,68,0.3); }
+    .ql-state-failed.active-chip  { background: rgba(239,68,68,0.12); }
+    .ql-state-failed:not(.active-chip):hover  { background: rgba(239,68,68,0.07); }
+    .ql-delete-btn {
+      background: none; border: none; padding: 3px 5px; cursor: pointer;
+      color: #334155; border-radius: 4px; transition: color 0.12s, background 0.12s;
+      display: flex; align-items: center;
+    }
+    .ql-delete-btn:hover { color: #f87171; background: rgba(239,68,68,0.08); }
+    .ql-empty-state { text-align: center; color: #334155; font-size: 12px; padding: 16px 0; }
+
+    /* ── Inventory panel (inside quests tab) ── */
+    #sc-np-inv-list { display: flex; flex-direction: column; gap: 5px; }
+    .inv-item {
+      display: flex; align-items: center; gap: 7px;
+      background: rgba(255,255,255,0.025); border: 1px solid rgba(108,99,255,0.13);
+      border-radius: 6px; padding: 6px 10px;
+      transition: border-color 0.12s;
+    }
+    .inv-item:focus-within { border-color: rgba(108,99,255,0.35); }
+    .inv-qty-input {
+      width: 38px; flex-shrink: 0; background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(108,99,255,0.2); border-radius: 4px;
+      color: #a78bfa; font-size: 12px; font-weight: 700; font-family: inherit;
+      text-align: center; padding: 2px 4px; outline: none;
+      transition: border-color 0.12s; caret-color: #a78bfa;
+    }
+    .inv-qty-input:focus { border-color: rgba(108,99,255,0.5); }
+    .inv-name-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: #e2e8f0; font-size: 12.5px; font-family: inherit;
+      caret-color: #a78bfa; min-width: 0;
+    }
+    .inv-name-input::placeholder { color: #334155; }
+    .inv-notes-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: #64748b; font-size: 11px; font-family: inherit;
+      caret-color: #a78bfa; min-width: 0; max-width: 80px;
+    }
+    .inv-notes-input::placeholder { color: #2a3447; }
+    .inv-delete-btn {
+      background: none; border: none; padding: 2px 4px; cursor: pointer;
+      color: #293548; border-radius: 3px; flex-shrink: 0;
+      transition: color 0.12s; display: flex; align-items: center;
+    }
+    .inv-delete-btn:hover { color: #f87171; }
+    #sc-np-inv-save {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 10.5px; color: #22c55e;
+      opacity: 0; transition: opacity 0.3s; height: 14px; margin-top: 2px;
+    }
+    #sc-np-inv-save.visible { opacity: 1; }
+
+    /* ── Dice roller (inside quests tab) ── */
+    #sc-np-dice-section { display: flex; flex-direction: column; gap: 8px; }
+    .dice-faces-row { display: flex; flex-wrap: wrap; gap: 5px; }
+    .dice-face-btn {
+      flex: 1; min-width: 36px; padding: 6px 4px; border-radius: 7px;
+      border: 1px solid rgba(108,99,255,0.3); background: rgba(108,99,255,0.07);
+      color: #a78bfa; font-size: 11px; font-weight: 700; font-family: inherit;
+      cursor: pointer; text-align: center; white-space: nowrap;
+      transition: background 0.12s, border-color 0.12s, transform 0.07s;
+    }
+    .dice-face-btn:hover { background: rgba(108,99,255,0.18); border-color: rgba(108,99,255,0.55); }
+    .dice-face-btn:active { transform: scale(0.91); }
+    .dice-face-btn.active { background: rgba(108,99,255,0.28); border-color: #6c63ff; color: #e0d8ff; }
+    .dice-controls-row { display: flex; align-items: center; gap: 7px; }
+    .dice-count-input {
+      width: 44px; text-align: center; background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(108,99,255,0.2); border-radius: 5px;
+      color: #e2e8f0; font-size: 12.5px; font-weight: 600; font-family: inherit;
+      padding: 5px 6px; outline: none; transition: border-color 0.12s;
+    }
+    .dice-count-input:focus { border-color: rgba(108,99,255,0.5); }
+    .dice-count-label { font-size: 11px; color: #475569; }
+    .dice-roll-btn {
+      flex: 1; padding: 7px 10px; border-radius: 7px;
+      border: 1px solid rgba(108,99,255,0.4); background: rgba(108,99,255,0.15);
+      color: #a78bfa; font-size: 12px; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: background 0.12s, border-color 0.12s, transform 0.08s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .dice-roll-btn:hover { background: rgba(108,99,255,0.25); border-color: rgba(108,99,255,0.6); }
+    .dice-roll-btn:active { transform: scale(0.96); }
+    .dice-roll-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    #sc-np-dice-result {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      min-height: 56px; padding: 8px 0 4px;
+    }
+    .dice-result-total {
+      font-size: 38px; font-weight: 800; line-height: 1;
+      color: #a78bfa; font-variant-numeric: tabular-nums;
+      transition: color 0.25s;
+    }
+    .dice-result-total.nat20 { color: #4ade80; text-shadow: 0 0 18px rgba(74,222,128,0.5); }
+    .dice-result-total.nat1  { color: #f87171; text-shadow: 0 0 18px rgba(248,113,113,0.4); }
+    .dice-result-total.rolling { animation: dice-spin 0.5s cubic-bezier(0.22,1,0.36,1); }
+    @keyframes dice-spin {
+      0%   { transform: scale(0.55) rotate(-18deg); opacity: 0; }
+      60%  { transform: scale(1.18) rotate(6deg);   opacity: 1; }
+      100% { transform: scale(1)    rotate(0deg);   opacity: 1; }
+    }
+    .dice-result-breakdown { font-size: 11px; color: #475569; text-align: center; }
+    .dice-result-nat { font-size: 11px; font-weight: 700; }
+    .dice-result-nat.nat20 { color: #4ade80; }
+    .dice-result-nat.nat1  { color: #f87171; }
+    .dice-history { display: flex; flex-wrap: wrap; gap: 4px; min-height: 22px; }
+    .dice-history-chip {
+      font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 100px;
+      background: rgba(108,99,255,0.1); border: 1px solid rgba(108,99,255,0.2);
+      color: #64748b;
+    }
+    .dice-history-chip.nat20 { background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.25); color: #4ade80; }
+    .dice-history-chip.nat1  { background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.2); color: #f87171; }
 
     /* ── Page shrink ── */
-    /* transform: translateX(0) (non-none) makes body the containing block   */
-    /* for position:fixed children, so they shrink with body's width.         */
     body {
       transition: width 0.26s cubic-bezier(0.4,0,0.2,1);
     }
@@ -233,45 +353,6 @@
       max-width: calc(100vw - var(--sc-np-w, ${DEFAULT_W}px));
       overflow-x: hidden;
     }
-
-    /* ── Scrollbar ── */
-    #sc-np-textarea::-webkit-scrollbar,
-    #sc-np-preview::-webkit-scrollbar { width: 5px; }
-    #sc-np-textarea::-webkit-scrollbar-track,
-    #sc-np-preview::-webkit-scrollbar-track { background: transparent; }
-    #sc-np-textarea::-webkit-scrollbar-thumb,
-    #sc-np-preview::-webkit-scrollbar-thumb { background: rgba(108,99,255,0.3); border-radius: 3px; }
-
-    /* ── Clear confirm overlay ── */
-    #sc-np-clear-confirm {
-      display: none;
-      position: absolute;
-      inset: 0;
-      background: rgba(15,12,30,0.92);
-      backdrop-filter: blur(4px);
-      z-index: 10;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      color: #cbd5e1;
-      font-size: 13px;
-      text-align: center;
-      padding: 24px;
-      box-sizing: border-box;
-    }
-    #sc-np-clear-confirm.visible { display: flex; }
-    #sc-np-clear-confirm p { margin: 0; color: #94a3b8; font-size: 12px; }
-    .sc-np-confirm-btns { display: flex; gap: 10px; }
-    .sc-np-confirm-btns button { padding: 7px 18px; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; font-family: inherit; font-weight: 500; }
-    #sc-np-confirm-yes { background: #ef4444; color: #fff; }
-    #sc-np-confirm-yes:hover { background: #dc2626; }
-    #sc-np-confirm-no { background: rgba(108,99,255,0.2); color: #a78bfa; border: 1px solid rgba(108,99,255,0.3); }
-    #sc-np-confirm-no:hover { background: rgba(108,99,255,0.3); }
-
-    /* ── Notes panel ── */
-    #sc-np-notes-panel { position: absolute; inset: 0; }
-    #sc-np-notes-panel.sc-np-hidden { display: none; }
 
     /* ── Tab strip ── */
     #sc-np-tabstrip { display: flex; gap: 3px; flex: 1; align-items: center; }
@@ -450,20 +531,9 @@
     drawer.innerHTML = `
       <div id="sc-np-header">
         <div id="sc-np-tabstrip">
-          <button class="sc-np-tab-pill active" data-tab="notes">Notes</button>
+          <button class="sc-np-tab-pill active" data-tab="quests">Quest Log</button>
           <button class="sc-np-tab-pill" data-tab="rp">RP Tools</button>
           <button class="sc-np-tab-pill" data-tab="fmt">Formatter</button>
-        </div>
-        <div id="sc-np-notes-btns">
-          <button id="sc-np-btn-preview" title="Toggle Markdown preview (Ctrl+P)">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-          <button id="sc-np-btn-export" title="Export note as .txt">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          </button>
-          <button id="sc-np-btn-clear" title="Clear note">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-          </button>
         </div>
         <button id="sc-np-btn-close" title="Close (Esc)">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -481,17 +551,55 @@
         <span id="sc-np-lastmod"></span>
       </div>
       <div id="sc-np-body">
-        <div id="sc-np-notes-panel">
-        <textarea id="sc-np-textarea" data-ai-rewriter-ignore="1" placeholder="Start typing your notes for this chat\u2026&#10;&#10;Supports Markdown \u2014 click \ud83d\udc41\ufe0f to preview. Ctrl+S to save now."></textarea>
-        <div id="sc-np-preview"></div>
-        <div id="sc-np-clear-confirm">
-          <strong>Clear this note?</strong>
-          <p>This will permanently delete the note for this chat.</p>
-          <div class="sc-np-confirm-btns">
-            <button id="sc-np-confirm-yes">Clear</button>
-            <button id="sc-np-confirm-no">Cancel</button>
+        <div id="sc-np-quests-panel">
+          <!-- Quest Log -->
+          <div class="ql-section-header">
+            <span class="ql-section-label">Quests</span>
+            <button id="sc-np-quest-add" class="ql-add-btn">+ Add Quest</button>
           </div>
-        </div>
+          <div id="sc-np-quest-list"></div>
+          <!-- Inventory -->
+          <div class="ql-section-header" style="margin-top:4px;">
+            <span class="ql-section-label">Inventory</span>
+            <button id="sc-np-inv-add" class="ql-add-btn">+ Add Item</button>
+          </div>
+          <div class="rp-card" style="padding:8px 10px;gap:6px;">
+            <div id="sc-np-inv-list"></div>
+            <div id="sc-np-inv-save">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Saved
+            </div>
+          </div>
+          <!-- Dice Roller -->
+          <div class="ql-section-header" style="margin-top:4px;">
+            <span class="ql-section-label">Dice Roller</span>
+          </div>
+          <div class="rp-card" id="sc-np-dice-section">
+            <div class="dice-faces-row">
+              <button class="dice-face-btn active" data-faces="4">d4</button>
+              <button class="dice-face-btn" data-faces="6">d6</button>
+              <button class="dice-face-btn" data-faces="8">d8</button>
+              <button class="dice-face-btn" data-faces="10">d10</button>
+              <button class="dice-face-btn" data-faces="12">d12</button>
+              <button class="dice-face-btn active" data-faces="20">d20</button>
+              <button class="dice-face-btn" data-faces="100">d100</button>
+            </div>
+            <div class="dice-controls-row">
+              <span class="dice-count-label">Roll</span>
+              <input id="sc-np-dice-count" type="number" class="dice-count-input" value="1" min="1" max="20" data-ai-rewriter-ignore="1" />
+              <span class="dice-count-label" id="sc-np-dice-label">× d20</span>
+              <button id="sc-np-dice-roll" class="dice-roll-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="4"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="16" cy="16" r="1.2" fill="currentColor"/><circle cx="16" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="16" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>
+                Roll
+              </button>
+            </div>
+            <div id="sc-np-dice-result">
+              <div class="dice-result-total" id="sc-np-dice-total">—</div>
+              <div class="dice-result-breakdown" id="sc-np-dice-breakdown"></div>
+              <div class="dice-result-nat" id="sc-np-dice-nat"></div>
+            </div>
+            <div class="dice-history" id="sc-np-dice-history"></div>
+          </div>
         </div>
         <div id="sc-np-rp-panel">
           <div class="rp-section-label">Focused Input</div>
@@ -657,24 +765,21 @@
     document.documentElement.appendChild(resizeHandle);
 
     /* ── Element refs ── */
-    const textarea = document.getElementById("sc-np-textarea");
-    const preview = document.getElementById("sc-np-preview");
-    const wcEl = document.getElementById("sc-np-wc");
-    const ccEl = document.getElementById("sc-np-cc");
-    const autosaveEl = document.getElementById("sc-np-autosave");
-    const lastmodEl = document.getElementById("sc-np-lastmod");
-    const clearConfirm = document.getElementById("sc-np-clear-confirm");
-    const btnPreview = document.getElementById("sc-np-btn-preview");
-    const btnExport = document.getElementById("sc-np-btn-export");
-    const btnClear = document.getElementById("sc-np-btn-clear");
-    const btnClose = document.getElementById("sc-np-btn-close");
-    const confirmYes = document.getElementById("sc-np-confirm-yes");
-    const confirmNo = document.getElementById("sc-np-confirm-no");
-    const notesPanel = document.getElementById("sc-np-notes-panel");
+    const questsPanel = document.getElementById("sc-np-quests-panel");
+    const questListEl = document.getElementById("sc-np-quest-list");
+    const questAddBtn = document.getElementById("sc-np-quest-add");
+    const invListEl = document.getElementById("sc-np-inv-list");
+    const invAddBtn = document.getElementById("sc-np-inv-add");
+    const invSaveEl = document.getElementById("sc-np-inv-save");
+    const diceCountInput = document.getElementById("sc-np-dice-count");
+    const diceLabelEl = document.getElementById("sc-np-dice-label");
+    const diceRollBtn = document.getElementById("sc-np-dice-roll");
+    const diceTotalEl = document.getElementById("sc-np-dice-total");
+    const diceBreakdownEl = document.getElementById("sc-np-dice-breakdown");
+    const diceNatEl = document.getElementById("sc-np-dice-nat");
+    const diceHistoryEl = document.getElementById("sc-np-dice-history");
     const rpPanel = document.getElementById("sc-np-rp-panel");
     const fmtPanel = document.getElementById("sc-np-fmt-panel");
-    const statusBar = document.getElementById("sc-np-status");
-    const notesBtns = document.getElementById("sc-np-notes-btns");
     const rpPersonaPillsEl = document.getElementById("sc-rp-persona-pills");
     const rpPersonaEditorEl = document.getElementById("sc-rp-persona-editor");
     const rpPersonaLabelInput = document.getElementById("sc-rp-persona-label");
@@ -729,10 +834,7 @@
 
     /* ── State ── */
     let isOpen = false;
-    let previewMode = false;
-    let saveTimer = null;
-    let autosaveTimer = null;
-    let activeTab = "notes";
+    let activeTab = "quests";
     let rpSaveTimer = null;
     let rpAutosaveTimer = null;
     const MAX_SNIPPETS = 5;
@@ -742,202 +844,399 @@
     }));
     let snipEditMode = false;
 
+    /* Storage keys */
+    const QUEST_KEY = "sc_quests_v1_" + chatId;
+    const INV_KEY = "sc_inv_v1_" + chatId;
+
     /* ── CSS variable init ── */
     document.documentElement.style.setProperty("--sc-np-w", DRAWER_W + "px");
 
-    /* ── Load saved note ── */
-    function loadNote() {
-      chrome.storage.local.get(storageKey, (data) => {
-        const parsed = data[storageKey];
-        if (parsed) {
-          textarea.value = parsed.text || "";
-          if (parsed.lastmod) updateLastmod(parsed.lastmod);
-        }
-        updateStats();
+    /* ════════════════ QUEST LOG ════════════════ */
+    const QUEST_STATES = ["active", "done", "failed"];
+    let quests = [];
+    let questSaveTimer = null;
+
+    function newQuest() {
+      return {
+        id: Date.now() + Math.random(),
+        title: "",
+        notes: "",
+        state: "active",
+      };
+    }
+
+    function saveQuests() {
+      chrome.storage.local.set({ [QUEST_KEY]: quests });
+    }
+    function scheduleQuestSave() {
+      clearTimeout(questSaveTimer);
+      questSaveTimer = setTimeout(saveQuests, 500);
+    }
+
+    function autoResizeTextarea(el) {
+      el.style.height = "0";
+      el.style.height = el.scrollHeight + "px";
+    }
+
+    function renderQuests() {
+      questListEl.innerHTML = "";
+      if (!quests.length) {
+        const empty = document.createElement("div");
+        empty.className = "ql-empty-state";
+        empty.textContent = "No quests yet — tap + Add Quest to begin.";
+        questListEl.appendChild(empty);
+        return;
+      }
+      quests.forEach((q, idx) => {
+        const card = document.createElement("div");
+        card.className =
+          "ql-item" +
+          (q.state === "done"
+            ? " ql-done"
+            : q.state === "failed"
+              ? " ql-failed"
+              : "");
+        card.dataset.id = q.id;
+
+        // Status circle button
+        const statusBtn = document.createElement("button");
+        statusBtn.className = "ql-status-btn";
+        statusBtn.title = "Cycle status";
+        const checkIcon = `<svg class="ql-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+        const xIcon = `<svg class="ql-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+        statusBtn.innerHTML =
+          q.state === "done" ? checkIcon : q.state === "failed" ? xIcon : "";
+        statusBtn.addEventListener("click", () => {
+          const cur = QUEST_STATES.indexOf(q.state);
+          q.state = QUEST_STATES[(cur + 1) % QUEST_STATES.length];
+          scheduleQuestSave();
+          renderQuests();
+        });
+
+        // Title row
+        const titleWrap = document.createElement("div");
+        titleWrap.className = "ql-title-wrap";
+        const titleInput = document.createElement("input");
+        titleInput.type = "text";
+        titleInput.className = "ql-title-input";
+        titleInput.placeholder = "Quest name…";
+        titleInput.value = q.title;
+        titleInput.maxLength = 80;
+        titleInput.setAttribute("data-ai-rewriter-ignore", "1");
+        titleInput.addEventListener("input", () => {
+          q.title = titleInput.value;
+          scheduleQuestSave();
+        });
+
+        const notesInput = document.createElement("textarea");
+        notesInput.className = "ql-notes-input";
+        notesInput.placeholder = "Notes (optional)…";
+        notesInput.value = q.notes;
+        notesInput.rows = 1;
+        notesInput.setAttribute("data-ai-rewriter-ignore", "1");
+        notesInput.addEventListener("input", () => {
+          q.notes = notesInput.value;
+          autoResizeTextarea(notesInput);
+          scheduleQuestSave();
+        });
+        setTimeout(() => autoResizeTextarea(notesInput), 0);
+        titleWrap.append(titleInput, notesInput);
+
+        const top = document.createElement("div");
+        top.className = "ql-item-top";
+        top.append(statusBtn, titleWrap);
+
+        // Bottom row: state chips + delete
+        const stateRow = document.createElement("div");
+        stateRow.className = "ql-state-btns";
+        QUEST_STATES.forEach((st) => {
+          const chip = document.createElement("button");
+          chip.className =
+            `ql-state-chip ql-state-${st}` +
+            (q.state === st ? " active-chip" : "");
+          chip.textContent = st.charAt(0).toUpperCase() + st.slice(1);
+          chip.addEventListener("click", () => {
+            q.state = st;
+            scheduleQuestSave();
+            renderQuests();
+          });
+          stateRow.appendChild(chip);
+        });
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "ql-delete-btn";
+        delBtn.title = "Delete quest";
+        delBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>`;
+        delBtn.addEventListener("click", () => {
+          quests.splice(idx, 1);
+          saveQuests();
+          renderQuests();
+        });
+
+        const bottom = document.createElement("div");
+        bottom.className = "ql-item-bottom";
+        bottom.append(stateRow, delBtn);
+
+        card.append(top, bottom);
+        questListEl.appendChild(card);
       });
     }
 
-    /* ── Save ── */
-    function saveNote() {
-      const text = textarea.value;
-      const lastmod = Date.now();
-      chrome.storage.local.set({ [storageKey]: { text, lastmod } });
-      updateLastmod(lastmod);
-      showAutosave();
+    questAddBtn.addEventListener("click", () => {
+      quests.unshift(newQuest());
+      saveQuests();
+      renderQuests();
+      // Focus the new title input
+      const first = questListEl.querySelector(".ql-title-input");
+      if (first) first.focus();
+    });
+
+    function loadQuests() {
+      chrome.storage.local.get(QUEST_KEY, (data) => {
+        quests = Array.isArray(data[QUEST_KEY]) ? data[QUEST_KEY] : [];
+        renderQuests();
+      });
     }
 
-    function scheduleSave() {
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(saveNote, SAVE_DEBOUNCE);
+    /* ════════════════ INVENTORY ════════════════ */
+    let inventory = [];
+    let invSaveTimer = null;
+
+    function newInvItem() {
+      return { id: Date.now() + Math.random(), qty: "1", name: "", notes: "" };
     }
 
-    function showAutosave() {
-      autosaveEl.classList.add("visible");
-      clearTimeout(autosaveTimer);
-      autosaveTimer = setTimeout(
-        () => autosaveEl.classList.remove("visible"),
+    function saveInv() {
+      chrome.storage.local.set({ [INV_KEY]: inventory });
+      invSaveEl.classList.add("visible");
+      clearTimeout(invSaveTimer);
+      invSaveTimer = setTimeout(
+        () => invSaveEl.classList.remove("visible"),
         1800,
       );
     }
-
-    /* ── Stats ── */
-    function updateStats() {
-      const text = textarea.value;
-      const words = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
-      wcEl.textContent = words + (words === 1 ? " word" : " words");
-      ccEl.textContent = text.length + (text.length === 1 ? " char" : " chars");
+    function scheduleInvSave() {
+      clearTimeout(invSaveTimer);
+      invSaveTimer = setTimeout(saveInv, 500);
     }
 
-    function updateLastmod(ts) {
-      const d = new Date(ts);
-      lastmodEl.textContent =
-        "Saved " +
-        d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    }
-
-    /* ── Lightweight Markdown renderer ── */
-    function renderMarkdown(md) {
-      const html = md
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(
-          /```([\s\S]*?)```/g,
-          (_, c) => "<pre><code>" + c.trim() + "</code></pre>",
-        )
-        .replace(/`([^`]+)`/g, "<code>$1</code>")
-        .replace(/^### (.+)$/gm, "<h3>$1</h3>")
-        .replace(/^## (.+)$/gm, "<h2>$1</h2>")
-        .replace(/^# (.+)$/gm, "<h1>$1</h1>")
-        .replace(/^---+$/gm, "<hr>")
-        .replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>")
-        .replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>")
-        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-        .replace(/\*(.+?)\*/g, "<em>$1</em>")
-        .replace(/__(.+?)__/g, "<strong>$1</strong>")
-        .replace(/_(.+?)_/g, "<em>$1</em>")
-        .replace(/^\s*[-*+] (.+)$/gm, "<li>$1</li>")
-        .replace(/(<li>.*<\/li>)\n(?!<li>)/g, "<ul>$1</ul>")
-        .replace(/^\s*\d+\. (.+)$/gm, "<li>$1</li>")
-        .replace(
-          /\[([^\]]+)\]\(([^)]+)\)/g,
-          '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
-        )
-        .replace(/\n{2,}/g, "</p><p>")
-        .replace(/\n/g, "<br>");
-      return "<p>" + html + "</p>";
-    }
-
-    /* ── Preview toggle ── */
-    function setPreview(on) {
-      previewMode = on;
-      btnPreview.classList.toggle("active", on);
-      if (on) {
-        preview.innerHTML = renderMarkdown(textarea.value);
-        preview.classList.add("visible");
-        textarea.style.display = "none";
-      } else {
-        preview.classList.remove("visible");
-        textarea.style.display = "";
-        textarea.focus();
+    function renderInv() {
+      invListEl.innerHTML = "";
+      if (!inventory.length) {
+        const empty = document.createElement("div");
+        empty.className = "ql-empty-state";
+        empty.style.padding = "6px 0";
+        empty.textContent = "Empty — tap + Add Item.";
+        invListEl.appendChild(empty);
+        return;
       }
+      inventory.forEach((item, idx) => {
+        const row = document.createElement("div");
+        row.className = "inv-item";
+
+        const qtyInput = document.createElement("input");
+        qtyInput.type = "text";
+        qtyInput.className = "inv-qty-input";
+        qtyInput.value = item.qty;
+        qtyInput.placeholder = "1";
+        qtyInput.maxLength = 6;
+        qtyInput.title = "Quantity";
+        qtyInput.setAttribute("data-ai-rewriter-ignore", "1");
+        qtyInput.addEventListener("input", () => {
+          item.qty = qtyInput.value;
+          scheduleInvSave();
+        });
+
+        const nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.className = "inv-name-input";
+        nameInput.value = item.name;
+        nameInput.placeholder = "Item name…";
+        nameInput.maxLength = 60;
+        nameInput.setAttribute("data-ai-rewriter-ignore", "1");
+        nameInput.addEventListener("input", () => {
+          item.name = nameInput.value;
+          scheduleInvSave();
+        });
+
+        const notesInput = document.createElement("input");
+        notesInput.type = "text";
+        notesInput.className = "inv-notes-input";
+        notesInput.value = item.notes;
+        notesInput.placeholder = "note…";
+        notesInput.maxLength = 40;
+        notesInput.setAttribute("data-ai-rewriter-ignore", "1");
+        notesInput.addEventListener("input", () => {
+          item.notes = notesInput.value;
+          scheduleInvSave();
+        });
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "inv-delete-btn";
+        delBtn.title = "Remove item";
+        delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+        delBtn.addEventListener("click", () => {
+          inventory.splice(idx, 1);
+          saveInv();
+          renderInv();
+        });
+
+        row.append(qtyInput, nameInput, notesInput, delBtn);
+        invListEl.appendChild(row);
+      });
     }
+
+    invAddBtn.addEventListener("click", () => {
+      inventory.push(newInvItem());
+      saveInv();
+      renderInv();
+      const inputs = invListEl.querySelectorAll(".inv-name-input");
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    });
+
+    function loadInv() {
+      chrome.storage.local.get(INV_KEY, (data) => {
+        inventory = Array.isArray(data[INV_KEY]) ? data[INV_KEY] : [];
+        renderInv();
+      });
+    }
+
+    /* ════════════════ DICE ROLLER ════════════════ */
+    let selectedFaces = new Set([20]);
+    let diceHistory = [];
+    const MAX_HIST = 8;
+
+    // Allow multiple dice faces selected at once
+    document.querySelectorAll(".dice-face-btn").forEach((btn) => {
+      // default: only d20 starts active
+      const f = parseInt(btn.dataset.faces, 10);
+      if (f !== 20) btn.classList.remove("active");
+      btn.addEventListener("click", () => {
+        btn.classList.toggle("active");
+        if (btn.classList.contains("active")) {
+          selectedFaces.add(f);
+        } else {
+          selectedFaces.delete(f);
+          if (!selectedFaces.size) {
+            selectedFaces.add(f);
+            btn.classList.add("active");
+          }
+        }
+        updateDiceLabel();
+      });
+    });
+
+    function updateDiceLabel() {
+      const sorted = [...selectedFaces].sort((a, b) => a - b);
+      const count = Math.min(
+        20,
+        Math.max(1, parseInt(diceCountInput.value, 10) || 1),
+      );
+      const n = sorted.length === 1 ? count + "×" : count + "×(";
+      const faces = sorted.map((f) => "d" + f).join("+");
+      diceLabelEl.textContent = n + faces + (sorted.length > 1 ? ")" : "");
+    }
+
+    diceCountInput.addEventListener("input", updateDiceLabel);
+
+    diceRollBtn.addEventListener("click", () => {
+      const count = Math.min(
+        20,
+        Math.max(1, parseInt(diceCountInput.value, 10) || 1),
+      );
+      const faceArr = [...selectedFaces].sort((a, b) => a - b);
+
+      const allRolls = [];
+      const perDie = {};
+      faceArr.forEach((f) => {
+        perDie[f] = [];
+        for (let i = 0; i < count; i++) {
+          const r = Math.floor(Math.random() * f) + 1;
+          perDie[f].push(r);
+          allRolls.push(r);
+        }
+      });
+
+      const total = allRolls.reduce((a, b) => a + b, 0);
+
+      // Breakdown text
+      let breakdown = "";
+      if (allRolls.length > 1) {
+        if (faceArr.length === 1) {
+          breakdown = "[" + perDie[faceArr[0]].join(", ") + "]";
+        } else {
+          breakdown = faceArr
+            .map((f) => "d" + f + ": [" + perDie[f].join(",") + "]")
+            .join("  ");
+        }
+      }
+
+      // Nat 20/1 detection — only for single d20
+      let natMsg = "";
+      let natClass = "";
+      if (faceArr.length === 1 && faceArr[0] === 20 && count === 1) {
+        if (allRolls[0] === 20) {
+          natMsg = "Natural 20!";
+          natClass = "nat20";
+        } else if (allRolls[0] === 1) {
+          natMsg = "Critical Fail!";
+          natClass = "nat1";
+        }
+      }
+
+      // Animate
+      diceTotalEl.classList.remove("rolling", "nat20", "nat1");
+      void diceTotalEl.offsetWidth; // reflow
+      diceTotalEl.classList.add("rolling");
+      if (natClass) diceTotalEl.classList.add(natClass);
+      diceTotalEl.textContent = total;
+      diceBreakdownEl.textContent = breakdown;
+      diceNatEl.textContent = natMsg;
+      diceNatEl.className =
+        "dice-result-nat" + (natClass ? " " + natClass : "");
+
+      // History chip
+      const label = faceArr.map((f) => count + "d" + f).join("+");
+      const chipClass = "dice-history-chip" + (natClass ? " " + natClass : "");
+      diceHistory.unshift({ label, total, natClass });
+      if (diceHistory.length > MAX_HIST) diceHistory.pop();
+      diceHistoryEl.innerHTML = "";
+      diceHistory.forEach((h) => {
+        const chip = document.createElement("span");
+        chip.className =
+          "dice-history-chip" + (h.natClass ? " " + h.natClass : "");
+        chip.textContent = h.label + ": " + h.total;
+        diceHistoryEl.appendChild(chip);
+      });
+    });
+
+    updateDiceLabel();
 
     /* ── Open / close ── */
     function setOpen(val) {
       isOpen = val;
       drawer.classList.toggle("sc-np-open", val);
       document.documentElement.classList.toggle("sc-np-open", val);
-      if (val && activeTab === "notes") textarea.focus();
     }
 
-    /* ── Textarea events ── */
-    textarea.addEventListener("input", () => {
-      updateStats();
-      if (previewMode) preview.innerHTML = renderMarkdown(textarea.value);
-      scheduleSave();
-    });
-
-    textarea.addEventListener("keydown", (e) => {
-      if (e.key === "Tab") {
-        e.preventDefault();
-        const s = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        textarea.value =
-          textarea.value.slice(0, s) + "  " + textarea.value.slice(end);
-        textarea.selectionStart = textarea.selectionEnd = s + 2;
-        scheduleSave();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === "p") {
-        e.preventDefault();
-        setPreview(!previewMode);
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
-        e.preventDefault();
-        clearTimeout(saveTimer);
-        saveNote();
-      }
-    });
-
     document.addEventListener("keydown", (e) => {
-      if (
-        e.key === "Escape" &&
-        isOpen &&
-        clearConfirm.classList.contains("visible")
-      ) {
-        clearConfirm.classList.remove("visible");
-      } else if (e.key === "Escape" && isOpen) {
-        setOpen(false);
-      }
+      if (e.key === "Escape" && isOpen) setOpen(false);
     });
 
-    /* ── Button events ── */
+    const btnClose = document.getElementById("sc-np-btn-close");
     tab.addEventListener("click", () => setOpen(!isOpen));
     btnClose.addEventListener("click", () => setOpen(false));
-    btnPreview.addEventListener("click", () => setPreview(!previewMode));
-
-    btnExport.addEventListener("click", () => {
-      const blob = new Blob([textarea.value], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "notes-" + chatId + ".txt";
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    });
-
-    btnClear.addEventListener("click", () =>
-      clearConfirm.classList.add("visible"),
-    );
-    confirmNo.addEventListener("click", () =>
-      clearConfirm.classList.remove("visible"),
-    );
-    confirmYes.addEventListener("click", () => {
-      textarea.value = "";
-      chrome.storage.local.remove(storageKey);
-      updateStats();
-      lastmodEl.textContent = "";
-      clearConfirm.classList.remove("visible");
-      if (previewMode) setPreview(false);
-    });
 
     /* ── Tab switching ── */
-    function setTab(tab) {
-      activeTab = tab;
+    function setTab(t) {
+      activeTab = t;
       document.querySelectorAll(".sc-np-tab-pill").forEach((p) => {
-        p.classList.toggle("active", p.dataset.tab === tab);
+        p.classList.toggle("active", p.dataset.tab === t);
       });
-      notesPanel.classList.toggle("sc-np-hidden", tab !== "notes");
-      rpPanel.classList.toggle("visible", tab === "rp");
-      fmtPanel.classList.toggle("visible", tab === "fmt");
-      if (tab === "fmt") loadFormatterPanel();
-      statusBar.style.display = tab === "notes" ? "" : "none";
-      notesBtns.style.display = tab === "notes" ? "" : "none";
-      if (previewMode && tab !== "notes") setPreview(false);
-      if (tab !== "notes" && clearConfirm.classList.contains("visible")) {
-        clearConfirm.classList.remove("visible");
-      }
-      if (tab === "notes" && isOpen) textarea.focus();
+      questsPanel.classList.toggle("sc-np-hidden", t !== "quests");
+      rpPanel.classList.toggle("visible", t === "rp");
+      fmtPanel.classList.toggle("visible", t === "fmt");
+      if (t === "fmt") loadFormatterPanel();
     }
 
     document.querySelectorAll(".sc-np-tab-pill").forEach((btn) => {
@@ -1649,7 +1948,10 @@
     });
 
     /* ── Boot ── */
-    loadNote();
+    // Erase any legacy notes storage for this chat
+    chrome.storage.local.remove(["sc_note_v1_" + chatId]);
+    loadQuests();
+    loadInv();
     setOpen(true);
   }
 })();
