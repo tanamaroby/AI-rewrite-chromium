@@ -31,12 +31,13 @@ esac
 
 NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
 
-# ── Update @version in source file ─────────────────────────────────────────
+# ── Update @version and @name in source file ───────────────────────────────
 sed -i '' "s|// @version.*|// @version      ${NEW_VERSION}|" "$SRC"
+sed -i '' "s|// @name         .*|// @name         AI Rewriter — Mobile v${NEW_VERSION}|" "$SRC"
 echo "  version  ${CURRENT} → ${NEW_VERSION}"
 
 # ── Build destination filename with version stamp ───────────────────────────
-# e.g. "AI Rewriter — Mobile v2.0.1.user.js"
+# e.g. "AI Rewriter — Mobile v2.0.4.user.js"
 DEST_FILE="AI Rewriter — Mobile v${NEW_VERSION}.user.js"
 
 # ── Copy to iCloud ──────────────────────────────────────────────────────────
