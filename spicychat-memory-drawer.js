@@ -351,6 +351,8 @@
     /* ── Dice Modifier List ── */
     .dmod-header { display: flex; align-items: center; gap: 6px; margin: 2px 0 5px; }
     .dmod-header-label { font-size: 11px; color: #475569; flex: 1; }
+    .dmod-include-label { display: flex; align-items: center; gap: 3px; font-size: 11px; color: #475569; cursor: pointer; user-select: none; }
+    .dmod-include-label input { accent-color: #6c63ff; cursor: pointer; margin: 0; }
     .dmod-total-pill {
       font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 100px;
       background: rgba(108,99,255,0.1); border: 1px solid rgba(108,99,255,0.2); color: #64748b;
@@ -956,6 +958,7 @@
             <input id="sc-np-dice-context" type="text" class="dice-context-input" maxlength="80" placeholder="Context… e.g. attempting to pick the lock" data-ai-rewriter-ignore="1" />
             <div class="dmod-header">
               <span class="dmod-header-label">Modifiers</span>
+              <label class="dmod-include-label"><input type="checkbox" id="sc-np-dmod-include" checked data-ai-rewriter-ignore="1"> Include</label>
               <span id="sc-np-dmod-total" class="dmod-total-pill">0</span>
             </div>
             <div id="sc-np-dmod-list" class="dmod-list"></div>
@@ -1211,6 +1214,7 @@
     const diceModDisplayEl = document.getElementById("sc-np-dice-mod-display");
     const dmodListEl = document.getElementById("sc-np-dmod-list");
     const dmodTotalEl = document.getElementById("sc-np-dmod-total");
+    const dmodIncludeEl = document.getElementById("sc-np-dmod-include");
     const DICE_MOD_KEY = "sc_dice_mod_v1_" + chatId;
     let diceModifiers = [];
 
@@ -1855,7 +1859,7 @@
       });
 
       const rawTotal = allRolls.reduce((a, b) => a + b, 0);
-      const mod = computeDiceMod();
+      const mod = dmodIncludeEl.checked ? computeDiceMod() : 0;
       const total = rawTotal + mod;
 
       // Breakdown text
@@ -2855,7 +2859,7 @@
         saveNpcs();
         renderNpcs();
         const notePart = note ? ` \u2014 ${note}` : "";
-        addLog(`[NPC met: ${name || "(unnamed)"} [${disp}]${notePart}]`);
+        addLog(`[NPC met: ${name || "(unnamed)"} (${disp})${notePart}]`);
         nameIn.value = "";
         noteIn.value = "";
         dispSel.value = "neutral";
