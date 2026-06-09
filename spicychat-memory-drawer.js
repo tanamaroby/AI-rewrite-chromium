@@ -189,7 +189,7 @@
     }
     #sc-np-log-clear-btn:hover { color: #f87171; }
 
-    /* ── Copy / export buttons ── */
+    /* ── Insert / export buttons ── */
     .ql-copy-btn {
       display: inline-flex; align-items: center; gap: 3px;
       padding: 2px 7px; border-radius: 5px; border: 1px solid rgba(108,99,255,0.22);
@@ -198,7 +198,7 @@
       transition: background 0.12s, border-color 0.12s, color 0.12s;
     }
     .ql-copy-btn:hover { background: rgba(108,99,255,0.1); border-color: rgba(108,99,255,0.4); color: #a78bfa; }
-    .ql-copy-btn.copied { color: #22c55e; border-color: rgba(34,197,94,0.35); }
+    .ql-copy-btn.inserted { color: #22c55e; border-color: rgba(34,197,94,0.35); }
 
     /* ── Body ── */
     #sc-np-body {
@@ -359,6 +359,15 @@
     }
     .dice-count-input:focus { border-color: rgba(108,99,255,0.5); }
     .dice-count-label { font-size: 11px; color: #475569; }
+    .dice-context-input {
+      width: 100%; box-sizing: border-box; background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(108,99,255,0.15); border-radius: 5px;
+      color: #94a3b8; font-size: 11px; font-family: inherit; font-style: italic;
+      padding: 5px 8px; outline: none; transition: border-color 0.12s;
+      caret-color: #a78bfa;
+    }
+    .dice-context-input::placeholder { color: #2a3447; }
+    .dice-context-input:focus { border-color: rgba(108,99,255,0.4); color: #e2e8f0; font-style: normal; }
     .dice-roll-btn {
       flex: 1; padding: 7px 10px; border-radius: 7px;
       border: 1px solid rgba(108,99,255,0.4); background: rgba(108,99,255,0.15);
@@ -807,13 +816,13 @@
         <div id="sc-np-quests-panel">
           <!-- Export All -->
           <div style="display:flex;justify-content:flex-end;">
-            <button id="sc-np-export-all" class="ql-copy-btn">⎘ Export All</button>
+            <button id="sc-np-export-all" class="ql-copy-btn">⎘ Insert All</button>
           </div>
           <!-- Quest Log -->
           <div class="ql-section-header">
             <span class="ql-section-label">Quests</span>
             <div style="display:flex;gap:5px;align-items:center;">
-              <button id="sc-np-quest-copy" class="ql-copy-btn">⎘ Copy</button>
+              <button id="sc-np-quest-copy" class="ql-copy-btn">⎘ Insert</button>
               <button id="sc-np-quest-add" class="ql-add-btn">+ Add Quest</button>
             </div>
           </div>
@@ -822,7 +831,7 @@
           <div class="ql-section-header" style="margin-top:4px;">
             <span class="ql-section-label">Inventory</span>
             <div style="display:flex;gap:5px;align-items:center;">
-              <button id="sc-np-inv-copy" class="ql-copy-btn">⎘ Copy</button>
+              <button id="sc-np-inv-copy" class="ql-copy-btn">⎘ Insert</button>
               <button id="sc-np-inv-add" class="ql-add-btn">+ Add Item</button>
             </div>
           </div>
@@ -836,7 +845,7 @@
           <!-- Dice Roller -->
           <div class="ql-section-header" style="margin-top:4px;">
             <span class="ql-section-label">Dice Roller</span>
-            <button id="sc-np-dice-copy" class="ql-copy-btn">⎘ Copy Last</button>
+            <button id="sc-np-dice-copy" class="ql-copy-btn">⎘ Insert Last</button>
           </div>
           <div class="rp-card" id="sc-np-dice-section">
             <div class="dice-faces-row">
@@ -857,6 +866,7 @@
                 Roll
               </button>
             </div>
+            <input id="sc-np-dice-context" type="text" class="dice-context-input" maxlength="80" placeholder="Context… e.g. attempting to pick the lock" data-ai-rewriter-ignore="1" />
             <div id="sc-np-dice-result">
               <div class="dice-result-total" id="sc-np-dice-total">—</div>
               <div class="dice-result-breakdown" id="sc-np-dice-breakdown"></div>
@@ -868,7 +878,7 @@
           <div class="ql-section-header ql-collapsible-hdr" data-section="sc-np-res-body">
             <span class="ql-section-label">Resources</span>
             <div style="display:flex;gap:5px;align-items:center;">
-              <button id="sc-np-res-copy" class="ql-copy-btn">⎘ Copy</button>
+              <button id="sc-np-res-copy" class="ql-copy-btn">⎘ Insert</button>
               <button id="sc-np-res-add" class="ql-add-btn">+ Add</button>
               <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
             </div>
@@ -894,7 +904,7 @@
           <div class="ql-section-header ql-collapsible-hdr" data-section="sc-np-abl-body">
             <span class="ql-section-label">Abilities</span>
             <div style="display:flex;gap:5px;align-items:center;">
-              <button id="sc-np-abl-copy" class="ql-copy-btn">⎘ Copy</button>
+              <button id="sc-np-abl-copy" class="ql-copy-btn">⎘ Insert</button>
               <button id="sc-np-abl-add" class="ql-add-btn">+ Add</button>
               <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
             </div>
@@ -906,7 +916,7 @@
           <div class="ql-section-header ql-collapsible-hdr" data-section="sc-np-party-body">
             <span class="ql-section-label">Party</span>
             <div style="display:flex;gap:5px;align-items:center;">
-              <button id="sc-np-party-copy" class="ql-copy-btn">⎘ Copy</button>
+              <button id="sc-np-party-copy" class="ql-copy-btn">⎘ Insert</button>
               <button id="sc-np-party-add" class="ql-add-btn">+ Add</button>
               <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
             </div>
@@ -918,7 +928,7 @@
           <div class="ql-section-header ql-collapsible-hdr" data-section="sc-np-npc-body">
             <span class="ql-section-label">NPCs</span>
             <div style="display:flex;gap:5px;align-items:center;">
-              <button id="sc-np-npc-copy" class="ql-copy-btn">⎘ Copy</button>
+              <button id="sc-np-npc-copy" class="ql-copy-btn">⎘ Insert</button>
               <button id="sc-np-npc-add" class="ql-add-btn">+ Add</button>
               <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
             </div>
@@ -930,7 +940,7 @@
           <div class="ql-section-header ql-collapsible-hdr" data-section="sc-np-rumour-body">
             <span class="ql-section-label">Rumours</span>
             <div style="display:flex;gap:5px;align-items:center;">
-              <button id="sc-np-rumour-copy" class="ql-copy-btn">⎘ Copy</button>
+              <button id="sc-np-rumour-copy" class="ql-copy-btn">⎘ Insert</button>
               <button id="sc-np-rumour-add" class="ql-add-btn">+ Add</button>
               <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
             </div>
@@ -1112,6 +1122,7 @@
     const diceCountInput = document.getElementById("sc-np-dice-count");
     const diceLabelEl = document.getElementById("sc-np-dice-label");
     const diceRollBtn = document.getElementById("sc-np-dice-roll");
+    const diceContextInput = document.getElementById("sc-np-dice-context");
     const diceTotalEl = document.getElementById("sc-np-dice-total");
     const diceBreakdownEl = document.getElementById("sc-np-dice-breakdown");
     const diceNatEl = document.getElementById("sc-np-dice-nat");
@@ -1551,11 +1562,18 @@
       });
 
       // Log the roll
-      const logLine = natMsg
-        ? `[Roll ${label}: ${total} — ${natMsg}]`
-        : breakdown
-          ? `[Roll ${label}: ${total} ${breakdown}]`
-          : `[Roll ${label}: ${total}]`;
+      const ctx = diceContextInput.value.trim();
+      const logLine = ctx
+        ? natMsg
+          ? `[${ctx} — Roll ${label}: ${total} — ${natMsg}]`
+          : breakdown
+            ? `[${ctx} — Roll ${label}: ${total} ${breakdown}]`
+            : `[${ctx} — Roll ${label}: ${total}]`
+        : natMsg
+          ? `[Roll ${label}: ${total} — ${natMsg}]`
+          : breakdown
+            ? `[Roll ${label}: ${total} ${breakdown}]`
+            : `[Roll ${label}: ${total}]`;
       addLog(logLine);
     });
 
@@ -1933,6 +1951,7 @@
           statusBtn.textContent =
             m.status.charAt(0).toUpperCase() + m.status.slice(1);
           saveParty();
+          addLog(`[Party: ${m.name || "(unnamed)"} → ${m.status}]`);
         });
         const nameIn = document.createElement("input");
         nameIn.type = "text";
@@ -2932,11 +2951,11 @@
       }, 1400);
     }
     function flashCopyBtnLabel(btn, label) {
-      btn.classList.add("copied");
+      btn.classList.add("inserted");
       const orig = btn.textContent;
-      btn.textContent = "\u2714 Copied";
+      btn.textContent = "\u2714 Inserted";
       setTimeout(() => {
-        btn.classList.remove("copied");
+        btn.classList.remove("inserted");
         btn.textContent = orig;
       }, 1400);
     }
@@ -2968,9 +2987,13 @@
         const cpBtn = document.createElement("button");
         cpBtn.className = "log-copy-btn";
         cpBtn.textContent = "\u2398";
-        cpBtn.title = "Copy this line";
+        cpBtn.title = "Insert into chat";
         cpBtn.addEventListener("click", () => {
-          copyText(msg);
+          document.dispatchEvent(
+            new CustomEvent("sc-rp-inject", {
+              detail: { text: "\n" + msg, silent: true },
+            }),
+          );
           cpBtn.textContent = "\u2714";
           setTimeout(() => {
             cpBtn.textContent = "\u2398";
@@ -2989,67 +3012,65 @@
     /* ════════════════ EXPORT FUNCTIONS ════════════════ */
     function exportQuests() {
       if (!quests.length) return "[Quests: none]";
-      const lines = quests.map((q) => {
+      const parts = quests.map((q) => {
         const st =
           q.state === "done"
             ? "\u2713"
             : q.state === "failed"
               ? "\u2717"
               : "\u25cb";
-        return `  ${st} ${q.title || "(untitled)"}${q.notes ? " \u2014 " + q.notes : ""}`;
+        return `${st} ${q.title || "(untitled)"}${q.notes ? " \u2014 " + q.notes : ""}`;
       });
-      return "[Quests]\n" + lines.join("\n");
+      return `[Quests: ${parts.join(" | ")}]`;
     }
 
     function exportInventory() {
       if (!inventory.length) return "[Inventory: empty]";
-      const lines = inventory.map(
+      const parts = inventory.map(
         (i) =>
-          `  ${i.qty}x ${i.name || "(unnamed)"}${i.notes ? " (" + i.notes + ")" : ""}`,
+          `${i.qty}x ${i.name || "(unnamed)"}${i.notes ? " (" + i.notes + ")" : ""}`,
       );
-      return "[Inventory]\n" + lines.join("\n");
+      return `[Inventory: ${parts.join(" | ")}]`;
     }
 
     function exportResources() {
       if (!resources.length) return "[Resources: none]";
-      const lines = resources.map(
-        (r) => `  ${r.name || "(unnamed)"}: ${r.value}`,
-      );
-      return "[Resources]\n" + lines.join("\n");
+      const parts = resources.map((r) => `${r.name || "(unnamed)"} ${r.value}`);
+      return `[Resources: ${parts.join(" | ")}]`;
     }
 
     function exportAbilities() {
       if (!abilities.length) return "[Abilities: none]";
-      const lines = abilities.map((a) => {
+      const parts = abilities.map((a) => {
         const note = a.notes ? ` (${a.notes})` : "";
-        return `  ${a.name || "(unnamed)"}: ${a.current}/${a.max}${note}`;
+        return `${a.name || "(unnamed)"} ${a.current}/${a.max}${note}`;
       });
-      return "[Abilities]\n" + lines.join("\n");
+      return `[Abilities: ${parts.join(" | ")}]`;
     }
 
     function exportParty() {
       if (!party.length) return "[Party: none]";
-      const lines = party.map(
-        (m) => `  ${m.name || "(unnamed)"} \u2014 ${m.status}`,
+      const parts = party.map(
+        (m) => `${m.name || "(unnamed)"} \u2014 ${m.status}`,
       );
-      return "[Party]\n" + lines.join("\n");
+      return `[Party: ${parts.join(" | ")}]`;
     }
 
     function exportNpcs() {
       if (!npcs.length) return "[NPCs: none]";
-      const lines = npcs.map(
+      const parts = npcs.map(
         (n) =>
-          `  ${n.name || "(unnamed)"} [${n.disp}]${n.note ? " \u2014 " + n.note : ""}`,
+          `${n.name || "(unnamed)"} [${n.disp}]${n.note ? " \u2014 " + n.note : ""}`,
       );
-      return "[NPCs]\n" + lines.join("\n");
+      return `[NPCs: ${parts.join(" | ")}]`;
     }
 
     function exportRumours() {
       if (!rumours.length) return "[Rumours: none]";
-      const lines = rumours.map(
-        (r) => `  ${r.done ? "\u2713" : "\u25cb"} ${r.text || "(empty)"}`,
+      const parts = rumours.map(
+        (r) => `${r.done ? "\u2713" : "\u25cb"} ${r.text || "(empty)"}`,
       );
-      return "[Rumours]\n" + lines.join("\n");
+      return `[Rumours: ${parts.join(" | ")}]`;
     }
 
     function exportDiceLast() {
@@ -3067,7 +3088,7 @@
         exportParty(),
         exportNpcs(),
         exportRumours(),
-      ].join("\n\n");
+      ].join("\n");
     }
 
     function bindCopyBtn(id, exportFn) {
@@ -3075,7 +3096,11 @@
       if (!btn) return;
       btn.addEventListener("click", () => {
         const text = exportFn();
-        copyText(text);
+        document.dispatchEvent(
+          new CustomEvent("sc-rp-inject", {
+            detail: { text: "\n" + text, silent: true },
+          }),
+        );
         flashCopyBtnLabel(btn, btn.textContent);
       });
     }
@@ -3089,11 +3114,15 @@
     bindCopyBtn("sc-np-npc-copy", exportNpcs);
     bindCopyBtn("sc-np-rumour-copy", exportRumours);
 
-    // Dice copy — copies last roll from log
+    // Dice insert — inserts last roll into chat
     document.getElementById("sc-np-dice-copy").addEventListener("click", () => {
       const btn = document.getElementById("sc-np-dice-copy");
       const text = exportDiceLast();
-      copyText(text);
+      document.dispatchEvent(
+        new CustomEvent("sc-rp-inject", {
+          detail: { text: "\n" + text, silent: true },
+        }),
+      );
       flashCopyBtnLabel(btn, btn.textContent);
     });
 
