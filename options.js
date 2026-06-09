@@ -9,6 +9,47 @@ const DEFAULT_COMMANDS = [
   },
 ];
 
+// ─── Sidebar storage meter ────────────────────────────────────────────────────
+
+(function updateStorageMeter() {
+  const detail = document.getElementById("storageDetail");
+  const bar = document.getElementById("storageBarFill");
+  const sub = document.getElementById("storageSubLabel");
+
+  // chrome.storage.sync quota: 102,400 bytes total
+  const SYNC_QUOTA = chrome.storage.sync.QUOTA_BYTES || 102400;
+  // chrome.storage.local quota: 10,485,760 bytes (10 MB)
+  const LOCAL_QUOTA = chrome.storage.local.QUOTA_BYTES || 10485760;
+
+  function fmt(bytes) {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+  }
+
+  Promise.all([
+    new Promise((res) =>
+      chrome.storage.sync.getBytesInUse(null, (b) => res(b)),
+    ),
+    new Promise((res) =>
+      chrome.storage.local.getBytesInUse(null, (b) => res(b)),
+    ),
+  ]).then(([syncUsed, localUsed]) => {
+    const totalUsed = syncUsed + localUsed;
+    const totalQuota = SYNC_QUOTA + LOCAL_QUOTA;
+    const pct = Math.min(100, (totalUsed / totalQuota) * 100);
+
+    detail.textContent = `${fmt(totalUsed)} / ${fmt(totalQuota)}`;
+    bar.style.width = pct.toFixed(1) + "%";
+    bar.classList.remove("warn", "danger");
+    if (pct >= 80) bar.classList.add("danger");
+    else if (pct >= 50) bar.classList.add("warn");
+
+    const left = totalQuota - totalUsed;
+    sub.textContent = `${fmt(left)} free  ·  sync ${fmt(syncUsed)}  ·  local ${fmt(localUsed)}`;
+  });
+})();
+
 // ─── Navigation ────────────────────────────────────────────────────────────
 
 const navLinks = document.querySelectorAll(".nav-link");
