@@ -410,6 +410,37 @@
     .rp-log-text-body::-webkit-scrollbar { width: 4px; }
     .rp-log-text-body::-webkit-scrollbar-track { background: transparent; }
     .rp-log-text-body::-webkit-scrollbar-thumb { background: rgba(108,99,255,0.25); border-radius: 2px; }
+
+    /* ── Formatter reference panel ── */
+    #sc-np-fmt-panel {
+      position: absolute; inset: 0; overflow-y: auto;
+      padding: 14px; box-sizing: border-box;
+      display: none; flex-direction: column; gap: 10px;
+    }
+    #sc-np-fmt-panel.visible { display: flex; }
+    #sc-np-fmt-panel::-webkit-scrollbar { width: 5px; }
+    #sc-np-fmt-panel::-webkit-scrollbar-track { background: transparent; }
+    #sc-np-fmt-panel::-webkit-scrollbar-thumb { background: rgba(108,99,255,0.3); border-radius: 3px; }
+    .fmt-master-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .fmt-master-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 100px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; }
+    .fmt-master-badge.on { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+    .fmt-master-badge.off { background: rgba(100,116,139,0.1); color: #64748b; border: 1px solid rgba(100,116,139,0.2); }
+    .fmt-meta-row { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; font-size: 11px; color: #475569; }
+    .fmt-meta-chip { background: rgba(108,99,255,0.1); border: 1px solid rgba(108,99,255,0.2); border-radius: 5px; padding: 2px 7px; font-size: 10.5px; color: #a78bfa; font-family: ui-monospace, monospace; font-weight: 600; }
+    .fmt-row { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; border-bottom: 1px solid rgba(108,99,255,0.07); transition: opacity 0.15s; }
+    .fmt-row:last-child { border-bottom: none; }
+    .fmt-row.off { opacity: 0.32; }
+    .fmt-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+    .fmt-dot.on { background: #22c55e; box-shadow: 0 0 5px rgba(34,197,94,0.45); }
+    .fmt-dot.off { background: #334155; }
+    .fmt-row-body { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+    .fmt-row-name { font-size: 11.5px; color: #cbd5e1; font-weight: 500; line-height: 1.3; }
+    .fmt-example { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+    .fmt-ex-before, .fmt-ex-after { font-size: 10px; padding: 1px 6px; border-radius: 3px; font-family: ui-monospace, monospace; white-space: pre; line-height: 1.6; }
+    .fmt-ex-before { background: rgba(239,68,68,0.08); color: #f87171; border: 1px solid rgba(239,68,68,0.18); }
+    .fmt-ex-after { background: rgba(34,197,94,0.08); color: #4ade80; border: 1px solid rgba(34,197,94,0.18); }
+    .fmt-ex-arrow { color: #334155; font-size: 10px; flex-shrink: 0; line-height: 1.6; }
+    .fmt-disabled-notice { background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2); border-radius: 7px; padding: 9px 12px; font-size: 11px; color: #f87171; text-align: center; }
     `;
     document.head.appendChild(style);
 
@@ -421,6 +452,7 @@
         <div id="sc-np-tabstrip">
           <button class="sc-np-tab-pill active" data-tab="notes">Notes</button>
           <button class="sc-np-tab-pill" data-tab="rp">RP Tools</button>
+          <button class="sc-np-tab-pill" data-tab="fmt">Formatter</button>
         </div>
         <div id="sc-np-notes-btns">
           <button id="sc-np-btn-preview" title="Toggle Markdown preview (Ctrl+P)">
@@ -606,6 +638,7 @@
             </div>
           </div>
         </div>
+        <div id="sc-np-fmt-panel"></div>
       </div>
     `;
 
@@ -639,6 +672,7 @@
     const confirmNo = document.getElementById("sc-np-confirm-no");
     const notesPanel = document.getElementById("sc-np-notes-panel");
     const rpPanel = document.getElementById("sc-np-rp-panel");
+    const fmtPanel = document.getElementById("sc-np-fmt-panel");
     const statusBar = document.getElementById("sc-np-status");
     const notesBtns = document.getElementById("sc-np-notes-btns");
     const rpPersonaPillsEl = document.getElementById("sc-rp-persona-pills");
@@ -895,6 +929,8 @@
       });
       notesPanel.classList.toggle("sc-np-hidden", tab !== "notes");
       rpPanel.classList.toggle("visible", tab === "rp");
+      fmtPanel.classList.toggle("visible", tab === "fmt");
+      if (tab === "fmt") loadFormatterPanel();
       statusBar.style.display = tab === "notes" ? "" : "none";
       notesBtns.style.display = tab === "notes" ? "" : "none";
       if (previewMode && tab !== "notes") setPreview(false);
@@ -1305,6 +1341,290 @@
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
       chrome.storage.local.set({ [WIDTH_KEY]: DRAWER_W });
+    });
+
+    /* ── Formatter reference panel ── */
+    const FMT_KEYS_TO_WATCH = [
+      "formatterEnabled",
+      "formatterKeyword",
+      "fmtShortcut",
+      "autoFormatAfterRewrite",
+      "fmtStripAsterisks",
+      "fmtNormaliseQuotes",
+      "fmtNormaliseApostrophes",
+      "fmtNormaliseEllipsis",
+      "fmtCollapseSpaces",
+      "fmtCapitaliseI",
+      "fmtCapitaliseQuotes",
+      "fmtTrimLines",
+      "fmtNormaliseNewlines",
+      "fmtCapitaliseSentences",
+      "fmtUnwrapBrackets",
+      "fmtExtraDelimiters",
+      "fmtRepairAsterisks",
+      "fmtActionPunctuation",
+      "fmtOocBrackets",
+    ];
+
+    const FMT_GROUPS = [
+      {
+        label: "NORMALISATION",
+        rows: [
+          {
+            key: "fmtStripAsterisks",
+            name: "Strip asterisks before re-wrapping",
+            b: "*she waves*",
+            a: "she waves",
+          },
+          {
+            key: "fmtNormaliseQuotes",
+            name: "Curly \u201C\u201D \u2192 straight quotes",
+            b: "\u201Coh wow\u201D",
+            a: '"oh wow"',
+          },
+          {
+            key: "fmtNormaliseApostrophes",
+            name: "Curly \u2018\u2019 \u2192 straight apostrophe",
+            b: "it\u2019s fine",
+            a: "it's fine",
+          },
+          {
+            key: "fmtNormaliseEllipsis",
+            name: "Normalise dot runs \u2192 \u2026",
+            b: "wait..",
+            a: "wait\u2026",
+            b2: "wait....",
+            a2: "wait\u2026",
+          },
+          {
+            key: "fmtCollapseSpaces",
+            name: "Collapse multiple spaces",
+            b: "hello   world",
+            a: "hello world",
+          },
+          {
+            key: "fmtCapitaliseI",
+            name: "Capitalise pronoun i \u2192 I",
+            b: "i think i do",
+            a: "I think I do",
+          },
+          {
+            key: "fmtCapitaliseQuotes",
+            name: "Capitalise dialogue opening letter",
+            b: '"oh wow"',
+            a: '"Oh wow"',
+          },
+        ],
+      },
+      {
+        label: "STRUCTURE",
+        rows: [
+          {
+            key: "fmtTrimLines",
+            name: "Trim paragraph whitespace",
+            b: "  hello  ",
+            a: "hello",
+          },
+          {
+            key: "fmtNormaliseNewlines",
+            name: "Normalise paragraph spacing",
+            hint: "3+ consecutive blank lines collapsed to one blank line",
+          },
+          {
+            key: "fmtCapitaliseSentences",
+            name: "Capitalise sentences",
+            b: "hello. world",
+            a: "Hello. World",
+          },
+        ],
+      },
+      {
+        label: "WRAPPING",
+        rows: [
+          {
+            key: "fmtUnwrapBrackets",
+            name: "Leave [ ] square brackets unwrapped",
+            b: "[aside] walk",
+            a: "[aside] *walk.*",
+          },
+        ],
+      },
+      {
+        label: "ROLEPLAY",
+        rows: [
+          {
+            key: "fmtRepairAsterisks",
+            name: "Repair unclosed * action marker",
+            b: "*she waves",
+            a: "*she waves*",
+          },
+          {
+            key: "fmtActionPunctuation",
+            name: "Action punctuation enforcer",
+            b: "*she waves*",
+            a: "*she waves.*",
+          },
+          {
+            key: "fmtOocBrackets",
+            name: "OOC (( )) \u2192 single parentheses",
+            b: "((ooc note))",
+            a: "(ooc note)",
+          },
+        ],
+      },
+    ];
+
+    function escH(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function renderFormatterPanel(d) {
+      fmtPanel.innerHTML = "";
+      const enabled = d.formatterEnabled !== false;
+      const keyword = d.formatterKeyword || "//format";
+      const shortcut = "Ctrl+" + (d.fmtShortcut || "m").toUpperCase();
+      const autoFmt = d.autoFormatAfterRewrite !== false;
+
+      // ── Header card ──
+      const hCard = document.createElement("div");
+      hCard.className = "rp-card";
+      hCard.style.cssText = "padding:10px 14px;gap:8px;";
+      hCard.innerHTML = `
+        <div class="fmt-master-row">
+          <span style="font-size:12px;font-weight:600;color:#cbd5e1;">Auto-formatter</span>
+          <span class="fmt-master-badge ${enabled ? "on" : "off"}">${enabled ? "ENABLED" : "DISABLED"}</span>
+        </div>
+        <div class="fmt-meta-row">
+          <span>keyword</span><span class="fmt-meta-chip">${escH(keyword)}</span>
+          <span style="margin-left:4px;">shortcut</span><span class="fmt-meta-chip">${escH(shortcut)}</span>
+          <span style="margin-left:4px;">auto after rewrite</span>
+          <span class="fmt-master-badge ${autoFmt ? "on" : "off"}" style="font-size:9.5px;">${autoFmt ? "ON" : "OFF"}</span>
+        </div>
+        <div style="font-size:10px;color:#334155;font-style:italic;margin-top:2px;">
+          Text outside quotes &amp; [brackets] is wrapped in
+          <span style="color:#6c63ff;font-family:ui-monospace,monospace;">*asterisks*</span> automatically.
+        </div>`;
+      fmtPanel.appendChild(hCard);
+
+      if (!enabled) {
+        const notice = document.createElement("div");
+        notice.className = "fmt-disabled-notice";
+        notice.textContent =
+          "Formatter is disabled — settings below are stored but inactive.";
+        fmtPanel.appendChild(notice);
+      }
+
+      // ── Setting groups ──
+      FMT_GROUPS.forEach(({ label, rows }) => {
+        const sec = document.createElement("div");
+        sec.className = "rp-section-label";
+        sec.textContent = label;
+        fmtPanel.appendChild(sec);
+
+        const card = document.createElement("div");
+        card.className = "rp-card";
+        card.style.padding = "4px 14px";
+
+        rows.forEach(({ key, name, b, a, b2, a2, hint }) => {
+          const on = d[key] !== false;
+          const row = document.createElement("div");
+          row.className = "fmt-row" + (on ? "" : " off");
+
+          const dot = document.createElement("span");
+          dot.className = "fmt-dot " + (on ? "on" : "off");
+
+          const body = document.createElement("div");
+          body.className = "fmt-row-body";
+
+          const nameEl = document.createElement("span");
+          nameEl.className = "fmt-row-name";
+          nameEl.textContent = name;
+          body.appendChild(nameEl);
+
+          if (hint) {
+            const hintEl = document.createElement("span");
+            hintEl.className = "rp-hint";
+            hintEl.style.fontSize = "10px";
+            hintEl.textContent = hint;
+            body.appendChild(hintEl);
+          } else if (b !== undefined) {
+            const exEl = document.createElement("div");
+            exEl.className = "fmt-example";
+            const addPair = (before, after) => {
+              const bEl = document.createElement("span");
+              bEl.className = "fmt-ex-before";
+              bEl.textContent = before;
+              const arr = document.createElement("span");
+              arr.className = "fmt-ex-arrow";
+              arr.textContent = "\u2192";
+              const aEl = document.createElement("span");
+              aEl.className = "fmt-ex-after";
+              aEl.textContent = after;
+              exEl.append(bEl, arr, aEl);
+            };
+            addPair(b, a);
+            if (b2 !== undefined) {
+              const sep = document.createElement("span");
+              sep.className = "fmt-ex-arrow";
+              sep.style.margin = "0 3px";
+              sep.textContent = "\u00b7";
+              exEl.appendChild(sep);
+              addPair(b2, a2);
+            }
+            body.appendChild(exEl);
+          }
+
+          row.append(dot, body);
+          card.appendChild(row);
+        });
+
+        // Extra delimiters row — appended to Wrapping card if set
+        if (label === "WRAPPING") {
+          const extras = (d.fmtExtraDelimiters || "").trim();
+          if (extras) {
+            const sep = document.createElement("div");
+            sep.style.cssText =
+              "height:1px;background:rgba(108,99,255,0.07);margin:2px 0;";
+            card.appendChild(sep);
+            const eRow = document.createElement("div");
+            eRow.className = "fmt-row";
+            const eDot = document.createElement("span");
+            eDot.className = "fmt-dot on";
+            const eBody = document.createElement("div");
+            eBody.className = "fmt-row-body";
+            const eName = document.createElement("span");
+            eName.className = "fmt-row-name";
+            eName.textContent = "Extra unwrapped delimiter pairs";
+            const eEx = document.createElement("div");
+            eEx.className = "fmt-example";
+            const eChip = document.createElement("span");
+            eChip.className = "fmt-ex-before";
+            eChip.style.cssText =
+              "color:#a78bfa;background:rgba(108,99,255,0.1);border-color:rgba(108,99,255,0.25);";
+            eChip.textContent = extras;
+            eEx.appendChild(eChip);
+            eBody.append(eName, eEx);
+            eRow.append(eDot, eBody);
+            card.appendChild(eRow);
+          }
+        }
+
+        fmtPanel.appendChild(card);
+      });
+    }
+
+    function loadFormatterPanel() {
+      chrome.storage.sync.get(FMT_KEYS_TO_WATCH, renderFormatterPanel);
+    }
+
+    // Live-reload when settings change while Formatter tab is active
+    chrome.storage.onChanged.addListener((changes) => {
+      if (activeTab === "fmt" && FMT_KEYS_TO_WATCH.some((k) => k in changes)) {
+        loadFormatterPanel();
+      }
     });
 
     /* ── Boot ── */
