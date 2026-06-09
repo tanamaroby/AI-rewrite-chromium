@@ -348,23 +348,48 @@
     }
     .dice-context-input::placeholder { color: #2a3447; }
     .dice-context-input:focus { border-color: rgba(108,99,255,0.4); color: #e2e8f0; font-style: normal; }
-    .dice-mod-row {
-      display: flex; align-items: center; gap: 6px;
+    /* ── Dice Modifier List ── */
+    .dmod-header { display: flex; align-items: center; gap: 6px; margin: 2px 0 5px; }
+    .dmod-header-label { font-size: 11px; color: #475569; flex: 1; }
+    .dmod-total-pill {
+      font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 100px;
+      background: rgba(108,99,255,0.1); border: 1px solid rgba(108,99,255,0.2); color: #64748b;
     }
-    .dice-mod-label { font-size: 11px; color: #475569; flex-shrink: 0; }
-    .dice-mod-input {
-      width: 54px; flex-shrink: 0; text-align: center; background: rgba(0,0,0,0.3);
+    .dmod-total-pill.positive { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.3); color: #22c55e; }
+    .dmod-total-pill.negative { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.28); color: #f87171; }
+    .dmod-list { display: flex; flex-direction: column; gap: 5px; }
+    .dmod-item {
+      display: flex; flex-direction: column; gap: 3px;
+      background: rgba(255,255,255,0.025); border: 1px solid rgba(108,99,255,0.13);
+      border-radius: 6px; padding: 6px 8px; transition: border-color 0.12s;
+    }
+    .dmod-item:focus-within { border-color: rgba(108,99,255,0.35); }
+    .dmod-top { display: flex; align-items: center; gap: 6px; }
+    .dmod-name-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: #e2e8f0; font-size: 12px; font-family: inherit; caret-color: #a78bfa; min-width: 0;
+    }
+    .dmod-name-input::placeholder { color: #334155; }
+    .dmod-val-input {
+      width: 46px; flex-shrink: 0; text-align: center; background: rgba(0,0,0,0.3);
       border: 1px solid rgba(108,99,255,0.2); border-radius: 5px;
-      color: #a78bfa; font-size: 12.5px; font-weight: 700; font-family: inherit;
-      padding: 5px 4px; outline: none; transition: border-color 0.12s; caret-color: #a78bfa;
+      color: #a78bfa; font-size: 12px; font-weight: 700; font-family: inherit;
+      padding: 3px 4px; outline: none; transition: border-color 0.12s; caret-color: #a78bfa;
     }
-    .dice-mod-input:focus { border-color: rgba(108,99,255,0.5); }
-    .dice-mod-note {
-      flex: 1; min-width: 0; background: transparent; border: none; outline: none;
+    .dmod-val-input:focus { border-color: rgba(108,99,255,0.5); }
+    .dmod-delete-btn {
+      background: none; border: none; padding: 2px 3px; cursor: pointer; flex-shrink: 0;
+      color: #293548; border-radius: 3px; transition: color 0.12s; display: flex; align-items: center;
+    }
+    .dmod-delete-btn:hover { color: #f87171; }
+    .dmod-notes-input {
+      width: 100%; box-sizing: border-box; background: transparent;
+      border: none; border-top: 1px solid rgba(108,99,255,0.07); outline: none;
       color: #64748b; font-size: 11px; font-family: inherit; font-style: italic;
-      caret-color: #a78bfa;
+      padding: 3px 0 1px; caret-color: #a78bfa;
     }
-    .dice-mod-note::placeholder { color: #2a3447; }
+    .dmod-notes-input::placeholder { color: #2a3447; }
+    .dmod-empty { font-size: 10.5px; color: #334155; font-style: italic; padding: 2px 0; }
     .dice-result-modifier { font-size: 11px; color: #64748b; text-align: center; }
     .dice-roll-btn {
       flex: 1; padding: 7px 10px; border-radius: 7px;
@@ -858,11 +883,12 @@
               </button>
             </div>
             <input id="sc-np-dice-context" type="text" class="dice-context-input" maxlength="80" placeholder="Context… e.g. attempting to pick the lock" data-ai-rewriter-ignore="1" />
-            <div class="dice-mod-row">
-              <span class="dice-mod-label">Mod</span>
-              <input id="sc-np-dice-mod" type="number" class="dice-mod-input" value="0" min="-99" max="99" data-ai-rewriter-ignore="1" />
-              <input id="sc-np-dice-mod-note" type="text" class="dice-mod-note" maxlength="50" placeholder="e.g. +3 proficiency, DEX bonus…" data-ai-rewriter-ignore="1" />
+            <div class="dmod-header">
+              <span class="dmod-header-label">Modifiers</span>
+              <span id="sc-np-dmod-total" class="dmod-total-pill">0</span>
+              <button id="sc-np-dmod-add" class="ql-add-btn" style="padding:2px 8px;font-size:11px;">+ Add</button>
             </div>
+            <div id="sc-np-dmod-list" class="dmod-list"></div>
             <div id="sc-np-dice-result">
               <div class="dice-result-total" id="sc-np-dice-total">—</div>
               <div class="dice-result-breakdown" id="sc-np-dice-breakdown"></div>
@@ -1117,30 +1143,147 @@
     const diceLabelEl = document.getElementById("sc-np-dice-label");
     const diceRollBtn = document.getElementById("sc-np-dice-roll");
     const diceContextInput = document.getElementById("sc-np-dice-context");
-    const diceModInput = document.getElementById("sc-np-dice-mod");
-    const diceModNoteInput = document.getElementById("sc-np-dice-mod-note");
     const diceModDisplayEl = document.getElementById("sc-np-dice-mod-display");
+    const dmodListEl = document.getElementById("sc-np-dmod-list");
+    const dmodTotalEl = document.getElementById("sc-np-dmod-total");
     const DICE_MOD_KEY = "sc_dice_mod_v1_" + chatId;
+    let diceModifiers = [];
 
-    // Load saved modifier
-    chrome.storage.local.get(DICE_MOD_KEY, (d) => {
-      const saved = d[DICE_MOD_KEY];
-      if (saved) {
-        if (saved.mod !== undefined) diceModInput.value = saved.mod;
-        if (saved.note) diceModNoteInput.value = saved.note;
+    function newDiceMod() {
+      return { id: Date.now() + Math.random(), name: "", value: 0, notes: "" };
+    }
+    function saveDiceMods() {
+      chrome.storage.local.set({ [DICE_MOD_KEY]: diceModifiers });
+    }
+    function computeDiceMod() {
+      return diceModifiers.reduce((s, m) => s + (m.value || 0), 0);
+    }
+    function renderDiceMods() {
+      dmodListEl.innerHTML = "";
+      if (!diceModifiers.length) {
+        const e = document.createElement("div");
+        e.className = "dmod-empty";
+        e.textContent =
+          "No modifiers yet \u2014 add status effects, items, bonuses\u2026";
+        dmodListEl.appendChild(e);
+      } else {
+        diceModifiers.forEach((m, idx) => {
+          const item = document.createElement("div");
+          item.className = "dmod-item";
+          const top = document.createElement("div");
+          top.className = "dmod-top";
+          const nameIn = document.createElement("input");
+          nameIn.type = "text";
+          nameIn.className = "dmod-name-input";
+          nameIn.value = m.name;
+          nameIn.placeholder = "Name\u2026 e.g. Poisoned, Proficiency, Sword";
+          nameIn.maxLength = 50;
+          nameIn.setAttribute("data-ai-rewriter-ignore", "1");
+          nameIn.addEventListener("input", () => {
+            m.name = nameIn.value;
+            saveDiceMods();
+          });
+          const valIn = document.createElement("input");
+          valIn.type = "number";
+          valIn.className = "dmod-val-input";
+          valIn.value = m.value;
+          valIn.min = "-99";
+          valIn.max = "99";
+          valIn.setAttribute("data-ai-rewriter-ignore", "1");
+          valIn.addEventListener("change", () => {
+            m.value = parseInt(valIn.value, 10) || 0;
+            saveDiceMods();
+            renderDiceMods();
+          });
+          const delBtn = document.createElement("button");
+          delBtn.className = "dmod-delete-btn";
+          delBtn.title = "Remove";
+          delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+          delBtn.addEventListener("click", () => {
+            const sign = m.value > 0 ? "+" : "";
+            addLog(
+              `[Modifier removed: ${m.name || "(unnamed)"} ${sign}${m.value}${m.notes ? " \u2014 " + m.notes : ""}]`,
+            );
+            diceModifiers.splice(idx, 1);
+            saveDiceMods();
+            renderDiceMods();
+          });
+          top.append(nameIn, valIn, delBtn);
+          const notesIn = document.createElement("input");
+          notesIn.type = "text";
+          notesIn.className = "dmod-notes-input";
+          notesIn.value = m.notes;
+          notesIn.placeholder =
+            "Notes\u2026 e.g. status effect, item bonus, terrain";
+          notesIn.maxLength = 80;
+          notesIn.setAttribute("data-ai-rewriter-ignore", "1");
+          notesIn.addEventListener("input", () => {
+            m.notes = notesIn.value;
+            saveDiceMods();
+          });
+          item.append(top, notesIn);
+          dmodListEl.appendChild(item);
+        });
       }
-    });
-
-    function saveDiceMod() {
-      chrome.storage.local.set({
-        [DICE_MOD_KEY]: {
-          mod: parseInt(diceModInput.value, 10) || 0,
-          note: diceModNoteInput.value,
-        },
+      const total = computeDiceMod();
+      const sign = total > 0 ? "+" : "";
+      dmodTotalEl.textContent = sign + total;
+      dmodTotalEl.className =
+        "dmod-total-pill" +
+        (total > 0 ? " positive" : total < 0 ? " negative" : "");
+    }
+    function loadDiceMods() {
+      chrome.storage.local.get(DICE_MOD_KEY, (d) => {
+        const saved = d[DICE_MOD_KEY];
+        if (Array.isArray(saved)) {
+          diceModifiers = saved;
+        } else if (saved && typeof saved.mod === "number" && saved.mod !== 0) {
+          // Migrate old single-mod format
+          diceModifiers = [
+            {
+              id: Date.now(),
+              name: saved.note || "Modifier",
+              value: saved.mod,
+              notes: "",
+            },
+          ];
+          saveDiceMods();
+        }
+        renderDiceMods();
       });
     }
-    diceModInput.addEventListener("change", saveDiceMod);
-    diceModNoteInput.addEventListener("input", saveDiceMod);
+    document.getElementById("sc-np-dmod-add").addEventListener("click", () => {
+      const m = newDiceMod();
+      diceModifiers.push(m);
+      saveDiceMods();
+      renderDiceMods();
+      const lastItem = dmodListEl.querySelector(".dmod-item:last-child");
+      if (lastItem) {
+        const nameIn = lastItem.querySelector(".dmod-name-input");
+        const notesIn = lastItem.querySelector(".dmod-notes-input");
+        if (nameIn) {
+          nameIn.focus();
+          let addLogged = false;
+          const doAddLog = () => {
+            if (addLogged) return;
+            addLogged = true;
+            nameIn.removeEventListener("blur", onNameBlur);
+            if (notesIn) notesIn.removeEventListener("blur", onNotesBlur);
+            const sign = m.value > 0 ? "+" : "";
+            const notesPart = m.notes ? ` \u2014 ${m.notes}` : "";
+            addLog(
+              `[Modifier added: ${m.name || "(unnamed)"} ${sign}${m.value}${notesPart}]`,
+            );
+          };
+          const onNameBlur = (e) => {
+            if (e.relatedTarget !== notesIn) doAddLog();
+          };
+          const onNotesBlur = () => doAddLog();
+          nameIn.addEventListener("blur", onNameBlur);
+          if (notesIn) notesIn.addEventListener("blur", onNotesBlur);
+        }
+      }
+    });
     const diceTotalEl = document.getElementById("sc-np-dice-total");
     const diceBreakdownEl = document.getElementById("sc-np-dice-breakdown");
     const diceNatEl = document.getElementById("sc-np-dice-nat");
@@ -1475,7 +1618,7 @@
       });
 
       const rawTotal = allRolls.reduce((a, b) => a + b, 0);
-      const mod = parseInt(diceModInput.value, 10) || 0;
+      const mod = computeDiceMod();
       const total = rawTotal + mod;
 
       // Breakdown text
@@ -1513,10 +1656,15 @@
       diceNatEl.textContent = natMsg;
       diceNatEl.className =
         "dice-result-nat" + (natClass ? " " + natClass : "");
-      const modNote = diceModNoteInput.value.trim();
       if (mod !== 0) {
         const sign = mod > 0 ? "+" : "";
-        diceModDisplayEl.textContent = `${sign}${mod} mod${rawTotal !== total ? " (" + rawTotal + " raw)" : ""}${modNote ? " — " + modNote : ""}`;
+        const parts = diceModifiers
+          .filter((mx) => mx.value !== 0)
+          .map((mx) =>
+            `${mx.value > 0 ? "+" : ""}${mx.value} ${mx.name || "?"}`.trim(),
+          )
+          .join(", ");
+        diceModDisplayEl.textContent = `${sign}${mod} mod${rawTotal !== total ? " (" + rawTotal + " raw)" : ""}${parts ? " \u2014 " + parts : ""}`;
       } else {
         diceModDisplayEl.textContent = "";
       }
@@ -1538,11 +1686,17 @@
 
       // Log the roll
       const ctx = diceContextInput.value.trim();
-      const modNoteTrim = diceModNoteInput.value.trim();
-      const modPart =
-        mod !== 0
-          ? ` (${mod > 0 ? "+" : ""}${mod}${modNoteTrim ? " " + modNoteTrim : ""})`
-          : "";
+      let modPart = "";
+      if (mod !== 0) {
+        const modSign = mod > 0 ? "+" : "";
+        const modItems = diceModifiers
+          .filter((mx) => mx.value !== 0)
+          .map(
+            (mx) => `${mx.value > 0 ? "+" : ""}${mx.value} ${mx.name || "?"}`,
+          )
+          .join(", ");
+        modPart = ` (${modSign}${mod}${modItems ? ": " + modItems : ""})`;
+      }
       const logLine = ctx
         ? natMsg
           ? `[${ctx} \u2014 Roll ${chipLabel}: ${total}${modPart} \u2014 ${natMsg}]`
@@ -1724,11 +1878,35 @@
       .addEventListener("click", () => applyResOp("set"));
 
     resAddBtn.addEventListener("click", () => {
-      resources.push(newRes());
+      const r = newRes();
+      resources.push(r);
       saveRes();
       renderRes();
-      const inputs = resListEl.querySelectorAll(".res-name-input");
-      if (inputs.length) inputs[inputs.length - 1].focus();
+      const lastRow = resListEl.lastElementChild;
+      if (lastRow && lastRow.classList.contains("res-item")) {
+        const nameIn = lastRow.querySelector(".res-name-input");
+        const noteIn = lastRow.querySelector(".res-note-input");
+        if (nameIn) {
+          nameIn.focus();
+          let addLogged = false;
+          const doAddLog = () => {
+            if (addLogged) return;
+            addLogged = true;
+            nameIn.removeEventListener("blur", onNameBlur);
+            if (noteIn) noteIn.removeEventListener("blur", onNoteBlur);
+            const notesPart = r.notes ? ` \u2014 ${r.notes}` : "";
+            addLog(
+              `[Resource added: ${r.name || "(unnamed)"}${notesPart} (value: ${r.value})]`,
+            );
+          };
+          const onNameBlur = (e) => {
+            if (e.relatedTarget !== noteIn) doAddLog();
+          };
+          const onNoteBlur = () => doAddLog();
+          nameIn.addEventListener("blur", onNameBlur);
+          if (noteIn) noteIn.addEventListener("blur", onNoteBlur);
+        }
+      }
     });
 
     function loadRes() {
@@ -1846,7 +2024,7 @@
         notesIn.className = "abl-notes-input";
         notesIn.value = a.notes || "";
         notesIn.placeholder =
-          "Describe this ability, dice modifier, effect\u2026";
+          "Describe this ability, its effect, duration\u2026";
         notesIn.rows = 1;
         notesIn.setAttribute("data-ai-rewriter-ignore", "1");
         notesIn.addEventListener("input", () => {
@@ -1907,18 +2085,30 @@
       abilities.push(abl);
       saveAbl();
       renderAbl();
-      const inputs = ablListEl.querySelectorAll(".abl-name-input");
-      if (inputs.length) {
-        const lastInput = inputs[inputs.length - 1];
-        lastInput.focus();
-        const logOnBlur = () => {
-          lastInput.removeEventListener("blur", logOnBlur);
-          const notesPart = abl.notes ? ` — ${abl.notes}` : "";
-          addLog(
-            `[Ability added: ${abl.name || "(unnamed)"}${notesPart} (${abl.current}/${abl.max} uses)]`,
-          );
-        };
-        lastInput.addEventListener("blur", logOnBlur);
+      const lastWrapper = ablListEl.lastElementChild;
+      if (lastWrapper) {
+        const nameIn = lastWrapper.querySelector(".abl-name-input");
+        const notesIn = lastWrapper.querySelector(".abl-notes-input");
+        if (nameIn) {
+          nameIn.focus();
+          let addLogged = false;
+          const doAddLog = () => {
+            if (addLogged) return;
+            addLogged = true;
+            nameIn.removeEventListener("blur", onNameBlur);
+            if (notesIn) notesIn.removeEventListener("blur", onNotesBlur);
+            const notesPart = abl.notes ? ` — ${abl.notes}` : "";
+            addLog(
+              `[Ability added: ${abl.name || "(unnamed)"}${notesPart} (${abl.current}/${abl.max} uses)]`,
+            );
+          };
+          const onNameBlur = (e) => {
+            if (e.relatedTarget !== notesIn) doAddLog();
+          };
+          const onNotesBlur = () => doAddLog();
+          nameIn.addEventListener("blur", onNameBlur);
+          if (notesIn) notesIn.addEventListener("blur", onNotesBlur);
+        }
       }
     });
 
@@ -2126,18 +2316,30 @@
       npcs.push(npc);
       saveNpcs();
       renderNpcs();
-      const inputs = npcListEl.querySelectorAll(".npc-name-input");
-      if (inputs.length) {
-        const lastInput = inputs[inputs.length - 1];
-        lastInput.focus();
-        const logOnBlur = () => {
-          lastInput.removeEventListener("blur", logOnBlur);
-          const notePart = npc.note ? ` — ${npc.note}` : "";
-          addLog(
-            `[NPC met: ${npc.name || "(unnamed)"} [${npc.disp}]${notePart}]`,
-          );
-        };
-        lastInput.addEventListener("blur", logOnBlur);
+      const lastCard = npcListEl.lastElementChild;
+      if (lastCard && lastCard.classList.contains("npc-item")) {
+        const nameIn = lastCard.querySelector(".npc-name-input");
+        const noteIn = lastCard.querySelector(".npc-note-input");
+        if (nameIn) {
+          nameIn.focus();
+          let addLogged = false;
+          const doAddLog = () => {
+            if (addLogged) return;
+            addLogged = true;
+            nameIn.removeEventListener("blur", onNameBlur);
+            if (noteIn) noteIn.removeEventListener("blur", onNoteBlur);
+            const notePart = npc.note ? ` — ${npc.note}` : "";
+            addLog(
+              `[NPC met: ${npc.name || "(unnamed)"} [${npc.disp}]${notePart}]`,
+            );
+          };
+          const onNameBlur = (e) => {
+            if (e.relatedTarget !== noteIn) doAddLog();
+          };
+          const onNoteBlur = () => doAddLog();
+          nameIn.addEventListener("blur", onNameBlur);
+          if (noteIn) noteIn.addEventListener("blur", onNoteBlur);
+        }
       }
     });
 
@@ -3165,6 +3367,7 @@
     /* ── Boot ── */
     // Erase any legacy notes storage for this chat
     chrome.storage.local.remove(["sc_note_v1_" + chatId]);
+    loadDiceMods();
     loadQuests();
     loadRes();
     loadAbl();
