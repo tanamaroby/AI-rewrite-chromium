@@ -958,7 +958,6 @@
             <input id="sc-np-dice-context" type="text" class="dice-context-input" maxlength="80" placeholder="Context… e.g. attempting to pick the lock" data-ai-rewriter-ignore="1" />
             <div class="dmod-header">
               <span class="dmod-header-label">Modifiers</span>
-              <label class="dmod-include-label"><input type="checkbox" id="sc-np-dmod-include" checked data-ai-rewriter-ignore="1"> Include</label>
               <span id="sc-np-dmod-total" class="dmod-total-pill">0</span>
             </div>
             <div id="sc-np-dmod-list" class="dmod-list"></div>
@@ -1214,18 +1213,26 @@
     const diceModDisplayEl = document.getElementById("sc-np-dice-mod-display");
     const dmodListEl = document.getElementById("sc-np-dmod-list");
     const dmodTotalEl = document.getElementById("sc-np-dmod-total");
-    const dmodIncludeEl = document.getElementById("sc-np-dmod-include");
     const DICE_MOD_KEY = "sc_dice_mod_v1_" + chatId;
     let diceModifiers = [];
 
     function newDiceMod() {
-      return { id: Date.now() + Math.random(), name: "", value: 0, notes: "" };
+      return {
+        id: Date.now() + Math.random(),
+        name: "",
+        value: 0,
+        notes: "",
+        enabled: true,
+      };
     }
     function saveDiceMods() {
       chrome.storage.local.set({ [DICE_MOD_KEY]: diceModifiers });
     }
     function computeDiceMod() {
-      return diceModifiers.reduce((s, m) => s + (m.value || 0), 0);
+      return diceModifiers.reduce(
+        (s, m) => (m.enabled !== false ? s + (m.value || 0) : s),
+        0,
+      );
     }
     function renderDiceMods() {
       dmodListEl.innerHTML = "";
@@ -1239,8 +1246,29 @@
         diceModifiers.forEach((m, idx) => {
           const item = document.createElement("div");
           item.className = "dmod-item";
+          if (m.enabled === false) item.style.opacity = "0.45";
           const top = document.createElement("div");
           top.className = "dmod-top";
+          // Per-modifier include checkbox
+          const inclChk = document.createElement("input");
+          inclChk.type = "checkbox";
+          inclChk.checked = m.enabled !== false;
+          inclChk.title = "Include in roll total";
+          inclChk.style.cssText =
+            "accent-color:#6c63ff;cursor:pointer;flex-shrink:0;margin:0;";
+          inclChk.setAttribute("data-ai-rewriter-ignore", "1");
+          inclChk.addEventListener("change", () => {
+            m.enabled = inclChk.checked;
+            item.style.opacity = m.enabled ? "" : "0.45";
+            saveDiceMods();
+            // refresh total pill without full re-render
+            const t = computeDiceMod();
+            const sg = t > 0 ? "+" : "";
+            dmodTotalEl.textContent = sg + t;
+            dmodTotalEl.className =
+              "dmod-total-pill" +
+              (t > 0 ? " positive" : t < 0 ? " negative" : "");
+          });
           // Name: display / edit
           const nameSpan = document.createElement("span");
           nameSpan.className = "item-disp-name";
@@ -1296,6 +1324,7 @@
             renderDiceMods();
           });
           top.append(
+            inclChk,
             nameSpan,
             nameEditIn,
             valSpan,
@@ -1859,7 +1888,7 @@
       });
 
       const rawTotal = allRolls.reduce((a, b) => a + b, 0);
-      const mod = dmodIncludeEl.checked ? computeDiceMod() : 0;
+      const mod = computeDiceMod();
       const total = rawTotal + mod;
 
       // Breakdown text
