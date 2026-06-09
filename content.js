@@ -341,11 +341,13 @@
       /(^|\n\n)([a-z])/g,
       (_, sep, ch) => sep + ch.toUpperCase(),
     );
-    // Capitalise after .  ! or ? but NOT after … or ...
+    // Capitalise after . ! ? — _ or spaced dash, but NOT after … or ...
     text = text.replace(
-      /([^.…])([.!?]) +([a-z])/g,
+      /([^.…])([.!?—_]) +([a-z])/g,
       (_, pre, punc, ch) => pre + punc + " " + ch.toUpperCase(),
     );
+    // Capitalise after spaced dash ( - )
+    text = text.replace(/ - ([a-z])/g, (_, ch) => " - " + ch.toUpperCase());
     return text;
   }
 
