@@ -489,6 +489,7 @@
         usage: result.usage || null,
         elapsed: parseFloat(elapsedSec),
         promptText: buildPrompt(match.cmd.prompt),
+        reasoning: result.reasoning || null,
       };
       chrome.storage.local.set({ sc_last_rewrite: rewriteDetail });
       document.dispatchEvent(
@@ -754,6 +755,7 @@
         usage: result.usage || null,
         elapsed: parseFloat(elapsedSec),
         promptText: buildPrompt(e.detail.prompt),
+        reasoning: result.reasoning || null,
       };
       lastRewrite = { el, ...rewriteDetail };
       chrome.storage.local.set({ sc_last_rewrite: rewriteDetail });

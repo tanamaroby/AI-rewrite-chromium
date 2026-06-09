@@ -33,6 +33,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           text: result.text,
           model: result.model,
           usage: result.usage,
+          reasoning: result.reasoning,
         }),
       )
       .catch((err) => sendResponse({ success: false, error: err.message }));
@@ -104,6 +105,7 @@ async function handleRewrite(text, prompt, apiKey, model) {
 
     const data = await response.json();
     const result = data.choices?.[0]?.message?.content?.trim();
+    const reasoning = data.choices?.[0]?.message?.reasoning?.trim() || null;
     const usedModel = data.model || resolvedModel;
     if (!result) {
       // Empty response — treat like a retryable failure
@@ -112,7 +114,12 @@ async function handleRewrite(text, prompt, apiKey, model) {
       );
       continue;
     }
-    return { text: result, model: usedModel, usage: data.usage || null };
+    return {
+      text: result,
+      reasoning,
+      model: usedModel,
+      usage: data.usage || null,
+    };
   }
 
   // All retries exhausted

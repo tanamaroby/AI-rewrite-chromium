@@ -398,9 +398,11 @@
     .rp-log-text-block { display: flex; flex-direction: column; gap: 4px; }
     .rp-log-text-cap { font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
     .rp-log-text-cap.prompt { color: rgba(167,139,250,0.55); }
+    .rp-log-text-cap.thinking { color: rgba(251,191,36,0.55); }
     .rp-log-text-cap.output { color: rgba(34,197,94,0.55); }
     .rp-log-text-body { font-size: 11.5px; line-height: 1.55; color: #64748b; white-space: pre-wrap; word-break: break-word; max-height: 110px; overflow-y: auto; padding: 7px 9px; border-radius: 5px; }
     .rp-log-text-body.prompt { background: rgba(108,99,255,0.06); border: 1px solid rgba(108,99,255,0.15); }
+    .rp-log-text-body.thinking { background: rgba(251,191,36,0.04); border: 1px solid rgba(251,191,36,0.15); color: #78716c; font-style: italic; }
     .rp-log-text-body.output { background: rgba(34,197,94,0.05); border: 1px solid rgba(34,197,94,0.14); color: #94a3b8; }
     .rp-log-text-body::-webkit-scrollbar { width: 4px; }
     .rp-log-text-body::-webkit-scrollbar-track { background: transparent; }
@@ -587,6 +589,10 @@
                 <span class="rp-log-text-cap prompt">Prompt</span>
                 <div class="rp-log-text-body prompt" id="sc-rp-log-prompt-text"></div>
               </div>
+              <div class="rp-log-text-block" id="sc-rp-log-thinking-block" style="display:none;">
+                <span class="rp-log-text-cap thinking">Thinking</span>
+                <div class="rp-log-text-body thinking" id="sc-rp-log-thinking-text"></div>
+              </div>
               <div class="rp-log-text-block">
                 <span class="rp-log-text-cap output">Output</span>
                 <div class="rp-log-text-body output" id="sc-rp-log-output-text"></div>
@@ -671,6 +677,12 @@
     const rpLogCostEl = document.getElementById("sc-rp-log-cost");
     const rpLogElapsedEl = document.getElementById("sc-rp-log-elapsed");
     const rpLogPromptTextEl = document.getElementById("sc-rp-log-prompt-text");
+    const rpLogThinkingBlock = document.getElementById(
+      "sc-rp-log-thinking-block",
+    );
+    const rpLogThinkingTextEl = document.getElementById(
+      "sc-rp-log-thinking-text",
+    );
     const rpLogOutputTextEl = document.getElementById("sc-rp-log-output-text");
 
     /* ── State ── */
@@ -985,6 +997,12 @@
       rpLogElapsedEl.textContent =
         detail.elapsed != null ? `${detail.elapsed}s` : "—";
       rpLogPromptTextEl.textContent = detail.promptText || "—";
+      if (detail.reasoning) {
+        rpLogThinkingBlock.style.display = "";
+        rpLogThinkingTextEl.textContent = detail.reasoning;
+      } else {
+        rpLogThinkingBlock.style.display = "none";
+      }
       rpLogOutputTextEl.textContent = detail.after || "—";
     }
 
