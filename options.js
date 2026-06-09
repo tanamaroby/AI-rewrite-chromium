@@ -302,15 +302,29 @@ spicychatNotesToggle.addEventListener("change", () => {
   );
 });
 
-// ── Notes list ──
+// ── RPG data list ──
 const scNotesCountEl = document.getElementById("sc-notes-count");
 const scNotesListEl = document.getElementById("sc-notes-list");
 const scNotesEmptyEl = document.getElementById("sc-notes-empty");
 const scNotesRefreshBtn = document.getElementById("sc-notes-refresh");
 
-function renderNotesList(notes) {
-  scNotesCountEl.textContent = notes.length;
-  if (notes.length === 0) {
+const RPG_PREFIXES = [
+  { key: "sc_quests_v1_", label: "Quests" },
+  { key: "sc_inv_v1_", label: "Inventory" },
+  { key: "sc_res_v1_", label: "Resources" },
+  { key: "sc_abl_v1_", label: "Abilities" },
+  { key: "sc_party_v1_", label: "Party" },
+  { key: "sc_npc_v1_", label: "NPCs" },
+  { key: "sc_rumour_v1_", label: "Rumours" },
+];
+
+function countItems(val) {
+  return Array.isArray(val) ? val.length : 0;
+}
+
+function renderNotesList(chats) {
+  scNotesCountEl.textContent = chats.length;
+  if (chats.length === 0) {
     scNotesEmptyEl.style.display = "";
     Array.from(scNotesListEl.children).forEach((c) => {
       if (c !== scNotesEmptyEl) c.remove();
@@ -322,104 +336,57 @@ function renderNotesList(notes) {
     if (c !== scNotesEmptyEl) c.remove();
   });
 
-  for (const note of notes) {
-    const words =
-      note.text.trim() === "" ? 0 : note.text.trim().split(/\s+/).length;
-    const chars = note.text.length;
-    const lastmod = note.lastmod
-      ? new Date(note.lastmod).toLocaleString([], {
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : "—";
+  for (const chat of chats) {
+    const summaryParts = RPG_PREFIXES.map(({ label }) => {
+      const n = chat.counts[label];
+      return n ? `${n} ${label}` : null;
+    }).filter(Boolean);
+    const summary = summaryParts.length ? summaryParts.join(" · ") : "Empty";
 
     const card = document.createElement("div");
     card.className = "card";
     card.style.cssText =
-      "padding: 12px 16px; display: flex; flex-direction: column; gap: 8px;";
-    card.dataset.chatId = note.chatId;
+      "padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;";
     card.innerHTML = `
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-        <div>
-          <span style="font-size:12px; font-weight:600; color:var(--text-primary);">${escHtml(note.chatId)}</span>
-          <span style="font-size:11px; color:var(--text-muted); margin-left:10px;">${words} words · ${chars} chars · ${escHtml(lastmod)}</span>
-        </div>
-        <div style="display:flex; gap:6px; flex-shrink:0;">
-          <button class="btn-ghost sc-note-edit-btn" style="font-size:11px; padding:3px 10px;" data-chat-id="${escHtml(note.chatId)}">Edit</button>
-          <button class="btn-ghost sc-note-delete-btn" style="font-size:11px; padding:3px 10px; color:#ef4444; border-color:rgba(239,68,68,0.4);" data-chat-id="${escHtml(note.chatId)}">Delete</button>
-        </div>
+      <div style="min-width:0;">
+        <div style="font-size:12px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escHtml(chat.chatId)}</div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:3px;">${escHtml(summary)}</div>
       </div>
-      <div class="sc-note-editor" style="display:none;">
-        <textarea class="form-input sc-note-textarea" rows="8" style="font-family:ui-monospace,monospace; font-size:12px; resize:vertical; width:100%; box-sizing:border-box;">${escHtml(note.text)}</textarea>
-        <div style="display:flex; gap:8px; margin-top:6px;">
-          <button class="btn-primary sc-note-save-btn" style="padding:6px 16px; font-size:12px;" data-chat-id="${escHtml(note.chatId)}">Save</button>
-          <button class="btn-ghost sc-note-cancel-btn" style="font-size:12px; padding:6px 14px;" data-chat-id="${escHtml(note.chatId)}">Cancel</button>
-          <span class="save-feedback sc-note-save-feedback" style="margin-left:4px;"></span>
-        </div>
-      </div>
+      <button class="btn-ghost sc-rpg-delete-btn" style="font-size:11px; padding:3px 10px; color:#ef4444; border-color:rgba(239,68,68,0.4); flex-shrink:0;" data-chat-id="${escHtml(chat.chatId)}">Delete all</button>
     `;
     scNotesListEl.appendChild(card);
   }
 
-  scNotesListEl.querySelectorAll(".sc-note-edit-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const card = btn.closest(".card");
-      const editor = card.querySelector(".sc-note-editor");
-      const isOpen = editor.style.display !== "none";
-      editor.style.display = isOpen ? "none" : "";
-      btn.textContent = isOpen ? "Edit" : "Close";
-    });
-  });
-
-  scNotesListEl.querySelectorAll(".sc-note-save-btn").forEach((btn) => {
+  scNotesListEl.querySelectorAll(".sc-rpg-delete-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const chatId = btn.dataset.chatId;
-      const card = btn.closest(".card");
-      const ta = card.querySelector(".sc-note-textarea");
-      const fb = card.querySelector(".sc-note-save-feedback");
-      const key = "sc_note_v1_" + chatId;
-      chrome.storage.local.set(
-        { [key]: { text: ta.value, lastmod: Date.now() } },
-        () => {
-          showFeedback(fb, "✓ Saved", true);
-        },
-      );
-    });
-  });
-
-  scNotesListEl.querySelectorAll(".sc-note-delete-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const chatId = btn.dataset.chatId;
-      if (!confirm(`Delete notes for chat "${chatId}"? This cannot be undone.`))
+      if (
+        !confirm(
+          `Delete all RPG data for chat "${chatId}"? This cannot be undone.`,
+        )
+      )
         return;
-      const key = "sc_note_v1_" + chatId;
-      chrome.storage.local.remove(key, () => loadSavedNotes());
-    });
-  });
-
-  scNotesListEl.querySelectorAll(".sc-note-cancel-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const card = btn.closest(".card");
-      const editor = card.querySelector(".sc-note-editor");
-      const editBtn = card.querySelector(".sc-note-edit-btn");
-      editor.style.display = "none";
-      editBtn.textContent = "Edit";
+      const keys = RPG_PREFIXES.map(({ key }) => key + chatId);
+      chrome.storage.local.remove(keys, () => loadSavedNotes());
     });
   });
 }
 
 function loadSavedNotes() {
   chrome.storage.local.get(null, (items) => {
-    const notes = [];
-    for (const [key, val] of Object.entries(items)) {
-      if (!key.startsWith("sc_note_v1_")) continue;
-      const chatId = key.replace("sc_note_v1_", "");
-      notes.push({ chatId, text: val.text || "", lastmod: val.lastmod || 0 });
+    const chatMap = {};
+    for (const { key, label } of RPG_PREFIXES) {
+      for (const [storageKey, val] of Object.entries(items)) {
+        if (!storageKey.startsWith(key)) continue;
+        const chatId = storageKey.slice(key.length);
+        if (!chatMap[chatId]) chatMap[chatId] = { chatId, counts: {} };
+        chatMap[chatId].counts[label] = countItems(val);
+      }
     }
-    notes.sort((a, b) => b.lastmod - a.lastmod);
-    renderNotesList(notes);
+    const chats = Object.values(chatMap).sort((a, b) =>
+      a.chatId.localeCompare(b.chatId),
+    );
+    renderNotesList(chats);
   });
 }
 
