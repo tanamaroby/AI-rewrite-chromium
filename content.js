@@ -311,14 +311,14 @@
     if (fmtActionPunctuation) {
       result = result.replace(/\*([^*\n]+)\*/g, (_, inner) => {
         const t = inner.trimEnd();
-        return /[.!?\u2026]$/.test(t) ? `*${inner}*` : `*${t}.*`;
+        return /[.!?\u2026\u2014\-_]$/.test(t) ? `*${inner}*` : `*${t}.*`;
       });
     }
     // Capitalise the first letter of each *action* that follows a sentence end:
     // handles patterns like  .*  "quote"  *next action*
     if (fmtActionPunctuation || fmtCapitaliseSentences) {
       result = result.replace(
-        /([.!?\u2026]\*)([^*]*)\*([a-z])/g,
+        /([.!?\u2026\u2014\-_]\*)([^*]*)\*([a-z])/g,
         (_, end, mid, ch) => end + mid + "*" + ch.toUpperCase(),
       );
     }
