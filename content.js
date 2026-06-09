@@ -21,9 +21,12 @@
   let fmtCapitaliseSentences = true;
   let fmtUnwrapBrackets = true;
   let fmtExtraDelimiters = "";
-  let rpPersonaEnabled = false;
-  let rpPersonaName = "";
-  let rpPersonaPrepend = "";
+  let rpPersonas = Array.from({ length: 5 }, () => ({
+    label: "",
+    name: "",
+    prepend: "",
+  }));
+  let rpActivePersonaIndex = -1;
   let rpGlobalStyle = "";
   let lastRewrite = null; // { el, before, after, label, ts }
   let lastFocusedEl = null; // last focused SpicyChat input
@@ -51,6 +54,8 @@
         "fmtCapitaliseSentences",
         "fmtUnwrapBrackets",
         "fmtExtraDelimiters",
+        "rpPersonas",
+        "rpActivePersonaIndex",
         "rpPersonaEnabled",
         "rpPersonaName",
         "rpPersonaPrepend",
@@ -75,9 +80,23 @@
         fmtCapitaliseSentences = data.fmtCapitaliseSentences !== false;
         fmtUnwrapBrackets = data.fmtUnwrapBrackets !== false;
         fmtExtraDelimiters = data.fmtExtraDelimiters || "";
-        rpPersonaEnabled = data.rpPersonaEnabled === true;
-        rpPersonaName = data.rpPersonaName || "";
-        rpPersonaPrepend = data.rpPersonaPrepend || "";
+        if (Array.isArray(data.rpPersonas) && data.rpPersonas.length > 0) {
+          rpPersonas = data.rpPersonas.slice(0, 5);
+          while (rpPersonas.length < 5)
+            rpPersonas.push({ label: "", name: "", prepend: "" });
+          rpActivePersonaIndex =
+            typeof data.rpActivePersonaIndex === "number"
+              ? data.rpActivePersonaIndex
+              : -1;
+        } else {
+          // Migrate old single-persona storage
+          rpPersonas[0] = {
+            label: data.rpPersonaName || "Persona 1",
+            name: data.rpPersonaName || "",
+            prepend: data.rpPersonaPrepend || "",
+          };
+          rpActivePersonaIndex = data.rpPersonaEnabled === true ? 0 : -1;
+        }
         rpGlobalStyle = data.rpGlobalStyle || "";
         fmtShortcut = data.fmtShortcut || "m";
       },
@@ -416,9 +435,17 @@
     const parts = [];
 
     // 1. Persona context (who is writing — always 1st person)
-    if (rpPersonaEnabled && rpPersonaPrepend.trim()) {
-      const name = rpPersonaName || "the user";
-      const resolved = rpPersonaPrepend.replace(/\{\{user\}\}/gi, name);
+    const activePersona =
+      rpActivePersonaIndex >= 0 && rpActivePersonaIndex < rpPersonas.length
+        ? rpPersonas[rpActivePersonaIndex]
+        : null;
+    if (
+      activePersona &&
+      activePersona.prepend &&
+      activePersona.prepend.trim()
+    ) {
+      const name = activePersona.name || "the user";
+      const resolved = activePersona.prepend.replace(/\{\{user\}\}/gi, name);
       parts.push(
         `[Character context: The text you are rewriting is written in first-person by ${name}. ` +
           `You are rewriting their words — stay in their voice and perspective throughout. ` +

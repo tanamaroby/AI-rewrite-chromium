@@ -337,6 +337,9 @@
     }
     .rp-toggle input:checked ~ .rp-toggle-track { background: rgba(108,99,255,0.35); border-color: rgba(108,99,255,0.6); }
     .rp-toggle input:checked ~ .rp-toggle-track::after { transform: translateX(14px); background: #a78bfa; }
+    .sc-persona-pill { display:inline-flex; align-items:center; justify-content:center; min-width:36px; padding:3px 9px; border-radius:16px; font-size:11.5px; font-weight:600; cursor:pointer; border:1.5px solid rgba(108,99,255,0.3); background:transparent; color:#64748b; transition:background 0.15s,border-color 0.15s,color 0.15s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:82px; }
+    .sc-persona-pill:hover { border-color:rgba(108,99,255,0.6); color:#cbd5e1; background:rgba(108,99,255,0.12); }
+    .sc-persona-pill.active { background:rgba(108,99,255,0.22); border-color:#6c63ff; color:#a78bfa; }
     .rp-rewrite-meta { font-size: 11px; color: #64748b; display: flex; align-items: center; justify-content: space-between; }
     .rp-rewrite-label { font-weight: 600; color: #a78bfa; }
     .rp-diff-block { display: flex; flex-direction: column; gap: 6px; }
@@ -502,21 +505,24 @@
             </div>
           </div>
           <div class="rp-section-label">Persona</div>
-          <div class="rp-card">
-            <div class="rp-toggle-row">
-              <span class="rp-toggle-label">Enable persona prepend</span>
-              <label class="rp-toggle">
-                <input type="checkbox" id="sc-rp-persona-enabled" />
-                <span class="rp-toggle-track"></span>
-              </label>
-            </div>
-            <div>
-              <div class="rp-hint" style="margin-bottom:6px;">Your name &mdash; replaces <code style="background:rgba(108,99,255,0.15);padding:1px 5px;border-radius:3px;font-size:10.5px;color:#a78bfa;">{{user}}</code> in the prepend</div>
-              <input type="text" id="sc-rp-persona-name" class="rp-input" placeholder="Your persona name…" data-ai-rewriter-ignore="1" />
-            </div>
-            <div>
-              <div class="rp-hint" style="margin-bottom:6px;">Injected before every rewrite prompt on SpicyChat</div>
-              <textarea id="sc-rp-persona-prepend" class="rp-input rp-textarea" placeholder="e.g. You are writing a collaborative story. The human character is named {{user}}. Stay in character." data-ai-rewriter-ignore="1"></textarea>
+          <div class="rp-card" style="padding-bottom:10px;">
+            <div class="rp-hint" style="margin-bottom:8px;">Tap a slot to activate it — tap again to deactivate. Active persona is injected before every rewrite.</div>
+            <!-- Persona slot pills -->
+            <div id="sc-rp-persona-pills" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;"></div>
+            <!-- Active persona editor -->
+            <div id="sc-rp-persona-editor" style="display:none;">
+              <div style="margin-bottom:6px;">
+                <div class="rp-hint" style="margin-bottom:4px;">Slot label</div>
+                <input type="text" id="sc-rp-persona-label" class="rp-input" placeholder="e.g. Aria" data-ai-rewriter-ignore="1" />
+              </div>
+              <div style="margin-bottom:6px;">
+                <div class="rp-hint" style="margin-bottom:4px;">Persona name &mdash; replaces <code style="background:rgba(108,99,255,0.15);padding:1px 5px;border-radius:3px;font-size:10.5px;color:#a78bfa;">{{user}}</code></div>
+                <input type="text" id="sc-rp-persona-name" class="rp-input" placeholder="Your persona name…" data-ai-rewriter-ignore="1" />
+              </div>
+              <div>
+                <div class="rp-hint" style="margin-bottom:4px;">Injected before every rewrite prompt</div>
+                <textarea id="sc-rp-persona-prepend" class="rp-input rp-textarea" placeholder="e.g. You are writing a collaborative story. The human character is named {{user}}. Stay in character." data-ai-rewriter-ignore="1"></textarea>
+              </div>
             </div>
             <div class="rp-autosave" id="sc-rp-autosave">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -635,7 +641,9 @@
     const rpPanel = document.getElementById("sc-np-rp-panel");
     const statusBar = document.getElementById("sc-np-status");
     const notesBtns = document.getElementById("sc-np-notes-btns");
-    const rpPersonaEnabledCb = document.getElementById("sc-rp-persona-enabled");
+    const rpPersonaPillsEl = document.getElementById("sc-rp-persona-pills");
+    const rpPersonaEditorEl = document.getElementById("sc-rp-persona-editor");
+    const rpPersonaLabelInput = document.getElementById("sc-rp-persona-label");
     const rpPersonaNameInput = document.getElementById("sc-rp-persona-name");
     const rpPersonaPrependTa = document.getElementById("sc-rp-persona-prepend");
     const rpAutosaveEl = document.getElementById("sc-rp-autosave");
@@ -901,11 +909,59 @@
     });
 
     /* ── Persona save/load ── */
+    let drawerPersonas = Array.from({ length: 5 }, () => ({
+      label: "",
+      name: "",
+      prepend: "",
+    }));
+    let drawerActiveIdx = -1;
+
+    function buildDrawerPersonaPills() {
+      rpPersonaPillsEl.innerHTML = "";
+      drawerPersonas.forEach((p, idx) => {
+        const btn = document.createElement("button");
+        btn.className =
+          "sc-persona-pill" + (idx === drawerActiveIdx ? " active" : "");
+        btn.dataset.idx = idx;
+        const label = (p.label || "").trim() || String(idx + 1);
+        btn.textContent =
+          label.length > 9 ? label.slice(0, 8) + "\u2026" : label;
+        btn.addEventListener("click", () => {
+          drawerActiveIdx = drawerActiveIdx === idx ? -1 : idx;
+          chrome.storage.sync.set({ rpActivePersonaIndex: drawerActiveIdx });
+          buildDrawerPersonaPills();
+          showDrawerPersonaEditor();
+          triggerPersonaAutosave();
+        });
+        rpPersonaPillsEl.appendChild(btn);
+      });
+    }
+
+    function showDrawerPersonaEditor() {
+      if (drawerActiveIdx < 0) {
+        rpPersonaEditorEl.style.display = "none";
+      } else {
+        rpPersonaEditorEl.style.display = "";
+        const p = drawerPersonas[drawerActiveIdx];
+        rpPersonaLabelInput.value = p.label || "";
+        rpPersonaNameInput.value = p.name || "";
+        rpPersonaPrependTa.value = p.prepend || "";
+      }
+    }
+
     function savePersona() {
+      if (drawerActiveIdx >= 0) {
+        drawerPersonas[drawerActiveIdx] = {
+          label: rpPersonaLabelInput.value,
+          name: rpPersonaNameInput.value,
+          prepend: rpPersonaPrependTa.value,
+        };
+        // Refresh pill label live
+        buildDrawerPersonaPills();
+      }
       chrome.storage.sync.set({
-        rpPersonaEnabled: rpPersonaEnabledCb.checked,
-        rpPersonaName: rpPersonaNameInput.value,
-        rpPersonaPrepend: rpPersonaPrependTa.value,
+        rpPersonas: drawerPersonas,
+        rpActivePersonaIndex: drawerActiveIdx,
       });
       rpAutosaveEl.classList.add("visible");
       clearTimeout(rpAutosaveTimer);
@@ -915,21 +971,47 @@
       );
     }
 
+    function triggerPersonaAutosave() {
+      savePersona();
+    }
+
     function schedulePersonaSave() {
       clearTimeout(rpSaveTimer);
       rpSaveTimer = setTimeout(savePersona, 600);
     }
 
-    rpPersonaEnabledCb.addEventListener("change", savePersona);
+    rpPersonaLabelInput.addEventListener("input", schedulePersonaSave);
     rpPersonaNameInput.addEventListener("input", schedulePersonaSave);
     rpPersonaPrependTa.addEventListener("input", schedulePersonaSave);
 
     chrome.storage.sync.get(
-      ["rpPersonaEnabled", "rpPersonaName", "rpPersonaPrepend"],
+      [
+        "rpPersonas",
+        "rpActivePersonaIndex",
+        "rpPersonaEnabled",
+        "rpPersonaName",
+        "rpPersonaPrepend",
+      ],
       (data) => {
-        rpPersonaEnabledCb.checked = data.rpPersonaEnabled === true;
-        rpPersonaNameInput.value = data.rpPersonaName || "";
-        rpPersonaPrependTa.value = data.rpPersonaPrepend || "";
+        if (Array.isArray(data.rpPersonas) && data.rpPersonas.length > 0) {
+          drawerPersonas = data.rpPersonas.slice(0, 5);
+          while (drawerPersonas.length < 5)
+            drawerPersonas.push({ label: "", name: "", prepend: "" });
+          drawerActiveIdx =
+            typeof data.rpActivePersonaIndex === "number"
+              ? data.rpActivePersonaIndex
+              : -1;
+        } else if (data.rpPersonaName || data.rpPersonaPrepend) {
+          // Migrate old single-persona storage
+          drawerPersonas[0] = {
+            label: data.rpPersonaName || "Persona 1",
+            name: data.rpPersonaName || "",
+            prepend: data.rpPersonaPrepend || "",
+          };
+          drawerActiveIdx = data.rpPersonaEnabled === true ? 0 : -1;
+        }
+        buildDrawerPersonaPills();
+        showDrawerPersonaEditor();
       },
     );
 

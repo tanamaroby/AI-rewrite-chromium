@@ -481,32 +481,141 @@ saveFormatterBtn.addEventListener("click", () => {
     showFeedback(formatterSaveFeedback, "✓ Saved!", true);
   });
 });
-// ─── RP Persona ───────────────────────────────────────────────────────────────
+// ─── RP Persona (5 slots) ────────────────────────────────────────────────────
 
-const rpPersonaEnabledToggle = document.getElementById(
-  "rpPersonaEnabledToggle",
-);
-const rpPersonaNameInput = document.getElementById("rpPersonaNameInput");
-const rpPersonaPrependInput = document.getElementById("rpPersonaPrependInput");
-const saveRpPersonaBtn = document.getElementById("saveRpPersona");
+const rpPersonaSlotsEl = document.getElementById("rpPersonaSlots");
+const rpPersonaPillsEl = document.getElementById("rpPersonaPills");
+const saveRpPersonasBtn = document.getElementById("saveRpPersonas");
 const rpPersonaSaveFeedback = document.getElementById("rpPersonaSaveFeedback");
+const rpActivePersonaStatus = document.getElementById("rpActivePersonaStatus");
 
+const DEFAULT_PERSONAS = Array.from({ length: 5 }, () => ({
+  label: "",
+  name: "",
+  prepend: "",
+}));
+
+let rpPersonasData = DEFAULT_PERSONAS.map((p) => ({ ...p }));
+let rpActivePersonaIndex = -1;
+
+function buildPersonaSlots() {
+  rpPersonaSlotsEl.innerHTML = "";
+  rpPersonasData.forEach((persona, idx) => {
+    const isActive = idx === rpActivePersonaIndex;
+    const card = document.createElement("div");
+    card.className = `persona-card${isActive ? " active" : ""}`;
+    card.dataset.idx = idx;
+    card.innerHTML = `
+      <div class="persona-card-header">
+        <span class="persona-slot-num">#${idx + 1}</span>
+        <input type="text" class="persona-label-input" placeholder="Slot label (e.g. Aria)" value="${escHtml(persona.label)}" data-field="label" />
+        <span class="persona-active-badge">ACTIVE</span>
+        <button class="persona-toggle-btn">${isActive ? "Deactivate" : "Activate"}</button>
+      </div>
+      <div class="form-group" style="margin: 0 0 8px;">
+        <label class="form-label" style="font-size:11.5px;">Persona Name</label>
+        <input type="text" class="form-input" style="padding: 6px 10px;" placeholder="e.g. Aria" value="${escHtml(persona.name)}" data-field="name" spellcheck="false" />
+        <p class="form-hint">Replaces <code>{{user}}</code> in the prepend text.</p>
+      </div>
+      <div class="form-group" style="margin: 0;">
+        <label class="form-label" style="font-size:11.5px;">Persona Prepend Text</label>
+        <textarea class="form-input" rows="4" style="resize:vertical;font-family:ui-monospace,monospace;font-size:11.5px;" placeholder="e.g. You are writing a collaborative story. The human character is named {{user}}. Stay in character." data-field="prepend">${escHtml(persona.prepend)}</textarea>
+        <p class="form-hint">Injected before every rewrite prompt on SpicyChat only.</p>
+      </div>`;
+    rpPersonaSlotsEl.appendChild(card);
+
+    // Live-update data on input
+    card.querySelectorAll("[data-field]").forEach((el) => {
+      el.addEventListener("input", () => {
+        rpPersonasData[idx][el.dataset.field] = el.value;
+        updatePersonaStatus();
+      });
+    });
+
+    // Activate / deactivate toggle
+    card.querySelector(".persona-toggle-btn").addEventListener("click", () => {
+      rpActivePersonaIndex = rpActivePersonaIndex === idx ? -1 : idx;
+      saveRpActiveIndex();
+      buildPersonaSlots();
+      updatePersonaPills();
+      updatePersonaStatus();
+    });
+  });
+}
+
+function updatePersonaPills() {
+  rpPersonaPillsEl.querySelectorAll(".persona-pill").forEach((btn) => {
+    const idx = parseInt(btn.dataset.idx, 10);
+    const label = rpPersonasData[idx].label.trim() || String(idx + 1);
+    btn.textContent = label.length > 10 ? label.slice(0, 9) + "…" : label;
+    btn.classList.toggle("active", idx === rpActivePersonaIndex);
+  });
+}
+
+function updatePersonaStatus() {
+  if (rpActivePersonaIndex < 0) {
+    rpActivePersonaStatus.textContent = "None";
+  } else {
+    const p = rpPersonasData[rpActivePersonaIndex];
+    rpActivePersonaStatus.textContent =
+      p.label.trim() || `Slot ${rpActivePersonaIndex + 1}`;
+  }
+}
+
+function saveRpActiveIndex() {
+  chrome.storage.sync.set({ rpActivePersonaIndex });
+}
+
+// Load persona data
 chrome.storage.sync.get(
-  ["rpPersonaEnabled", "rpPersonaName", "rpPersonaPrepend"],
+  [
+    "rpPersonas",
+    "rpActivePersonaIndex",
+    "rpPersonaEnabled",
+    "rpPersonaName",
+    "rpPersonaPrepend",
+  ],
   (data) => {
-    rpPersonaEnabledToggle.checked = data.rpPersonaEnabled === true;
-    rpPersonaNameInput.value = data.rpPersonaName || "";
-    rpPersonaPrependInput.value = data.rpPersonaPrepend || "";
+    if (Array.isArray(data.rpPersonas) && data.rpPersonas.length > 0) {
+      // New multi-persona storage
+      rpPersonasData = data.rpPersonas.slice(0, 5);
+      while (rpPersonasData.length < 5)
+        rpPersonasData.push({ label: "", name: "", prepend: "" });
+      rpActivePersonaIndex =
+        typeof data.rpActivePersonaIndex === "number"
+          ? data.rpActivePersonaIndex
+          : -1;
+    } else if (data.rpPersonaName || data.rpPersonaPrepend) {
+      // Migrate old single-persona storage → slot 0
+      rpPersonasData[0] = {
+        label: data.rpPersonaName || "Persona 1",
+        name: data.rpPersonaName || "",
+        prepend: data.rpPersonaPrepend || "",
+      };
+      rpActivePersonaIndex = data.rpPersonaEnabled === true ? 0 : -1;
+    }
+    buildPersonaSlots();
+    updatePersonaPills();
+    updatePersonaStatus();
   },
 );
 
-saveRpPersonaBtn.addEventListener("click", () => {
+// Pill click → activate / deactivate
+rpPersonaPillsEl.addEventListener("click", (e) => {
+  const btn = e.target.closest(".persona-pill");
+  if (!btn) return;
+  const idx = parseInt(btn.dataset.idx, 10);
+  rpActivePersonaIndex = rpActivePersonaIndex === idx ? -1 : idx;
+  saveRpActiveIndex();
+  buildPersonaSlots();
+  updatePersonaPills();
+  updatePersonaStatus();
+});
+
+// Save all personas
+saveRpPersonasBtn.addEventListener("click", () => {
   chrome.storage.sync.set(
-    {
-      rpPersonaEnabled: rpPersonaEnabledToggle.checked,
-      rpPersonaName: rpPersonaNameInput.value.trim(),
-      rpPersonaPrepend: rpPersonaPrependInput.value,
-    },
+    { rpPersonas: rpPersonasData, rpActivePersonaIndex },
     () => {
       showFeedback(rpPersonaSaveFeedback, "✓ Saved!", true);
     },

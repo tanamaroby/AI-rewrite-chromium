@@ -286,35 +286,31 @@
         <div class="section-header" style="margin-top: 28px;">
           <h3 style="font-size: 15px; color: var(--text-primary); margin: 0 0 6px;">RP Tools &mdash; Persona Prepend</h3>
           <p class="section-desc" style="margin: 0;">
-            Silently inject a persona context before every rewrite prompt on SpicyChat.
+            Five saved persona slots. Activate one at a time — clicking the active slot deactivates it.
             Use <code>{{user}}</code> as a placeholder for your persona name.
-            Also editable live from the <strong>RP Tools</strong> tab in the side drawer.
+            Also switchable live from the <strong>RP Tools</strong> tab in the side drawer.
           </p>
         </div>
-        <div class="card">
-          <div class="toggle-row">
-            <div class="toggle-info">
-              <span class="toggle-label">Enable persona prepend</span>
-              <span class="toggle-hint">Prepends your persona context to every rewrite on SpicyChat</span>
+        <!-- Active persona status bar -->
+        <div class="card" style="margin-bottom: 6px;">
+          <div class="toggle-row" style="flex-wrap: wrap; gap: 10px;">
+            <div class="toggle-info" style="min-width: 120px;">
+              <span class="toggle-label">Active persona</span>
+              <span class="toggle-hint" id="rpActivePersonaStatus">None</span>
             </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="rpPersonaEnabledToggle" />
-              <span class="toggle-track"></span>
-            </label>
+            <div id="rpPersonaPills" style="display: flex; gap: 5px; flex-wrap: wrap;">
+              <button class="persona-pill" data-idx="0">1</button>
+              <button class="persona-pill" data-idx="1">2</button>
+              <button class="persona-pill" data-idx="2">3</button>
+              <button class="persona-pill" data-idx="3">4</button>
+              <button class="persona-pill" data-idx="4">5</button>
+            </div>
           </div>
         </div>
-        <div class="form-group" style="margin-top: 16px;">
-          <label class="form-label" for="rpPersonaNameInput">Your Persona Name</label>
-          <input type="text" id="rpPersonaNameInput" class="form-input" placeholder="e.g. Aria" spellcheck="false" />
-          <p class="form-hint">Replaces <code>{{user}}</code> in the prepend text below.</p>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="rpPersonaPrependInput">Persona Prepend Text</label>
-          <textarea id="rpPersonaPrependInput" class="form-input" rows="5" style="resize: vertical; font-family: ui-monospace, monospace; font-size: 12px;" placeholder="e.g. You are writing a collaborative story. The human character is named {{user}}. Stay in character."></textarea>
-          <p class="form-hint">Injected before every rewrite prompt on SpicyChat only. Supports <code>{{user}}</code> as a placeholder.</p>
-        </div>
-        <div class="form-actions">
-          <button class="btn-primary" id="saveRpPersona">Save Persona</button>
+        <!-- 5 persona edit slots -->
+        <div id="rpPersonaSlots" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;"></div>
+        <div class="form-actions" style="margin-top: 12px;">
+          <button class="btn-primary" id="saveRpPersonas">Save All Personas</button>
           <span class="save-feedback" id="rpPersonaSaveFeedback"></span>
         </div>
 
