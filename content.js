@@ -24,6 +24,7 @@
   let fmtRepairAsterisks = true;
   let fmtOocBrackets = true;
   let fmtActionPunctuation = true;
+  let fmtCapitaliseQuotes = true;
   let rpPersonas = Array.from({ length: 5 }, () => ({
     label: "",
     name: "",
@@ -60,6 +61,7 @@
         "fmtRepairAsterisks",
         "fmtOocBrackets",
         "fmtActionPunctuation",
+        "fmtCapitaliseQuotes",
         "rpPersonas",
         "rpActivePersonaIndex",
         "rpPersonaEnabled",
@@ -89,6 +91,7 @@
         fmtRepairAsterisks = data.fmtRepairAsterisks !== false;
         fmtOocBrackets = data.fmtOocBrackets !== false;
         fmtActionPunctuation = data.fmtActionPunctuation !== false;
+        fmtCapitaliseQuotes = data.fmtCapitaliseQuotes !== false;
         if (Array.isArray(data.rpPersonas) && data.rpPersonas.length > 0) {
           rpPersonas = data.rpPersonas.slice(0, 5);
           while (rpPersonas.length < 5)
@@ -225,6 +228,7 @@
   function formatText(text) {
     if (fmtOocBrackets)
       text = text.replace(/\(\(\s*([\s\S]*?)\s*\)\)/g, "($1)");
+    // Repair/strip any pre-existing asterisks before processing
     if (fmtRepairAsterisks) {
       text = text
         .split("\n")
@@ -233,12 +237,6 @@
           return count % 2 !== 0 ? line + "*" : line;
         })
         .join("\n");
-    }
-    if (fmtActionPunctuation) {
-      text = text.replace(/\*([^*\n]+)\*/g, (_, inner) => {
-        const t = inner.trimEnd();
-        return /[.!?\u2026]$/.test(t) ? `*${inner}*` : `*${t}.*`;
-      });
     }
     if (fmtStripAsterisks) text = text.replace(/\*/g, "");
     if (fmtNormaliseQuotes) text = text.replace(/[\u201C\u201D]/g, '"');
@@ -257,6 +255,9 @@
     }
     if (fmtNormaliseNewlines) text = text.replace(/\n+/g, "\n\n");
     if (fmtCapitaliseSentences) text = capitaliseSentences(text);
+    // Capitalise first letter of dialogue inside straight quotes
+    if (fmtCapitaliseQuotes)
+      text = text.replace(/"([a-z])/g, (_, ch) => '"' + ch.toUpperCase());
 
     const patterns = ['"[^"]*"'];
     if (fmtUnwrapBrackets) patterns.push("\\[[^\\]]*\\]");
@@ -280,7 +281,24 @@
     if (lastIndex < text.length) {
       parts.push(wrapOutsideText(text.slice(lastIndex)));
     }
-    return parts.join("");
+    let result = parts.join("");
+
+    // Action punctuation runs after wrapping so it sees the new *...* pairs
+    if (fmtActionPunctuation) {
+      result = result.replace(/\*([^*\n]+)\*/g, (_, inner) => {
+        const t = inner.trimEnd();
+        return /[.!?\u2026]$/.test(t) ? `*${inner}*` : `*${t}.*`;
+      });
+    }
+    // Capitalise the first letter of each *action* that follows a sentence end:
+    // handles patterns like  .*  "quote"  *next action*
+    if (fmtActionPunctuation || fmtCapitaliseSentences) {
+      result = result.replace(
+        /([.!?\u2026]\*)([^*]*)\*([a-z])/g,
+        (_, end, mid, ch) => end + mid + "*" + ch.toUpperCase(),
+      );
+    }
+    return result;
   }
 
   function wrapOutsideText(str) {
