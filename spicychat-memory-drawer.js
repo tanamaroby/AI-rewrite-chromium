@@ -343,6 +343,200 @@
     .dice-history-chip.nat20 { background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.25); color: #4ade80; }
     .dice-history-chip.nat1  { background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.2); color: #f87171; }
 
+    /* ── Collapsible quest sections ── */
+    .ql-collapsible-hdr { cursor: pointer; user-select: none; }
+    .ql-section-body.ql-collapsed { display: none; }
+    .ql-chevron { display: flex; align-items: center; transition: transform 0.18s; color: #334155; flex-shrink: 0; }
+    .ql-chevron.collapsed { transform: rotate(-90deg); }
+
+    /* ── Resource counters ── */
+    .res-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 4px 0; border-bottom: 1px solid rgba(108,99,255,0.07);
+    }
+    .res-item:last-child { border-bottom: none; }
+    .res-name-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: #e2e8f0; font-size: 12px; font-family: inherit; caret-color: #a78bfa; min-width: 0;
+    }
+    .res-name-input::placeholder { color: #334155; }
+    .res-value {
+      min-width: 38px; text-align: right; font-size: 14px; font-weight: 800;
+      color: #a78bfa; font-variant-numeric: tabular-nums; flex-shrink: 0;
+    }
+    .res-delete-btn {
+      background: none; border: none; padding: 2px 3px; cursor: pointer;
+      color: #293548; border-radius: 3px; flex-shrink: 0;
+      transition: color 0.12s; display: flex; align-items: center;
+    }
+    .res-delete-btn:hover { color: #f87171; }
+    /* bulk adjust panel */
+    .res-adjust-panel {
+      display: flex; flex-direction: column; gap: 6px;
+      border-top: 1px solid rgba(108,99,255,0.12); padding-top: 8px; margin-top: 2px;
+    }
+    .res-adjust-row { display: flex; align-items: center; gap: 6px; }
+    .res-select {
+      flex: 1; min-width: 0; background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(108,99,255,0.2); border-radius: 5px;
+      color: #e2e8f0; font-size: 11.5px; font-family: inherit;
+      padding: 5px 7px; outline: none; transition: border-color 0.12s;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236c63ff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 7px center;
+      padding-right: 22px; cursor: pointer;
+    }
+    .res-select:focus { border-color: rgba(108,99,255,0.5); }
+    .res-select option { background: #1a1730; color: #e2e8f0; }
+    .res-amount-input {
+      width: 52px; flex-shrink: 0; text-align: center;
+      background: rgba(0,0,0,0.3); border: 1px solid rgba(108,99,255,0.2); border-radius: 5px;
+      color: #e2e8f0; font-size: 12.5px; font-weight: 700; font-family: inherit;
+      padding: 5px 4px; outline: none; transition: border-color 0.12s; caret-color: #a78bfa;
+    }
+    .res-amount-input:focus { border-color: rgba(108,99,255,0.5); }
+    .res-op-btn {
+      padding: 5px 11px; border-radius: 5px; font-size: 12px; font-weight: 700;
+      font-family: inherit; cursor: pointer; border: 1px solid transparent;
+      transition: background 0.12s, border-color 0.12s; flex-shrink: 0;
+    }
+    .res-op-add { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.3); color: #22c55e; }
+    .res-op-add:hover { background: rgba(34,197,94,0.22); border-color: rgba(34,197,94,0.5); }
+    .res-op-sub { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.28); color: #f87171; }
+    .res-op-sub:hover { background: rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.45); }
+    .res-op-set { background: rgba(108,99,255,0.1); border-color: rgba(108,99,255,0.28); color: #a78bfa; }
+    .res-op-set:hover { background: rgba(108,99,255,0.2); border-color: rgba(108,99,255,0.5); }
+    .res-feedback { font-size: 10.5px; color: #22c55e; height: 14px; opacity: 0; transition: opacity 0.3s; }
+    .res-feedback.visible { opacity: 1; }
+
+    /* ── NPC Tracker ── */
+    .npc-item {
+      display: flex; align-items: flex-start; gap: 7px; flex-direction: column;
+      background: rgba(255,255,255,0.025); border: 1px solid rgba(108,99,255,0.13);
+      border-radius: 6px; padding: 7px 10px; transition: border-color 0.12s;
+    }
+    .npc-item:focus-within { border-color: rgba(108,99,255,0.35); }
+    .npc-top { display: flex; align-items: center; gap: 6px; width: 100%; }
+    .npc-disp-btn {
+      flex-shrink: 0; padding: 2px 7px; border-radius: 100px; border: 1px solid transparent;
+      font-size: 9.5px; font-weight: 700; cursor: pointer; font-family: inherit;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+    }
+    .npc-disp-friendly { background: rgba(34,197,94,0.12);  border-color: rgba(34,197,94,0.3);  color: #22c55e; }
+    .npc-disp-neutral  { background: rgba(100,116,139,0.1); border-color: rgba(100,116,139,0.25);color: #94a3b8; }
+    .npc-disp-hostile  { background: rgba(239,68,68,0.1);   border-color: rgba(239,68,68,0.28);  color: #f87171; }
+    .npc-name-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: #e2e8f0; font-size: 12.5px; font-weight: 600; font-family: inherit;
+      caret-color: #a78bfa; min-width: 0;
+    }
+    .npc-name-input::placeholder { color: #334155; }
+    .npc-note-input {
+      width: 100%; background: transparent; border: none; outline: none;
+      color: #64748b; font-size: 11.5px; font-family: inherit; caret-color: #a78bfa;
+    }
+    .npc-note-input::placeholder { color: #2a3447; }
+    .npc-delete-btn {
+      background: none; border: none; padding: 2px 3px; cursor: pointer; flex-shrink: 0;
+      color: #293548; border-radius: 3px; transition: color 0.12s; display: flex; align-items: center;
+    }
+    .npc-delete-btn:hover { color: #f87171; }
+
+    /* ── Ability Uses ── */
+    .abl-item {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.025); border: 1px solid rgba(108,99,255,0.13);
+      border-radius: 6px; padding: 5px 8px; transition: border-color 0.12s;
+    }
+    .abl-item:focus-within { border-color: rgba(108,99,255,0.35); }
+    .abl-name-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: #e2e8f0; font-size: 12px; font-family: inherit; caret-color: #a78bfa; min-width: 0;
+    }
+    .abl-name-input::placeholder { color: #334155; }
+    .abl-use-btn {
+      width: 22px; height: 22px; border-radius: 4px;
+      border: 1px solid rgba(108,99,255,0.28); background: rgba(108,99,255,0.07);
+      color: #a78bfa; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .abl-use-btn:hover { background: rgba(108,99,255,0.2); border-color: rgba(108,99,255,0.5); }
+    .abl-cur { font-size: 13px; font-weight: 700; color: #a78bfa; min-width: 18px; text-align: center; }
+    .abl-sep { font-size: 11px; color: #334155; }
+    .abl-max-input {
+      width: 28px; text-align: center; background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(108,99,255,0.15); border-radius: 3px;
+      color: #64748b; font-size: 11px; font-family: inherit; padding: 1px 2px; outline: none;
+    }
+    .abl-reset-btn {
+      font-size: 9px; font-weight: 700; color: #475569;
+      background: none; border: 1px solid rgba(108,99,255,0.15); border-radius: 4px;
+      padding: 2px 5px; cursor: pointer; font-family: inherit; flex-shrink: 0;
+      transition: color 0.12s, border-color 0.12s;
+    }
+    .abl-reset-btn:hover { color: #a78bfa; border-color: rgba(108,99,255,0.4); }
+    .abl-delete-btn {
+      background: none; border: none; padding: 2px 3px; cursor: pointer; flex-shrink: 0;
+      color: #293548; border-radius: 3px; transition: color 0.12s; display: flex; align-items: center;
+    }
+    .abl-delete-btn:hover { color: #f87171; }
+
+    /* ── Party Tracker ── */
+    .party-item {
+      display: flex; align-items: center; gap: 7px;
+      background: rgba(255,255,255,0.025); border: 1px solid rgba(108,99,255,0.13);
+      border-radius: 6px; padding: 6px 10px; transition: border-color 0.12s;
+    }
+    .party-item:focus-within { border-color: rgba(108,99,255,0.35); }
+    .party-status-btn {
+      flex-shrink: 0; padding: 2px 8px; border-radius: 100px; border: 1px solid transparent;
+      font-size: 9.5px; font-weight: 700; cursor: pointer; font-family: inherit; min-width: 54px;
+      text-align: center; transition: background 0.12s, border-color 0.12s, color 0.12s;
+    }
+    .party-status-active { background: rgba(34,197,94,0.12);  border-color: rgba(34,197,94,0.3);  color: #22c55e; }
+    .party-status-downed { background: rgba(251,191,36,0.1);  border-color: rgba(251,191,36,0.3);  color: #fbbf24; }
+    .party-status-dead   { background: rgba(239,68,68,0.1);   border-color: rgba(239,68,68,0.28);  color: #f87171; }
+    .party-status-absent { background: rgba(100,116,139,0.1); border-color: rgba(100,116,139,0.25);color: #64748b; }
+    .party-name-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: #e2e8f0; font-size: 12.5px; font-weight: 600; font-family: inherit;
+      caret-color: #a78bfa; min-width: 0;
+    }
+    .party-name-input::placeholder { color: #334155; }
+    .party-delete-btn {
+      background: none; border: none; padding: 2px 3px; cursor: pointer; flex-shrink: 0;
+      color: #293548; border-radius: 3px; transition: color 0.12s; display: flex; align-items: center;
+    }
+    .party-delete-btn:hover { color: #f87171; }
+
+    /* ── Rumours Board ── */
+    .rumour-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 6px 0; border-bottom: 1px solid rgba(108,99,255,0.07);
+    }
+    .rumour-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .rumour-check {
+      flex-shrink: 0; width: 16px; height: 16px; margin-top: 2px;
+      border: 1.5px solid rgba(108,99,255,0.35); border-radius: 3px;
+      background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .rumour-check:hover { border-color: rgba(108,99,255,0.65); background: rgba(108,99,255,0.08); }
+    .rumour-item.rumour-done .rumour-check { background: rgba(34,197,94,0.2); border-color: #22c55e; }
+    .rumour-text-input {
+      flex: 1; background: transparent; border: none; outline: none; resize: none;
+      color: #e2e8f0; font-size: 12px; font-family: inherit; line-height: 1.4;
+      caret-color: #a78bfa; overflow: hidden; min-height: 0;
+    }
+    .rumour-item.rumour-done .rumour-text-input { color: #475569; text-decoration: line-through; }
+    .rumour-text-input::placeholder { color: #334155; }
+    .rumour-delete-btn {
+      background: none; border: none; padding: 2px 3px; cursor: pointer; flex-shrink: 0;
+      color: #293548; border-radius: 3px; transition: color 0.12s; display: flex; align-items: center; margin-top: 1px;
+    }
+    .rumour-delete-btn:hover { color: #f87171; }
+
     /* ── Page shrink ── */
     body {
       transition: width 0.26s cubic-bezier(0.4,0,0.2,1);
@@ -588,6 +782,75 @@
               <div class="dice-result-nat" id="sc-np-dice-nat"></div>
             </div>
             <div class="dice-history" id="sc-np-dice-history"></div>
+          </div>
+          <!-- Resource Counters -->
+          <div class="ql-section-header ql-collapsible-hdr" data-section="sc-np-res-body">
+            <span class="ql-section-label">Resources</span>
+            <div style="display:flex;gap:5px;align-items:center;">
+              <button id="sc-np-res-add" class="ql-add-btn">+ Add</button>
+              <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+            </div>
+          </div>
+          <div id="sc-np-res-body" class="ql-section-body">
+            <div class="rp-card" style="padding:8px 10px;gap:6px;">
+              <div id="sc-np-res-list"></div>
+              <div class="res-adjust-panel" id="sc-np-res-adjust">
+                <div class="res-adjust-row">
+                  <select id="sc-np-res-select" class="res-select" data-ai-rewriter-ignore="1"><option value="">Select resource…</option></select>
+                  <input id="sc-np-res-amount" type="number" class="res-amount-input" value="1" min="0" data-ai-rewriter-ignore="1" placeholder="Amt" />
+                </div>
+                <div class="res-adjust-row">
+                  <button id="sc-np-res-op-add" class="res-op-btn res-op-add">+ Add</button>
+                  <button id="sc-np-res-op-sub" class="res-op-btn res-op-sub">− Subtract</button>
+                  <button id="sc-np-res-op-set" class="res-op-btn res-op-set">= Set</button>
+                  <span class="res-feedback" id="sc-np-res-fb"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Ability Uses -->
+          <div class="ql-section-header ql-collapsible-hdr" data-section="sc-np-abl-body">
+            <span class="ql-section-label">Abilities</span>
+            <div style="display:flex;gap:5px;align-items:center;">
+              <button id="sc-np-abl-add" class="ql-add-btn">+ Add</button>
+              <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+            </div>
+          </div>
+          <div id="sc-np-abl-body" class="ql-section-body">
+            <div class="rp-card" style="padding:8px 10px;gap:5px;"><div id="sc-np-abl-list"></div></div>
+          </div>
+          <!-- Party Tracker -->
+          <div class="ql-section-header ql-collapsible-hdr" data-section="sc-np-party-body">
+            <span class="ql-section-label">Party</span>
+            <div style="display:flex;gap:5px;align-items:center;">
+              <button id="sc-np-party-add" class="ql-add-btn">+ Add</button>
+              <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+            </div>
+          </div>
+          <div id="sc-np-party-body" class="ql-section-body">
+            <div class="rp-card" style="padding:8px 10px;gap:5px;"><div id="sc-np-party-list"></div></div>
+          </div>
+          <!-- NPC Tracker -->
+          <div class="ql-section-header ql-collapsible-hdr" data-section="sc-np-npc-body">
+            <span class="ql-section-label">NPCs</span>
+            <div style="display:flex;gap:5px;align-items:center;">
+              <button id="sc-np-npc-add" class="ql-add-btn">+ Add</button>
+              <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+            </div>
+          </div>
+          <div id="sc-np-npc-body" class="ql-section-body">
+            <div class="rp-card" style="padding:8px 10px;gap:5px;"><div id="sc-np-npc-list"></div></div>
+          </div>
+          <!-- Rumours Board -->
+          <div class="ql-section-header ql-collapsible-hdr" data-section="sc-np-rumour-body">
+            <span class="ql-section-label">Rumours</span>
+            <div style="display:flex;gap:5px;align-items:center;">
+              <button id="sc-np-rumour-add" class="ql-add-btn">+ Add</button>
+              <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+            </div>
+          </div>
+          <div id="sc-np-rumour-body" class="ql-section-body">
+            <div class="rp-card" style="padding:8px 10px;gap:5px;"><div id="sc-np-rumour-list"></div></div>
           </div>
         </div>
         <div id="sc-np-rp-panel">
@@ -1200,6 +1463,540 @@
     });
 
     updateDiceLabel();
+
+    /* ════════════════ COLLAPSIBLE SECTIONS ════════════════ */
+    drawer.querySelectorAll(".ql-collapsible-hdr").forEach((hdr) => {
+      hdr.addEventListener("click", (e) => {
+        if (e.target.closest("button")) return;
+        const body = document.getElementById(hdr.dataset.section);
+        const chevron = hdr.querySelector(".ql-chevron");
+        const collapsed = body.classList.toggle("ql-collapsed");
+        chevron.classList.toggle("collapsed", collapsed);
+      });
+    });
+
+    /* ════════════════ RESOURCE COUNTERS ════════════════ */
+    const RES_KEY = "sc_res_v1_" + chatId;
+    let resources = [];
+    let resSaveTimer = null;
+    const resListEl = document.getElementById("sc-np-res-list");
+    const resAddBtn = document.getElementById("sc-np-res-add");
+
+    function newRes() {
+      return { id: Date.now() + Math.random(), name: "", value: 0 };
+    }
+    function saveRes() {
+      chrome.storage.local.set({ [RES_KEY]: resources });
+    }
+    function scheduleResSave() {
+      clearTimeout(resSaveTimer);
+      resSaveTimer = setTimeout(saveRes, 500);
+    }
+
+    const resSelectEl = document.getElementById("sc-np-res-select");
+    const resAmountEl = document.getElementById("sc-np-res-amount");
+    const resAdjustPanel = document.getElementById("sc-np-res-adjust");
+    const resFbEl = document.getElementById("sc-np-res-fb");
+    let resFbTimer = null;
+
+    function showResFeedback(msg) {
+      resFbEl.textContent = msg;
+      resFbEl.classList.add("visible");
+      clearTimeout(resFbTimer);
+      resFbTimer = setTimeout(() => resFbEl.classList.remove("visible"), 1600);
+    }
+
+    function rebuildResSelect(keepId) {
+      const prev = keepId ?? resSelectEl.value;
+      resSelectEl.innerHTML = "<option value=''>Select resource\u2026</option>";
+      resources.forEach((r) => {
+        const opt = document.createElement("option");
+        opt.value = r.id;
+        opt.textContent =
+          (r.name.trim() || "(unnamed)") + "  \u2014  " + r.value;
+        resSelectEl.appendChild(opt);
+      });
+      if (prev) resSelectEl.value = prev;
+      resAdjustPanel.style.display = resources.length ? "" : "none";
+    }
+
+    function renderRes() {
+      resListEl.innerHTML = "";
+      if (!resources.length) {
+        const e = document.createElement("div");
+        e.className = "ql-empty-state";
+        e.style.padding = "6px 0";
+        e.textContent = "No resources yet.";
+        resListEl.appendChild(e);
+        rebuildResSelect();
+        return;
+      }
+      resources.forEach((r, idx) => {
+        const row = document.createElement("div");
+        row.className = "res-item";
+        row.dataset.resId = r.id;
+        const nameIn = document.createElement("input");
+        nameIn.type = "text";
+        nameIn.className = "res-name-input";
+        nameIn.value = r.name;
+        nameIn.placeholder = "Resource name\u2026";
+        nameIn.maxLength = 40;
+        nameIn.setAttribute("data-ai-rewriter-ignore", "1");
+        nameIn.addEventListener("input", () => {
+          r.name = nameIn.value;
+          scheduleResSave();
+          rebuildResSelect(r.id);
+        });
+        const valEl = document.createElement("span");
+        valEl.className = "res-value";
+        valEl.textContent = r.value;
+        row._valEl = valEl;
+        const delBtn = document.createElement("button");
+        delBtn.className = "res-delete-btn";
+        delBtn.title = "Remove";
+        delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+        delBtn.addEventListener("click", () => {
+          resources.splice(idx, 1);
+          saveRes();
+          renderRes();
+        });
+        row.append(nameIn, valEl, delBtn);
+        resListEl.appendChild(row);
+      });
+      rebuildResSelect();
+    }
+
+    function applyResOp(op) {
+      const id = resSelectEl.value;
+      if (!id) {
+        showResFeedback("Pick a resource first.");
+        return;
+      }
+      const amount = Math.max(0, parseInt(resAmountEl.value, 10) || 0);
+      const r = resources.find((x) => String(x.id) === id);
+      if (!r) return;
+      if (op === "add") r.value += amount;
+      else if (op === "sub") r.value = Math.max(0, r.value - amount);
+      else if (op === "set") r.value = amount;
+      // Update the value display in the list without full re-render
+      const row = resListEl.querySelector(`[data-res-id="${id}"]`);
+      if (row && row._valEl) row._valEl.textContent = r.value;
+      rebuildResSelect(id);
+      saveRes();
+      const label =
+        op === "add"
+          ? "+" + amount
+          : op === "sub"
+            ? "\u2212" + amount
+            : "=" + amount;
+      showResFeedback(label + " \u2192 " + r.value);
+    }
+
+    document
+      .getElementById("sc-np-res-op-add")
+      .addEventListener("click", () => applyResOp("add"));
+    document
+      .getElementById("sc-np-res-op-sub")
+      .addEventListener("click", () => applyResOp("sub"));
+    document
+      .getElementById("sc-np-res-op-set")
+      .addEventListener("click", () => applyResOp("set"));
+
+    resAddBtn.addEventListener("click", () => {
+      resources.push(newRes());
+      saveRes();
+      renderRes();
+      const inputs = resListEl.querySelectorAll(".res-name-input");
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    });
+
+    function loadRes() {
+      chrome.storage.local.get(RES_KEY, (d) => {
+        resources = Array.isArray(d[RES_KEY]) ? d[RES_KEY] : [];
+        renderRes();
+      });
+    }
+
+    /* ════════════════ ABILITY USES ════════════════ */
+    const ABL_KEY = "sc_abl_v1_" + chatId;
+    let abilities = [];
+    let ablSaveTimer = null;
+    const ablListEl = document.getElementById("sc-np-abl-list");
+    const ablAddBtn = document.getElementById("sc-np-abl-add");
+
+    function newAbl() {
+      return { id: Date.now() + Math.random(), name: "", current: 3, max: 3 };
+    }
+    function saveAbl() {
+      chrome.storage.local.set({ [ABL_KEY]: abilities });
+    }
+    function scheduleAblSave() {
+      clearTimeout(ablSaveTimer);
+      ablSaveTimer = setTimeout(saveAbl, 500);
+    }
+
+    function renderAbl() {
+      ablListEl.innerHTML = "";
+      if (!abilities.length) {
+        const e = document.createElement("div");
+        e.className = "ql-empty-state";
+        e.style.padding = "6px 0";
+        e.textContent = "No abilities yet.";
+        ablListEl.appendChild(e);
+        return;
+      }
+      abilities.forEach((a, idx) => {
+        const row = document.createElement("div");
+        row.className = "abl-item";
+        const nameIn = document.createElement("input");
+        nameIn.type = "text";
+        nameIn.className = "abl-name-input";
+        nameIn.value = a.name;
+        nameIn.placeholder = "Ability name\u2026";
+        nameIn.maxLength = 40;
+        nameIn.setAttribute("data-ai-rewriter-ignore", "1");
+        nameIn.addEventListener("input", () => {
+          a.name = nameIn.value;
+          scheduleAblSave();
+        });
+        const useBtn = document.createElement("button");
+        useBtn.className = "abl-use-btn";
+        useBtn.textContent = "\u2212";
+        const curEl = document.createElement("span");
+        curEl.className = "abl-cur";
+        curEl.textContent = a.current;
+        curEl.style.opacity = a.current === 0 ? "0.35" : "1";
+        useBtn.addEventListener("click", () => {
+          a.current = Math.max(0, a.current - 1);
+          curEl.textContent = a.current;
+          curEl.style.opacity = a.current === 0 ? "0.35" : "1";
+          saveAbl();
+        });
+        const sep = document.createElement("span");
+        sep.className = "abl-sep";
+        sep.textContent = "/";
+        const maxIn = document.createElement("input");
+        maxIn.type = "number";
+        maxIn.className = "abl-max-input";
+        maxIn.value = a.max;
+        maxIn.min = 1;
+        maxIn.max = 99;
+        maxIn.setAttribute("data-ai-rewriter-ignore", "1");
+        maxIn.addEventListener("input", () => {
+          a.max = Math.max(1, parseInt(maxIn.value, 10) || 1);
+          scheduleAblSave();
+        });
+        const resetBtn = document.createElement("button");
+        resetBtn.className = "abl-reset-btn";
+        resetBtn.textContent = "RST";
+        resetBtn.addEventListener("click", () => {
+          a.current = a.max;
+          curEl.textContent = a.current;
+          curEl.style.opacity = "1";
+          saveAbl();
+        });
+        const delBtn = document.createElement("button");
+        delBtn.className = "abl-delete-btn";
+        delBtn.title = "Remove";
+        delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+        delBtn.addEventListener("click", () => {
+          abilities.splice(idx, 1);
+          saveAbl();
+          renderAbl();
+        });
+        row.append(nameIn, useBtn, curEl, sep, maxIn, resetBtn, delBtn);
+        ablListEl.appendChild(row);
+      });
+    }
+
+    ablAddBtn.addEventListener("click", () => {
+      abilities.push(newAbl());
+      saveAbl();
+      renderAbl();
+      const inputs = ablListEl.querySelectorAll(".abl-name-input");
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    });
+
+    function loadAbl() {
+      chrome.storage.local.get(ABL_KEY, (d) => {
+        abilities = Array.isArray(d[ABL_KEY]) ? d[ABL_KEY] : [];
+        renderAbl();
+      });
+    }
+
+    /* ════════════════ PARTY TRACKER ════════════════ */
+    const PARTY_KEY = "sc_party_v1_" + chatId;
+    const PARTY_STATUSES = ["active", "downed", "dead", "absent"];
+    let party = [];
+    let partySaveTimer = null;
+    const partyListEl = document.getElementById("sc-np-party-list");
+    const partyAddBtn = document.getElementById("sc-np-party-add");
+
+    function newPartyMember() {
+      return { id: Date.now() + Math.random(), name: "", status: "active" };
+    }
+    function saveParty() {
+      chrome.storage.local.set({ [PARTY_KEY]: party });
+    }
+    function schedulePartySave() {
+      clearTimeout(partySaveTimer);
+      partySaveTimer = setTimeout(saveParty, 500);
+    }
+
+    function renderParty() {
+      partyListEl.innerHTML = "";
+      if (!party.length) {
+        const e = document.createElement("div");
+        e.className = "ql-empty-state";
+        e.style.padding = "6px 0";
+        e.textContent = "No party members yet.";
+        partyListEl.appendChild(e);
+        return;
+      }
+      party.forEach((m, idx) => {
+        const row = document.createElement("div");
+        row.className = "party-item";
+        const statusBtn = document.createElement("button");
+        statusBtn.className = "party-status-btn party-status-" + m.status;
+        statusBtn.textContent =
+          m.status.charAt(0).toUpperCase() + m.status.slice(1);
+        statusBtn.title = "Click to cycle status";
+        statusBtn.addEventListener("click", () => {
+          const cur = PARTY_STATUSES.indexOf(m.status);
+          m.status = PARTY_STATUSES[(cur + 1) % PARTY_STATUSES.length];
+          statusBtn.className = "party-status-btn party-status-" + m.status;
+          statusBtn.textContent =
+            m.status.charAt(0).toUpperCase() + m.status.slice(1);
+          saveParty();
+        });
+        const nameIn = document.createElement("input");
+        nameIn.type = "text";
+        nameIn.className = "party-name-input";
+        nameIn.value = m.name;
+        nameIn.placeholder = "Name\u2026";
+        nameIn.maxLength = 40;
+        nameIn.setAttribute("data-ai-rewriter-ignore", "1");
+        nameIn.addEventListener("input", () => {
+          m.name = nameIn.value;
+          schedulePartySave();
+        });
+        const delBtn = document.createElement("button");
+        delBtn.className = "party-delete-btn";
+        delBtn.title = "Remove";
+        delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+        delBtn.addEventListener("click", () => {
+          party.splice(idx, 1);
+          saveParty();
+          renderParty();
+        });
+        row.append(statusBtn, nameIn, delBtn);
+        partyListEl.appendChild(row);
+      });
+    }
+
+    partyAddBtn.addEventListener("click", () => {
+      party.push(newPartyMember());
+      saveParty();
+      renderParty();
+      const inputs = partyListEl.querySelectorAll(".party-name-input");
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    });
+
+    function loadParty() {
+      chrome.storage.local.get(PARTY_KEY, (d) => {
+        party = Array.isArray(d[PARTY_KEY]) ? d[PARTY_KEY] : [];
+        renderParty();
+      });
+    }
+
+    /* ════════════════ NPC TRACKER ════════════════ */
+    const NPC_KEY = "sc_npc_v1_" + chatId;
+    const NPC_DISPS = ["friendly", "neutral", "hostile"];
+    const DISP_LABELS = {
+      friendly: "Friendly",
+      neutral: "Neutral",
+      hostile: "Hostile",
+    };
+    let npcs = [];
+    let npcSaveTimer = null;
+    const npcListEl = document.getElementById("sc-np-npc-list");
+    const npcAddBtn = document.getElementById("sc-np-npc-add");
+
+    function newNpc() {
+      return {
+        id: Date.now() + Math.random(),
+        name: "",
+        note: "",
+        disp: "neutral",
+      };
+    }
+    function saveNpcs() {
+      chrome.storage.local.set({ [NPC_KEY]: npcs });
+    }
+    function scheduleNpcSave() {
+      clearTimeout(npcSaveTimer);
+      npcSaveTimer = setTimeout(saveNpcs, 500);
+    }
+
+    function renderNpcs() {
+      npcListEl.innerHTML = "";
+      if (!npcs.length) {
+        const e = document.createElement("div");
+        e.className = "ql-empty-state";
+        e.style.padding = "6px 0";
+        e.textContent = "No NPCs yet.";
+        npcListEl.appendChild(e);
+        return;
+      }
+      npcs.forEach((n, idx) => {
+        const card = document.createElement("div");
+        card.className = "npc-item";
+        const top = document.createElement("div");
+        top.className = "npc-top";
+        const dispBtn = document.createElement("button");
+        dispBtn.className = "npc-disp-btn npc-disp-" + n.disp;
+        dispBtn.textContent = DISP_LABELS[n.disp];
+        dispBtn.title = "Click to cycle disposition";
+        dispBtn.addEventListener("click", () => {
+          const cur = NPC_DISPS.indexOf(n.disp);
+          n.disp = NPC_DISPS[(cur + 1) % NPC_DISPS.length];
+          dispBtn.className = "npc-disp-btn npc-disp-" + n.disp;
+          dispBtn.textContent = DISP_LABELS[n.disp];
+          saveNpcs();
+        });
+        const nameIn = document.createElement("input");
+        nameIn.type = "text";
+        nameIn.className = "npc-name-input";
+        nameIn.value = n.name;
+        nameIn.placeholder = "NPC name\u2026";
+        nameIn.maxLength = 40;
+        nameIn.setAttribute("data-ai-rewriter-ignore", "1");
+        nameIn.addEventListener("input", () => {
+          n.name = nameIn.value;
+          scheduleNpcSave();
+        });
+        const delBtn = document.createElement("button");
+        delBtn.className = "npc-delete-btn";
+        delBtn.title = "Remove";
+        delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+        delBtn.addEventListener("click", () => {
+          npcs.splice(idx, 1);
+          saveNpcs();
+          renderNpcs();
+        });
+        top.append(dispBtn, nameIn, delBtn);
+        const noteIn = document.createElement("input");
+        noteIn.type = "text";
+        noteIn.className = "npc-note-input";
+        noteIn.value = n.note;
+        noteIn.placeholder = "Short note\u2026";
+        noteIn.maxLength = 80;
+        noteIn.setAttribute("data-ai-rewriter-ignore", "1");
+        noteIn.addEventListener("input", () => {
+          n.note = noteIn.value;
+          scheduleNpcSave();
+        });
+        card.append(top, noteIn);
+        npcListEl.appendChild(card);
+      });
+    }
+
+    npcAddBtn.addEventListener("click", () => {
+      npcs.push(newNpc());
+      saveNpcs();
+      renderNpcs();
+      const inputs = npcListEl.querySelectorAll(".npc-name-input");
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    });
+
+    function loadNpcs() {
+      chrome.storage.local.get(NPC_KEY, (d) => {
+        npcs = Array.isArray(d[NPC_KEY]) ? d[NPC_KEY] : [];
+        renderNpcs();
+      });
+    }
+
+    /* ════════════════ RUMOURS BOARD ════════════════ */
+    const RUMOUR_KEY = "sc_rumour_v1_" + chatId;
+    let rumours = [];
+    let rumourSaveTimer = null;
+    const rumourListEl = document.getElementById("sc-np-rumour-list");
+    const rumourAddBtn = document.getElementById("sc-np-rumour-add");
+
+    function newRumour() {
+      return { id: Date.now() + Math.random(), text: "", done: false };
+    }
+    function saveRumours() {
+      chrome.storage.local.set({ [RUMOUR_KEY]: rumours });
+    }
+    function scheduleRumourSave() {
+      clearTimeout(rumourSaveTimer);
+      rumourSaveTimer = setTimeout(saveRumours, 500);
+    }
+
+    function renderRumours() {
+      rumourListEl.innerHTML = "";
+      if (!rumours.length) {
+        const e = document.createElement("div");
+        e.className = "ql-empty-state";
+        e.style.padding = "6px 0";
+        e.textContent = "No rumours yet.";
+        rumourListEl.appendChild(e);
+        return;
+      }
+      rumours.forEach((r, idx) => {
+        const row = document.createElement("div");
+        row.className = "rumour-item" + (r.done ? " rumour-done" : "");
+        const check = document.createElement("div");
+        check.className = "rumour-check";
+        check.title = "Mark as followed up";
+        if (r.done)
+          check.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+        check.addEventListener("click", () => {
+          r.done = !r.done;
+          saveRumours();
+          renderRumours();
+        });
+        const textIn = document.createElement("textarea");
+        textIn.className = "rumour-text-input";
+        textIn.value = r.text;
+        textIn.placeholder = "Rumour or lead\u2026";
+        textIn.rows = 1;
+        textIn.setAttribute("data-ai-rewriter-ignore", "1");
+        textIn.addEventListener("input", () => {
+          r.text = textIn.value;
+          autoResizeTextarea(textIn);
+          scheduleRumourSave();
+        });
+        setTimeout(() => autoResizeTextarea(textIn), 0);
+        const delBtn = document.createElement("button");
+        delBtn.className = "rumour-delete-btn";
+        delBtn.title = "Remove";
+        delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+        delBtn.addEventListener("click", () => {
+          rumours.splice(idx, 1);
+          saveRumours();
+          renderRumours();
+        });
+        row.append(check, textIn, delBtn);
+        rumourListEl.appendChild(row);
+      });
+    }
+
+    rumourAddBtn.addEventListener("click", () => {
+      rumours.push(newRumour());
+      saveRumours();
+      renderRumours();
+      const inputs = rumourListEl.querySelectorAll(".rumour-text-input");
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    });
+
+    function loadRumours() {
+      chrome.storage.local.get(RUMOUR_KEY, (d) => {
+        rumours = Array.isArray(d[RUMOUR_KEY]) ? d[RUMOUR_KEY] : [];
+        renderRumours();
+      });
+    }
 
     /* ── Open / close ── */
     function setOpen(val) {
@@ -1941,6 +2738,11 @@
     chrome.storage.local.remove(["sc_note_v1_" + chatId]);
     loadQuests();
     loadInv();
+    loadRes();
+    loadAbl();
+    loadParty();
+    loadNpcs();
+    loadRumours();
     setOpen(true);
   }
 })();
