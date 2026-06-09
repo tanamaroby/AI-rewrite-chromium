@@ -1790,7 +1790,7 @@
       const notePart = r.notes ? ` (${r.notes})` : "";
       let logMsg;
       if (op === "add") {
-        logMsg = `[${r.name || "Resource"}: gained ${amount}, ${before} \u2192 ${r.value} left${notePart}]`;
+        logMsg = `[${r.name || "Resource"}: gained ${amount}, ${before} \u2192 ${r.value} total${notePart}]`;
       } else if (op === "sub") {
         logMsg = `[${r.name || "Resource"}: used ${amount}, ${before} \u2192 ${r.value} left${notePart}]`;
       } else {
