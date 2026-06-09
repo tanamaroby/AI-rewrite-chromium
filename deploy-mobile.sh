@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-SRC="ai-rewriter-mobile.user.js"
+SRC="mobile/ai-rewriter-mobile.user.js"
 DEST_DIR="/Users/main/Library/Mobile Documents/com~apple~CloudDocs/Userscript Files"
 BUMP="${1:-patch}"
 

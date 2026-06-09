@@ -7,6 +7,7 @@ This is a **Chromium MV3 browser extension** that rewrites text in any web textb
 ## Architecture
 
 ```
+── Chrome extension (load this folder in Chrome) ──────────────────────────────
 manifest.json              MV3 manifest — permissions, content scripts, service worker
 background.js              Service worker — all OpenRouter API calls happen here (keeps key off content pages)
 content.js                 Injected into every page — handles AI rewrites, local formatter, SpicyChat RP events
@@ -14,9 +15,19 @@ content.css                Styles for loading overlay, formatter overlay, toast 
 popup.html/css/js          Toolbar popup — API key status, model pill, keyword chips, quick toggles
 options.html/css/js        Settings page — sidebar nav: API Key, Keywords, Model, SpicyChat Notes, Formatter, RP Persona
 spicychat-memory-drawer.js Content script injected into SpicyChat chat pages only — resizable notes drawer panel
-ai-rewriter-mobile.user.js Standalone Tampermonkey/Greasemonkey userscript (separate from the extension)
 icons/                     PNG icons at 16/32/48/128px
+
+── Mobile userscript (Safari/Userscripts app on iPhone/iPad) ──────────────────
+mobile/ai-rewriter-mobile.user.js   Standalone userscript — completely separate from the extension
+mobile/toolbar-preview.html         Static HTML preview — open in any browser to test toolbar UI
+
+── Dev tooling ────────────────────────────────────────────────────────────────
+deploy-mobile.sh           Bumps @version in the userscript and copies it to iCloud Drive for iPhone sync
 ```
+
+> **Chrome extension isolation**: `manifest.json` only references explicitly named JS/CSS files. `mobile/` files are never loaded by the extension. The release zip also excludes them (hardcoded file list in `release.yml`).
+
+> **API key warning**: `mobile/ai-rewriter-mobile.user.js` contains a hardcoded `API_KEY`. Never commit this file to a public repo without scrubbing the key first.
 
 ## Key conventions
 
@@ -123,9 +134,46 @@ Besides API key status, model pill, and keyword chips, the popup includes:
   - Creates a GitHub Release with the changelog notes + installation instructions as the body
 - Users install by downloading the zip, unzipping to a permanent folder, and using "Load unpacked" in `chrome://extensions`
 
+## Mobile userscript (`mobile/ai-rewriter-mobile.user.js`)
+
+Completely independent from the Chrome extension. Runs via the **Userscripts** app in Safari on iPhone/iPad.
+
+- Fixed toolbar pinned to the top of the screen when any editable element is focused
+- **Format** button pinned on the left (full toolbar height) — most-used action, instant/no AI call
+- AI command buttons in a single scrollable row to the right of Format
+- Calls OpenRouter directly via `GM.xmlHttpRequest` (no service worker needed)
+- API key hardcoded as `API_KEY` constant at the top of the file
+- Local `formatText()` / `wrapOutside()` functions mirror the logic in `content.js`
+- `MODEL` constant at top — currently `xiaomi/mimo-v2.5`
+- `isTablet` detection for iPadOS (checks `maxTouchPoints` to catch iPadOS 13+ Macintosh UA)
+- Visual Viewport API used to keep toolbar pinned when the soft keyboard opens
+
+### Deploy workflow
+
+Run from the repo root:
+
+```bash
+./deploy-mobile.sh          # patch bump (2.0.2 → 2.0.3)
+./deploy-mobile.sh minor    # minor bump (2.0.2 → 2.1.0)
+./deploy-mobile.sh major    # major bump (2.0.2 → 3.0.0)
+```
+
+Bumps `@version` in `mobile/ai-rewriter-mobile.user.js`, then copies it to
+`~/Library/Mobile Documents/com~apple~CloudDocs/Userscript Files/` as
+`AI Rewriter — Mobile vX.Y.Z.user.js`. iCloud syncs it to iPhone automatically.
+
+### Preview
+
+Open `mobile/toolbar-preview.html` in any browser to interactively test the toolbar UI without a phone.
+
 ## Style notes
 
 - Dark purple theme: `#0f0c1e` background, `#6c63ff` → `#a78bfa` gradient accent
 - Options page has sidebar nav with sections shown/hidden via JS (no routing library)
 - Overlay uses glass-morphism: `backdrop-filter: blur`, semi-transparent dark panel
 - SpicyChat drawer uses `#0f0e1a` background with `rgba(108, 99, 255, 0.28)` border
+- Mobile toolbar: deep dark `rgba(8,5,20,0.97)` base, teal (`#34d399`) for Format, violet (`#a78bfa`) for AI commands, glow `box-shadow` on active states
+
+## Copilot behaviour rules
+
+- **After any edit to `mobile/ai-rewriter-mobile.user.js`**, always ask: _"Do you want to deploy to iPhone? (`./deploy-mobile.sh [patch|minor|major]`)"_ before ending the response.
