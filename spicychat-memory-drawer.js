@@ -384,6 +384,27 @@
     .rp-action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .rp-status-ok { color: #22c55e !important; }
     .rp-status-err { color: #f87171 !important; }
+
+    /* ── Last Log ── */
+    .rp-log-model { font-size: 11px; font-weight: 600; color: #a78bfa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rp-log-sep { height: 1px; background: rgba(108,99,255,0.1); margin: 2px 0; }
+    .rp-log-grid { display: flex; flex-direction: column; gap: 3px; }
+    .rp-log-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 1px 0; }
+    .rp-log-key { font-size: 11px; color: #475569; }
+    .rp-log-val { font-size: 11.5px; font-weight: 600; color: #94a3b8; font-variant-numeric: tabular-nums; }
+    .rp-log-subrow .rp-log-key { padding-left: 10px; color: #334155; font-size: 10.5px; }
+    .rp-log-subrow .rp-log-val { font-size: 10.5px; color: #475569; }
+    .rp-log-total .rp-log-key, .rp-log-total .rp-log-val { color: #cbd5e1; font-size: 12px; }
+    .rp-log-text-block { display: flex; flex-direction: column; gap: 4px; }
+    .rp-log-text-cap { font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+    .rp-log-text-cap.prompt { color: rgba(167,139,250,0.55); }
+    .rp-log-text-cap.output { color: rgba(34,197,94,0.55); }
+    .rp-log-text-body { font-size: 11.5px; line-height: 1.55; color: #64748b; white-space: pre-wrap; word-break: break-word; max-height: 110px; overflow-y: auto; padding: 7px 9px; border-radius: 5px; }
+    .rp-log-text-body.prompt { background: rgba(108,99,255,0.06); border: 1px solid rgba(108,99,255,0.15); }
+    .rp-log-text-body.output { background: rgba(34,197,94,0.05); border: 1px solid rgba(34,197,94,0.14); color: #94a3b8; }
+    .rp-log-text-body::-webkit-scrollbar { width: 4px; }
+    .rp-log-text-body::-webkit-scrollbar-track { background: transparent; }
+    .rp-log-text-body::-webkit-scrollbar-thumb { background: rgba(108,99,255,0.25); border-radius: 2px; }
     `;
     document.head.appendChild(style);
 
@@ -524,6 +545,54 @@
               </button>
             </div>
           </div>
+          <div class="rp-section-label">Last Log</div>
+          <div class="rp-card">
+            <div class="rp-empty-state" id="sc-rp-log-empty">No log yet.</div>
+            <div id="sc-rp-log-info" style="display:none; flex-direction:column; gap:8px;">
+              <div class="rp-log-model" id="sc-rp-log-model" title=""></div>
+              <div class="rp-log-sep"></div>
+              <div class="rp-log-grid">
+                <div class="rp-log-row">
+                  <span class="rp-log-key">Prompt tokens</span>
+                  <span class="rp-log-val" id="sc-rp-log-prompt-tok">—</span>
+                </div>
+                <div class="rp-log-row rp-log-subrow" id="sc-rp-log-cached-row" style="display:none;">
+                  <span class="rp-log-key">↳ cached</span>
+                  <span class="rp-log-val" id="sc-rp-log-cached-tok">—</span>
+                </div>
+                <div class="rp-log-row">
+                  <span class="rp-log-key">Output tokens</span>
+                  <span class="rp-log-val" id="sc-rp-log-completion-tok">—</span>
+                </div>
+                <div class="rp-log-row rp-log-subrow" id="sc-rp-log-thinking-row" style="display:none;">
+                  <span class="rp-log-key">↳ thinking</span>
+                  <span class="rp-log-val" id="sc-rp-log-thinking-tok">—</span>
+                </div>
+                <div class="rp-log-sep"></div>
+                <div class="rp-log-row rp-log-total">
+                  <span class="rp-log-key">Total</span>
+                  <span class="rp-log-val" id="sc-rp-log-total-tok">—</span>
+                </div>
+                <div class="rp-log-row" id="sc-rp-log-cost-row" style="display:none;">
+                  <span class="rp-log-key">Cost</span>
+                  <span class="rp-log-val" id="sc-rp-log-cost">—</span>
+                </div>
+                <div class="rp-log-row">
+                  <span class="rp-log-key">Time</span>
+                  <span class="rp-log-val" id="sc-rp-log-elapsed">—</span>
+                </div>
+              </div>
+              <div class="rp-log-sep"></div>
+              <div class="rp-log-text-block">
+                <span class="rp-log-text-cap prompt">Prompt</span>
+                <div class="rp-log-text-body prompt" id="sc-rp-log-prompt-text"></div>
+              </div>
+              <div class="rp-log-text-block">
+                <span class="rp-log-text-cap output">Output</span>
+                <div class="rp-log-text-body output" id="sc-rp-log-output-text"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     `;
@@ -584,6 +653,25 @@
     const oneshotStatusEl = document.getElementById("sc-rp-oneshot-status");
     const rpGlobalStyleTa = document.getElementById("sc-rp-global-style");
     const rpGsAutosaveEl = document.getElementById("sc-rp-gs-autosave");
+    const rpLogEmptyEl = document.getElementById("sc-rp-log-empty");
+    const rpLogInfo = document.getElementById("sc-rp-log-info");
+    const rpLogModelEl = document.getElementById("sc-rp-log-model");
+    const rpLogPromptTokEl = document.getElementById("sc-rp-log-prompt-tok");
+    const rpLogCachedRow = document.getElementById("sc-rp-log-cached-row");
+    const rpLogCachedTokEl = document.getElementById("sc-rp-log-cached-tok");
+    const rpLogCompletionTokEl = document.getElementById(
+      "sc-rp-log-completion-tok",
+    );
+    const rpLogThinkingRow = document.getElementById("sc-rp-log-thinking-row");
+    const rpLogThinkingTokEl = document.getElementById(
+      "sc-rp-log-thinking-tok",
+    );
+    const rpLogTotalTokEl = document.getElementById("sc-rp-log-total-tok");
+    const rpLogCostRow = document.getElementById("sc-rp-log-cost-row");
+    const rpLogCostEl = document.getElementById("sc-rp-log-cost");
+    const rpLogElapsedEl = document.getElementById("sc-rp-log-elapsed");
+    const rpLogPromptTextEl = document.getElementById("sc-rp-log-prompt-text");
+    const rpLogOutputTextEl = document.getElementById("sc-rp-log-output-text");
 
     /* ── State ── */
     let isOpen = false;
@@ -859,9 +947,51 @@
       rpRewriteInfo.style.display = "none";
     }
 
-    document.addEventListener("sc-rp-rewrite-done", (e) =>
-      showRewriteState(e.detail),
-    );
+    function showLogState(detail) {
+      rpLogEmptyEl.style.display = "none";
+      rpLogInfo.style.display = "flex";
+      const modelFull = detail.model || "unknown";
+      rpLogModelEl.textContent = modelFull.split("/").pop();
+      rpLogModelEl.title = modelFull;
+      const u = detail.usage;
+      if (u) {
+        rpLogPromptTokEl.textContent =
+          u.prompt_tokens != null ? u.prompt_tokens.toLocaleString() : "—";
+        rpLogCompletionTokEl.textContent =
+          u.completion_tokens != null
+            ? u.completion_tokens.toLocaleString()
+            : "—";
+        rpLogTotalTokEl.textContent =
+          u.total_tokens != null ? u.total_tokens.toLocaleString() : "—";
+        const reasoning = u.completion_tokens_details?.reasoning_tokens;
+        rpLogThinkingRow.style.display = reasoning ? "" : "none";
+        if (reasoning)
+          rpLogThinkingTokEl.textContent = reasoning.toLocaleString();
+        const cached = u.prompt_tokens_details?.cached_tokens;
+        rpLogCachedRow.style.display = cached ? "" : "none";
+        if (cached) rpLogCachedTokEl.textContent = cached.toLocaleString();
+        const cost = u.cost;
+        rpLogCostRow.style.display = cost != null ? "" : "none";
+        if (cost != null)
+          rpLogCostEl.textContent = cost === 0 ? "Free" : `$${cost.toFixed(6)}`;
+      } else {
+        rpLogPromptTokEl.textContent = "—";
+        rpLogCompletionTokEl.textContent = "—";
+        rpLogTotalTokEl.textContent = "—";
+        rpLogThinkingRow.style.display = "none";
+        rpLogCachedRow.style.display = "none";
+        rpLogCostRow.style.display = "none";
+      }
+      rpLogElapsedEl.textContent =
+        detail.elapsed != null ? `${detail.elapsed}s` : "—";
+      rpLogPromptTextEl.textContent = detail.promptText || "—";
+      rpLogOutputTextEl.textContent = detail.after || "—";
+    }
+
+    document.addEventListener("sc-rp-rewrite-done", (e) => {
+      showRewriteState(e.detail);
+      showLogState(e.detail);
+    });
     document.addEventListener("sc-rp-undo-done", () => clearRewriteState());
 
     rpUndoBtn.addEventListener("click", () => {
@@ -871,7 +1001,10 @@
 
     /* Load last rewrite state (persists across page loads) */
     chrome.storage.local.get("sc_last_rewrite", (data) => {
-      if (data.sc_last_rewrite) showRewriteState(data.sc_last_rewrite);
+      if (data.sc_last_rewrite) {
+        showRewriteState(data.sc_last_rewrite);
+        showLogState(data.sc_last_rewrite);
+      }
     });
 
     /* ── Global Style Rules ── */

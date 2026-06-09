@@ -28,7 +28,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "REWRITE_TEXT") {
     handleRewrite(message.text, message.prompt, message.apiKey, message.model)
       .then((result) =>
-        sendResponse({ success: true, text: result.text, model: result.model }),
+        sendResponse({
+          success: true,
+          text: result.text,
+          model: result.model,
+          usage: result.usage,
+        }),
       )
       .catch((err) => sendResponse({ success: false, error: err.message }));
     return true; // Keep channel open for async response
@@ -107,7 +112,7 @@ async function handleRewrite(text, prompt, apiKey, model) {
       );
       continue;
     }
-    return { text: result, model: usedModel };
+    return { text: result, model: usedModel, usage: data.usage || null };
   }
 
   // All retries exhausted

@@ -485,6 +485,10 @@
         after: finalText,
         label: match.cmd.label || match.keyword,
         ts: lastRewrite.ts,
+        model: result.model || model,
+        usage: result.usage || null,
+        elapsed: parseFloat(elapsedSec),
+        promptText: buildPrompt(match.cmd.prompt),
       };
       chrome.storage.local.set({ sc_last_rewrite: rewriteDetail });
       document.dispatchEvent(
@@ -746,6 +750,10 @@
         after: finalText,
         label: "One-Shot",
         ts: Date.now(),
+        model: result.model || model,
+        usage: result.usage || null,
+        elapsed: parseFloat(elapsedSec),
+        promptText: buildPrompt(e.detail.prompt),
       };
       lastRewrite = { el, ...rewriteDetail };
       chrome.storage.local.set({ sc_last_rewrite: rewriteDetail });
