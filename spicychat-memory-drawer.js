@@ -286,11 +286,25 @@
       transition: background 0.12s, border-color 0.12s;
     }
     .ql-update-btn:hover { background: rgba(108,99,255,0.2); border-color: rgba(108,99,255,0.5); }
-    .ql-update-latest {
+    .ql-updates-list {
+      display: flex; flex-direction: column; gap: 2px;
+      padding-top: 3px; margin-top: 2px;
+      border-top: 1px solid rgba(108,99,255,0.07);
+    }
+    .ql-updates-list:empty { display: none; }
+    .ql-update-entry {
+      display: flex; align-items: flex-start; gap: 4px;
       font-size: 10.5px; font-style: italic; color: #475569;
-      padding: 1px 0 3px; border-top: 1px solid rgba(108,99,255,0.07); margin-top: 2px;
       white-space: pre-wrap; word-break: break-word;
     }
+    .ql-update-entry:first-child { color: #94a3b8; }
+    .ql-update-entry-text { flex: 1; min-width: 0; }
+    .ql-update-entry-del {
+      flex-shrink: 0; background: none; border: none; cursor: pointer;
+      color: #334155; font-size: 9px; line-height: 1.4; padding: 0 2px;
+      transition: color 0.1s;
+    }
+    .ql-update-entry-del:hover { color: #f87171; }
     .ql-item-bottom { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
     .ql-state-btns { display: flex; gap: 4px; }
     .ql-state-chip {
@@ -1563,7 +1577,7 @@
         title: "",
         notes: "",
         state: "active",
-        update: "",
+        updates: [],
       };
     }
 
@@ -1749,12 +1763,11 @@
         updateBtn.addEventListener("click", () => {
           const txt = updateIn.value.trim();
           if (!txt) return;
-          q.update = txt;
+          q.updates.unshift(txt);
           scheduleQuestSave();
           addLog(`[Quest "${q.title || "(untitled)"}": ${txt}]`);
           updateIn.value = "";
-          latestEl.textContent = txt;
-          latestEl.style.display = "";
+          renderUpdatesList();
         });
         updateIn.addEventListener("keydown", (e) => {
           if (e.key === "Enter") {
@@ -1765,11 +1778,31 @@
         updateRow.append(updateIn, updateBtn);
         card.appendChild(updateRow);
 
-        const latestEl = document.createElement("div");
-        latestEl.className = "ql-update-latest";
-        latestEl.style.display = q.update ? "" : "none";
-        latestEl.textContent = q.update || "";
-        card.appendChild(latestEl);
+        const updatesContainer = document.createElement("div");
+        updatesContainer.className = "ql-updates-list";
+        function renderUpdatesList() {
+          updatesContainer.innerHTML = "";
+          (q.updates || []).forEach((txt, i) => {
+            const entry = document.createElement("div");
+            entry.className = "ql-update-entry";
+            const textSpan = document.createElement("span");
+            textSpan.className = "ql-update-entry-text";
+            textSpan.textContent = txt;
+            const delBtn = document.createElement("button");
+            delBtn.className = "ql-update-entry-del";
+            delBtn.title = "Remove this entry";
+            delBtn.textContent = "\u2715";
+            delBtn.addEventListener("click", () => {
+              q.updates.splice(i, 1);
+              scheduleQuestSave();
+              renderUpdatesList();
+            });
+            entry.append(textSpan, delBtn);
+            updatesContainer.appendChild(entry);
+          });
+        }
+        renderUpdatesList();
+        card.appendChild(updatesContainer);
 
         questListEl.appendChild(card);
       });
@@ -1827,6 +1860,13 @@
     function loadQuests() {
       chrome.storage.local.get(QUEST_KEY, (data) => {
         quests = Array.isArray(data[QUEST_KEY]) ? data[QUEST_KEY] : [];
+        // migrate old single-update format
+        quests.forEach((q) => {
+          if (!Array.isArray(q.updates)) {
+            q.updates = q.update ? [q.update] : [];
+            delete q.update;
+          }
+        });
         renderQuests();
       });
     }
@@ -2949,7 +2989,7 @@
         check.addEventListener("click", () => {
           r.done = !r.done;
           addLog(
-            `[Rumour ${r.done ? "followed up" : "reopened"}: "${(r.text || "(empty)").slice(0, 40)}"]`,
+            `[Rumour ${r.done ? "followed up" : "reopened"}: "${(r.text || "(empty)").slice(0, 60)}"]`,
           );
           saveRumours();
           renderRumours();
@@ -2971,7 +3011,7 @@
         delBtn.title = "Remove";
         delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
         delBtn.addEventListener("click", () => {
-          addLog(`[Rumour removed: "${(r.text || "(empty)").slice(0, 40)}"]`);
+          addLog(`[Rumour removed: "${(r.text || "(empty)").slice(0, 60)}"]`);
           rumours.splice(idx, 1);
           saveRumours();
           renderRumours();
@@ -3824,7 +3864,7 @@
             : q.state === "failed"
               ? "\u2717"
               : "\u25cb";
-        const upd = q.update ? ` > ${q.update}` : "";
+        const upd = q.updates && q.updates.length ? ` > ${q.updates[0]}` : "";
         return `${st} ${q.title || "(untitled)"}${q.notes ? " \u2014 " + q.notes : ""}${upd}`;
       });
       return `[Quests: ${parts.join(" | ")}]`;
