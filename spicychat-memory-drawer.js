@@ -1705,6 +1705,7 @@
             ? "\u2212" + amount
             : "=" + amount;
       showResFeedback(label + " \u2192 " + r.value);
+      addLog(`[${r.name || "Resource"}: ${label} \u2192 ${r.value}]`);
     }
 
     document
