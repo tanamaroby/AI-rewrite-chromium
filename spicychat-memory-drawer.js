@@ -539,17 +539,6 @@
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <div id="sc-np-status">
-        <div id="sc-np-status-left">
-          <span id="sc-np-wc">0 words</span>
-          <span id="sc-np-cc">0 chars</span>
-        </div>
-        <div id="sc-np-autosave">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          <span>Saved</span>
-        </div>
-        <span id="sc-np-lastmod"></span>
-      </div>
       <div id="sc-np-body">
         <div id="sc-np-quests-panel">
           <!-- Quest Log -->
@@ -559,9 +548,9 @@
           </div>
           <div id="sc-np-quest-list"></div>
           <!-- Inventory -->
-          <div class="ql-section-header" style="margin-top:4px;">
+          <div style="margin-top:4px;display:flex;flex-direction:column;gap:5px;">
             <span class="ql-section-label">Inventory</span>
-            <button id="sc-np-inv-add" class="ql-add-btn">+ Add Item</button>
+            <button id="sc-np-inv-add" class="ql-add-btn" style="width:100%;justify-content:center;padding:5px 0;">+ Add Item</button>
           </div>
           <div class="rp-card" style="padding:8px 10px;gap:6px;">
             <div id="sc-np-inv-list"></div>
