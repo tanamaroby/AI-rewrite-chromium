@@ -491,6 +491,31 @@
           </div>
         </div>
 
+        <div class="settings-group-label">ROLEPLAY</div>
+        <div class="card">
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Repair unclosed action markers <code>*</code></span>
+              <span class="toggle-hint">If a line has an odd number of asterisks, close the dangling one at the end</span>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" id="fmtRepairAsterisks" /><span class="toggle-track"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Action punctuation <code>*waves*</code> → <code>*waves.*</code></span>
+              <span class="toggle-hint">Ensure actions wrapped in asterisks end with a period, ! or ?</span>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" id="fmtActionPunctuation" /><span class="toggle-track"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Clean up OOC double-brackets <code>(( ))</code> → <code>( )</code></span>
+              <span class="toggle-hint">Convert ((out of character)) double-bracket notation to single parentheses</span>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" id="fmtOocBrackets" /><span class="toggle-track"></span></label>
+          </div>
+        </div>
+
         <div class="form-group" style="margin-top: 16px;">
           <label class="form-label" for="fmtExtraDelimitersInput">Extra unwrapped delimiter pairs</label>
           <input

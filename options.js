@@ -451,6 +451,9 @@ const FMT_TOGGLES = [
   "fmtNormaliseNewlines",
   "fmtCapitaliseSentences",
   "fmtUnwrapBrackets",
+  "fmtRepairAsterisks",
+  "fmtActionPunctuation",
+  "fmtOocBrackets",
 ];
 
 function syncAutoFormatRowState() {

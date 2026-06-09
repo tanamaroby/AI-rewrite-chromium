@@ -21,6 +21,9 @@
   let fmtCapitaliseSentences = true;
   let fmtUnwrapBrackets = true;
   let fmtExtraDelimiters = "";
+  let fmtRepairAsterisks = true;
+  let fmtOocBrackets = true;
+  let fmtActionPunctuation = true;
   let rpPersonas = Array.from({ length: 5 }, () => ({
     label: "",
     name: "",
@@ -54,6 +57,9 @@
         "fmtCapitaliseSentences",
         "fmtUnwrapBrackets",
         "fmtExtraDelimiters",
+        "fmtRepairAsterisks",
+        "fmtOocBrackets",
+        "fmtActionPunctuation",
         "rpPersonas",
         "rpActivePersonaIndex",
         "rpPersonaEnabled",
@@ -80,6 +86,9 @@
         fmtCapitaliseSentences = data.fmtCapitaliseSentences !== false;
         fmtUnwrapBrackets = data.fmtUnwrapBrackets !== false;
         fmtExtraDelimiters = data.fmtExtraDelimiters || "";
+        fmtRepairAsterisks = data.fmtRepairAsterisks !== false;
+        fmtOocBrackets = data.fmtOocBrackets !== false;
+        fmtActionPunctuation = data.fmtActionPunctuation !== false;
         if (Array.isArray(data.rpPersonas) && data.rpPersonas.length > 0) {
           rpPersonas = data.rpPersonas.slice(0, 5);
           while (rpPersonas.length < 5)
@@ -214,10 +223,30 @@
   // ─── Text formatter (no AI) ─────────────────────────────────────────────────
 
   function formatText(text) {
+    if (fmtOocBrackets)
+      text = text.replace(/\(\(\s*([\s\S]*?)\s*\)\)/g, "($1)");
+    if (fmtRepairAsterisks) {
+      text = text
+        .split("\n")
+        .map((line) => {
+          const count = (line.match(/\*/g) || []).length;
+          return count % 2 !== 0 ? line + "*" : line;
+        })
+        .join("\n");
+    }
+    if (fmtActionPunctuation) {
+      text = text.replace(/\*([^*\n]+)\*/g, (_, inner) => {
+        const t = inner.trimEnd();
+        return /[.!?\u2026]$/.test(t) ? `*${inner}*` : `*${t}.*`;
+      });
+    }
     if (fmtStripAsterisks) text = text.replace(/\*/g, "");
     if (fmtNormaliseQuotes) text = text.replace(/[\u201C\u201D]/g, '"');
     if (fmtNormaliseApostrophes) text = text.replace(/[\u2018\u2019]/g, "'");
-    if (fmtNormaliseEllipsis) text = text.replace(/\.{3}/g, "…");
+    if (fmtNormaliseEllipsis) {
+      text = text.replace(/\.{2,}/g, "...");
+      text = text.replace(/\.{3}/g, "\u2026");
+    }
     if (fmtCollapseSpaces) text = text.replace(/[ \t]{2,}/g, " ");
     if (fmtCapitaliseI) text = text.replace(/\bi\b/g, "I");
     if (fmtTrimLines) {
