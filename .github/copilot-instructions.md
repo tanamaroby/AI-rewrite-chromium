@@ -13,8 +13,8 @@ background.js              Service worker — all OpenRouter API calls happen he
 content.js                 Injected into every page — handles AI rewrites, local formatter, SpicyChat RP events
 content.css                Styles for loading overlay, formatter overlay, toast notifications, format button
 popup.html/css/js          Toolbar popup — API key status, model pill, keyword chips, quick toggles
-options.html/css/js        Settings page — sidebar nav: API Key, Keywords, Model, SpicyChat Notes, Formatter, RP Persona
-spicychat-memory-drawer.js Content script injected into SpicyChat chat pages only — resizable notes drawer panel
+options.html/css/js        Settings page — sidebar nav: API Key, Keywords, Model, SpicyChat RPG Tracker, Formatter, RP Persona
+spicychat-memory-drawer.js Content script injected into SpicyChat chat pages only — resizable RPG session tracker drawer
 icons/                     PNG icons at 16/32/48/128px
 
 ── Mobile userscript (Safari/Userscripts app on iPhone/iPad) ──────────────────
@@ -35,7 +35,7 @@ deploy-mobile.sh           Bumps @version in the userscript and copies it to iCl
 - **Messaging**: content → background via `chrome.runtime.sendMessage({ type: "REWRITE_TEXT", ... })`
 - **Storage**:
   - `chrome.storage.sync`: `apiKey`, `model`, `commands[]`, all formatter settings (`fmt*`), `formatterEnabled`, `formatterKeyword`, `autoFormatAfterRewrite`, `fmtShortcut`, `rpPersonaEnabled`, `rpPersonaName`, `rpPersonaPrepend`, `rpGlobalStyle`, `spicychatNotesEnabled`
-  - `chrome.storage.local`: SpicyChat notes keyed as `sc_note_v1_<chatId>`, `sc_last_rewrite` (last rewrite detail for undo), `sc_note_width_v1` (drawer width)
+  - `chrome.storage.local`: RPG tracker data keyed as `sc_quests_v1_<chatId>`, `sc_res_v1_<chatId>`, `sc_abl_v1_<chatId>`, `sc_party_v1_<chatId>`, `sc_npc_v1_<chatId>`, `sc_rumour_v1_<chatId>`, `sc_dice_mod_v1_<chatId>`; `sc_last_rewrite` (last rewrite for undo); `sc_note_width_v1` (drawer width)
 - **Retry logic**: `MAX_RETRIES = 3`, `RETRY_DELAY_MS = 2000`, exponential backoff, honors `Retry-After` header
 - **Default model**: `openrouter/free` — auto-routes to any available free model
 - **No build tools** — no npm, no bundler, no TypeScript. Keep it plain JS
@@ -82,9 +82,50 @@ Two content scripts run on `spicychat.ai`:
 
 - Injected on `/chat/*` pages (desktop only — skipped on touch devices)
 - Resizable slide-in drawer panel (`#sc-np`) with a tab button (`#sc-np-tab`) at the right edge
-- Saves notes per chat ID to `chrome.storage.local` under `sc_note_v1_<chatId>`
+- **No notes section** — replaced entirely by a full RPG session tracker
 - Drawer width saved to `chrome.storage.local` as `sc_note_width_v1`
 - Toggle controlled by `spicychatNotesEnabled` in sync storage
+- On boot, erases legacy `sc_note_v1_<chatId>` keys automatically
+
+#### RPG tracker sections (all per-chat, stored in `chrome.storage.local`)
+
+| Section   | Key                   | Contents                                                     |
+| --------- | --------------------- | ------------------------------------------------------------ |
+| Quest Log | `sc_quests_v1_<id>`   | title, notes, state (active/done/failed), latest update text |
+| Resources | `sc_res_v1_<id>`      | name, value (integer), notes                                 |
+| Abilities | `sc_abl_v1_<id>`      | name, notes, current uses, max uses                          |
+| Party     | `sc_party_v1_<id>`    | name, status (active/downed/dead/absent)                     |
+| NPCs      | `sc_npc_v1_<id>`      | name, note, disposition (friendly/neutral/hostile)           |
+| Rumours   | `sc_rumour_v1_<id>`   | text, done (bool)                                            |
+| Dice Mod  | `sc_dice_mod_v1_<id>` | persistent modifier value + note label                       |
+
+#### Activity log strip
+
+- Fixed strip below the drawer header, max 10 entries, expands when entries exist
+- Every event (add, remove, change, roll, resource adjust) auto-inserts into the last focused chat input via `sc-rp-inject` CustomEvent with `{ silent: true }` — no toast, no clipboard
+- Each log entry has a `⎘` button to manually re-insert that line
+
+#### Insert buttons (⎘)
+
+- Every section has an "⎘ Insert" button that injects the section export into the chat input
+- "⎘ Insert All" at the top injects all sections at once
+- All exports are **single-line** `[Section: item | item | …]` format — safe from the asterisk formatter
+- Dice roller has "⎘ Insert Last" for the most recent roll
+
+#### Smart add-logging
+
+All "Add" actions log **on blur** (after the user fills in the name/text), so the log contains real information rather than a generic "new item added" message.
+
+#### Key functions
+
+- `addLog(msg)` — pushes to `activityLog[]` (max 10), re-renders strip, injects `\n` + msg into chat input (silently)
+- `flashCopyBtnLabel(btn)` — shows "✔ Inserted" for 1400ms on Insert buttons
+- `bindCopyBtn(id, exportFn)` — wires an Insert button to inject the export via `sc-rp-inject`
+- `export*()` functions — one per section, return single-line `[…]` string
+- `exportAll()` — joins all section exports with `\n`
+- `applyResOp(op)` — handles resource add/use/set, logs with before→after format
+- `renderAbl()` — renders ability slots as visual Use buttons (one per max, up to 10); each click decrements and logs
+- `autoResizeTextarea(el)` — auto-sizes textareas by scrollHeight
 
 ### SpicyChat RP events (handled in `content.js`)
 
@@ -92,7 +133,7 @@ Two content scripts run on `spicychat.ai`:
 
 - **Input stats**: dispatches `sc-rp-input-stats` CustomEvent `{ chars, words }` on every input/focus
 - **Rewrite undo**: listens for `sc-rp-undo` → restores pre-rewrite text, dispatches `sc-rp-undo-done`
-- **Snippet inject**: listens for `sc-rp-inject { text }` → appends text to last focused input
+- **Snippet inject**: listens for `sc-rp-inject { text, silent? }` → appends text to last focused input; if `silent: true`, suppresses the toast and strips a leading `\n` when the input is empty
 - **One-shot rewrite**: listens for `sc-rp-run-oneshot { prompt }` → rewrites current input content with given prompt, dispatches `sc-rp-oneshot-result` and `sc-rp-rewrite-done`
 - Last rewrite stored in `chrome.storage.local` as `sc_last_rewrite { before, after, label, ts }`
 - `lastFocusedEl` tracks the last focused editable on SpicyChat for inject/oneshot targets
@@ -112,7 +153,7 @@ Sidebar nav with sections shown/hidden via JS (no routing library):
 1. **API Key** — save/toggle-visibility for OpenRouter key
 2. **Keywords** — CRUD for `commands[]`; each command has `keyword`, `label`, `prompt`
 3. **Model** — model ID input + click-to-select model cards; auto-migrates bad model IDs on load
-4. **SpicyChat Notes** — enable/disable drawer; view, edit, delete all saved notes
+4. **SpicyChat RPG Tracker** — enable/disable drawer; view saved RPG data per chat (counts of quests/resources/abilities etc.) with delete-all per chat
 5. **Formatter** — all `fmt*` toggles, keyword, shortcut key, extra delimiters
 6. **RP Persona** — persona name, prepend text, global style (SpicyChat-only persona injection)
 
@@ -120,7 +161,7 @@ Sidebar nav with sections shown/hidden via JS (no routing library):
 
 Besides API key status, model pill, and keyword chips, the popup includes:
 
-- **SpicyChat Notes** toggle (`spicychatNotesEnabled`)
+- **SpicyChat Notes** toggle (`spicychatNotesEnabled`) — controls the RPG session tracker drawer
 - **Formatter** toggle (`formatterEnabled`)
 
 ## Release process

@@ -317,48 +317,6 @@
     .ql-delete-btn:hover { color: #f87171; background: rgba(239,68,68,0.08); }
     .ql-empty-state { text-align: center; color: #334155; font-size: 12px; padding: 16px 0; }
 
-    /* ── Inventory panel (inside quests tab) ── */
-    #sc-np-inv-list { display: flex; flex-direction: column; gap: 5px; }
-    .inv-item {
-      display: flex; align-items: center; gap: 7px;
-      background: rgba(255,255,255,0.025); border: 1px solid rgba(108,99,255,0.13);
-      border-radius: 6px; padding: 6px 10px;
-      transition: border-color 0.12s;
-    }
-    .inv-item:focus-within { border-color: rgba(108,99,255,0.35); }
-    .inv-qty-input {
-      width: 38px; flex-shrink: 0; background: rgba(0,0,0,0.25);
-      border: 1px solid rgba(108,99,255,0.2); border-radius: 4px;
-      color: #a78bfa; font-size: 12px; font-weight: 700; font-family: inherit;
-      text-align: center; padding: 2px 4px; outline: none;
-      transition: border-color 0.12s; caret-color: #a78bfa;
-    }
-    .inv-qty-input:focus { border-color: rgba(108,99,255,0.5); }
-    .inv-name-input {
-      flex: 1; background: transparent; border: none; outline: none;
-      color: #e2e8f0; font-size: 12.5px; font-family: inherit;
-      caret-color: #a78bfa; min-width: 0;
-    }
-    .inv-name-input::placeholder { color: #334155; }
-    .inv-notes-input {
-      flex: 1; background: transparent; border: none; outline: none;
-      color: #64748b; font-size: 11px; font-family: inherit;
-      caret-color: #a78bfa; min-width: 0; max-width: 80px;
-    }
-    .inv-notes-input::placeholder { color: #2a3447; }
-    .inv-delete-btn {
-      background: none; border: none; padding: 2px 4px; cursor: pointer;
-      color: #293548; border-radius: 3px; flex-shrink: 0;
-      transition: color 0.12s; display: flex; align-items: center;
-    }
-    .inv-delete-btn:hover { color: #f87171; }
-    #sc-np-inv-save {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 10.5px; color: #22c55e;
-      opacity: 0; transition: opacity 0.3s; height: 14px; margin-top: 2px;
-    }
-    #sc-np-inv-save.visible { opacity: 1; }
-
     /* ── Dice roller (inside quests tab) ── */
     #sc-np-dice-section { display: flex; flex-direction: column; gap: 8px; }
     .dice-faces-row { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -875,21 +833,6 @@
             </div>
           </div>
           <div id="sc-np-quest-list"></div>
-          <!-- Inventory -->
-          <div class="ql-section-header" style="margin-top:4px;">
-            <span class="ql-section-label">Inventory</span>
-            <div style="display:flex;gap:5px;align-items:center;">
-              <button id="sc-np-inv-copy" class="ql-copy-btn">⎘ Insert</button>
-              <button id="sc-np-inv-add" class="ql-add-btn">+ Add Item</button>
-            </div>
-          </div>
-          <div class="rp-card" style="padding:8px 10px;gap:6px;">
-            <div id="sc-np-inv-list"></div>
-            <div id="sc-np-inv-save">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              Saved
-            </div>
-          </div>
           <!-- Dice Roller -->
           <div class="ql-section-header" style="margin-top:4px;">
             <span class="ql-section-label">Dice Roller</span>
@@ -1170,9 +1113,6 @@
     const questsPanel = document.getElementById("sc-np-quests-panel");
     const questListEl = document.getElementById("sc-np-quest-list");
     const questAddBtn = document.getElementById("sc-np-quest-add");
-    const invListEl = document.getElementById("sc-np-inv-list");
-    const invAddBtn = document.getElementById("sc-np-inv-add");
-    const invSaveEl = document.getElementById("sc-np-inv-save");
     const diceCountInput = document.getElementById("sc-np-dice-count");
     const diceLabelEl = document.getElementById("sc-np-dice-label");
     const diceRollBtn = document.getElementById("sc-np-dice-roll");
@@ -1273,7 +1213,6 @@
 
     /* Storage keys */
     const QUEST_KEY = "sc_quests_v1_" + chatId;
-    const INV_KEY = "sc_inv_v1_" + chatId;
 
     /* ── CSS variable init ── */
     document.documentElement.style.setProperty("--sc-np-w", DRAWER_W + "px");
@@ -1398,6 +1337,7 @@
         delBtn.title = "Delete quest";
         delBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>`;
         delBtn.addEventListener("click", () => {
+          addLog(`[Quest removed: ${q.title || "(untitled)"}]`);
           quests.splice(idx, 1);
           saveQuests();
           renderQuests();
@@ -1454,123 +1394,27 @@
     }
 
     questAddBtn.addEventListener("click", () => {
-      quests.unshift(newQuest());
+      const q = newQuest();
+      quests.unshift(q);
       saveQuests();
       renderQuests();
-      // Focus the new title input
+      // Log with title + notes once the user fills the title field
       const first = questListEl.querySelector(".ql-title-input");
-      if (first) first.focus();
+      if (first) {
+        first.focus();
+        const logOnBlur = () => {
+          first.removeEventListener("blur", logOnBlur);
+          const notesPart = q.notes ? ` — ${q.notes}` : "";
+          addLog(`[Quest added: ${q.title || "(untitled)"}${notesPart}]`);
+        };
+        first.addEventListener("blur", logOnBlur);
+      }
     });
 
     function loadQuests() {
       chrome.storage.local.get(QUEST_KEY, (data) => {
         quests = Array.isArray(data[QUEST_KEY]) ? data[QUEST_KEY] : [];
         renderQuests();
-      });
-    }
-
-    /* ════════════════ INVENTORY ════════════════ */
-    let inventory = [];
-    let invSaveTimer = null;
-
-    function newInvItem() {
-      return { id: Date.now() + Math.random(), qty: "1", name: "", notes: "" };
-    }
-
-    function saveInv() {
-      chrome.storage.local.set({ [INV_KEY]: inventory });
-      invSaveEl.classList.add("visible");
-      clearTimeout(invSaveTimer);
-      invSaveTimer = setTimeout(
-        () => invSaveEl.classList.remove("visible"),
-        1800,
-      );
-    }
-    function scheduleInvSave() {
-      clearTimeout(invSaveTimer);
-      invSaveTimer = setTimeout(saveInv, 500);
-    }
-
-    function renderInv() {
-      invListEl.innerHTML = "";
-      if (!inventory.length) {
-        const empty = document.createElement("div");
-        empty.className = "ql-empty-state";
-        empty.style.padding = "6px 0";
-        empty.textContent = "Empty — tap + Add Item.";
-        invListEl.appendChild(empty);
-        return;
-      }
-      inventory.forEach((item, idx) => {
-        const row = document.createElement("div");
-        row.className = "inv-item";
-
-        const qtyInput = document.createElement("input");
-        qtyInput.type = "text";
-        qtyInput.className = "inv-qty-input";
-        qtyInput.value = item.qty;
-        qtyInput.placeholder = "1";
-        qtyInput.maxLength = 6;
-        qtyInput.title = "Quantity";
-        qtyInput.setAttribute("data-ai-rewriter-ignore", "1");
-        qtyInput.addEventListener("input", () => {
-          item.qty = qtyInput.value;
-          scheduleInvSave();
-        });
-
-        const nameInput = document.createElement("input");
-        nameInput.type = "text";
-        nameInput.className = "inv-name-input";
-        nameInput.value = item.name;
-        nameInput.placeholder = "Item name…";
-        nameInput.maxLength = 60;
-        nameInput.setAttribute("data-ai-rewriter-ignore", "1");
-        nameInput.addEventListener("input", () => {
-          item.name = nameInput.value;
-          scheduleInvSave();
-        });
-
-        const notesInput = document.createElement("input");
-        notesInput.type = "text";
-        notesInput.className = "inv-notes-input";
-        notesInput.value = item.notes;
-        notesInput.placeholder = "note…";
-        notesInput.maxLength = 40;
-        notesInput.setAttribute("data-ai-rewriter-ignore", "1");
-        notesInput.addEventListener("input", () => {
-          item.notes = notesInput.value;
-          scheduleInvSave();
-        });
-
-        const delBtn = document.createElement("button");
-        delBtn.className = "inv-delete-btn";
-        delBtn.title = "Remove item";
-        delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-        delBtn.addEventListener("click", () => {
-          inventory.splice(idx, 1);
-          saveInv();
-          renderInv();
-        });
-
-        row.append(qtyInput, nameInput, notesInput, delBtn);
-        invListEl.appendChild(row);
-      });
-    }
-
-    invAddBtn.addEventListener("click", () => {
-      const item = newInvItem();
-      inventory.push(item);
-      saveInv();
-      renderInv();
-      addLog("[Inventory: new item added]");
-      const inputs = invListEl.querySelectorAll(".inv-name-input");
-      if (inputs.length) inputs[inputs.length - 1].focus();
-    });
-
-    function loadInv() {
-      chrome.storage.local.get(INV_KEY, (data) => {
-        inventory = Array.isArray(data[INV_KEY]) ? data[INV_KEY] : [];
-        renderInv();
       });
     }
 
@@ -1810,6 +1654,7 @@
         delBtn.title = "Remove";
         delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
         delBtn.addEventListener("click", () => {
+          addLog(`[Resource removed: ${r.name || "(unnamed)"}]`);
           resources.splice(idx, 1);
           saveRes();
           renderRes();
@@ -1975,7 +1820,10 @@
         resetBtn.addEventListener("click", () => {
           a.current = a.max;
           saveAbl();
-          addLog(`[${a.name || "Ability"} restored — ${a.current}/${a.max}]`);
+          const notesPart = a.notes ? ` (${a.notes})` : "";
+          addLog(
+            `[${a.name || "Ability"} restored — ${a.current}/${a.max}${notesPart}]`,
+          );
           renderAbl();
         });
 
@@ -1984,6 +1832,8 @@
         delBtn.title = "Remove";
         delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
         delBtn.addEventListener("click", () => {
+          const notesPart = a.notes ? ` (${a.notes})` : "";
+          addLog(`[Ability removed: ${a.name || "(unnamed)"}${notesPart}]`);
           abilities.splice(idx, 1);
           saveAbl();
           renderAbl();
@@ -2053,11 +1903,23 @@
     }
 
     ablAddBtn.addEventListener("click", () => {
-      abilities.push(newAbl());
+      const abl = newAbl();
+      abilities.push(abl);
       saveAbl();
       renderAbl();
       const inputs = ablListEl.querySelectorAll(".abl-name-input");
-      if (inputs.length) inputs[inputs.length - 1].focus();
+      if (inputs.length) {
+        const lastInput = inputs[inputs.length - 1];
+        lastInput.focus();
+        const logOnBlur = () => {
+          lastInput.removeEventListener("blur", logOnBlur);
+          const notesPart = abl.notes ? ` — ${abl.notes}` : "";
+          addLog(
+            `[Ability added: ${abl.name || "(unnamed)"}${notesPart} (${abl.current}/${abl.max} uses)]`,
+          );
+        };
+        lastInput.addEventListener("blur", logOnBlur);
+      }
     });
 
     function loadAbl() {
@@ -2129,6 +1991,7 @@
         delBtn.title = "Remove";
         delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
         delBtn.addEventListener("click", () => {
+          addLog(`[Party: ${m.name || "(unnamed)"} removed]`);
           party.splice(idx, 1);
           saveParty();
           renderParty();
@@ -2139,12 +2002,22 @@
     }
 
     partyAddBtn.addEventListener("click", () => {
-      party.push(newPartyMember());
+      const member = newPartyMember();
+      party.push(member);
       saveParty();
       renderParty();
-      addLog("[Party: new member added]");
       const inputs = partyListEl.querySelectorAll(".party-name-input");
-      if (inputs.length) inputs[inputs.length - 1].focus();
+      if (inputs.length) {
+        const lastInput = inputs[inputs.length - 1];
+        lastInput.focus();
+        const logOnBlur = () => {
+          lastInput.removeEventListener("blur", logOnBlur);
+          addLog(
+            `[Party: ${member.name || "(unnamed)"} joined — ${member.status}]`,
+          );
+        };
+        lastInput.addEventListener("blur", logOnBlur);
+      }
     });
 
     function loadParty() {
@@ -2226,6 +2099,7 @@
         delBtn.title = "Remove";
         delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
         delBtn.addEventListener("click", () => {
+          addLog(`[NPC removed: ${n.name || "(unnamed)"}]`);
           npcs.splice(idx, 1);
           saveNpcs();
           renderNpcs();
@@ -2248,12 +2122,23 @@
     }
 
     npcAddBtn.addEventListener("click", () => {
-      npcs.push(newNpc());
+      const npc = newNpc();
+      npcs.push(npc);
       saveNpcs();
       renderNpcs();
-      addLog("[NPC: new character added]");
       const inputs = npcListEl.querySelectorAll(".npc-name-input");
-      if (inputs.length) inputs[inputs.length - 1].focus();
+      if (inputs.length) {
+        const lastInput = inputs[inputs.length - 1];
+        lastInput.focus();
+        const logOnBlur = () => {
+          lastInput.removeEventListener("blur", logOnBlur);
+          const notePart = npc.note ? ` — ${npc.note}` : "";
+          addLog(
+            `[NPC met: ${npc.name || "(unnamed)"} [${npc.disp}]${notePart}]`,
+          );
+        };
+        lastInput.addEventListener("blur", logOnBlur);
+      }
     });
 
     function loadNpcs() {
@@ -2324,6 +2209,7 @@
         delBtn.title = "Remove";
         delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
         delBtn.addEventListener("click", () => {
+          addLog(`[Rumour removed: "${(r.text || "(empty)").slice(0, 40)}"]`);
           rumours.splice(idx, 1);
           saveRumours();
           renderRumours();
@@ -2334,12 +2220,21 @@
     }
 
     rumourAddBtn.addEventListener("click", () => {
-      rumours.push(newRumour());
+      const rumour = newRumour();
+      rumours.push(rumour);
       saveRumours();
       renderRumours();
-      addLog("[Rumour: new lead added]");
       const inputs = rumourListEl.querySelectorAll(".rumour-text-input");
-      if (inputs.length) inputs[inputs.length - 1].focus();
+      if (inputs.length) {
+        const lastInput = inputs[inputs.length - 1];
+        lastInput.focus();
+        const logOnBlur = () => {
+          lastInput.removeEventListener("blur", logOnBlur);
+          if (rumour.text.trim())
+            addLog(`[Rumour added: "${rumour.text.slice(0, 60)}"]`);
+        };
+        lastInput.addEventListener("blur", logOnBlur);
+      }
     });
 
     function loadRumours() {
@@ -3098,18 +2993,6 @@
       });
     }
 
-    function copyText(text) {
-      navigator.clipboard.writeText(text).catch(() => {});
-    }
-
-    function flashCopyBtn(btn) {
-      btn.classList.add("copied");
-      btn.textContent = "\u2714 Copied";
-      setTimeout(() => {
-        btn.classList.remove("copied");
-        btn.textContent = "\u2398 Copy";
-      }, 1400);
-    }
     function flashCopyBtnLabel(btn, label) {
       btn.classList.add("inserted");
       const orig = btn.textContent;
@@ -3185,15 +3068,6 @@
       return `[Quests: ${parts.join(" | ")}]`;
     }
 
-    function exportInventory() {
-      if (!inventory.length) return "[Inventory: empty]";
-      const parts = inventory.map(
-        (i) =>
-          `${i.qty}x ${i.name || "(unnamed)"}${i.notes ? " (" + i.notes + ")" : ""}`,
-      );
-      return `[Inventory: ${parts.join(" | ")}]`;
-    }
-
     function exportResources() {
       if (!resources.length) return "[Resources: none]";
       const parts = resources.map((r) => {
@@ -3246,7 +3120,6 @@
     function exportAll() {
       return [
         exportQuests(),
-        exportInventory(),
         exportResources(),
         exportAbilities(),
         exportParty(),
@@ -3271,7 +3144,6 @@
 
     bindCopyBtn("sc-np-export-all", exportAll);
     bindCopyBtn("sc-np-quest-copy", exportQuests);
-    bindCopyBtn("sc-np-inv-copy", exportInventory);
     bindCopyBtn("sc-np-res-copy", exportResources);
     bindCopyBtn("sc-np-abl-copy", exportAbilities);
     bindCopyBtn("sc-np-party-copy", exportParty);
@@ -3294,7 +3166,6 @@
     // Erase any legacy notes storage for this chat
     chrome.storage.local.remove(["sc_note_v1_" + chatId]);
     loadQuests();
-    loadInv();
     loadRes();
     loadAbl();
     loadParty();
