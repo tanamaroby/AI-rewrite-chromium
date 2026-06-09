@@ -25,6 +25,9 @@
   let fmtOocBrackets = true;
   let fmtActionPunctuation = true;
   let fmtCapitaliseQuotes = true;
+  let fmtEmDash = true;
+  let fmtNoSpaceBeforePunct = true;
+  let fmtSpaceAfterPunct = true;
   let rpPersonas = Array.from({ length: 5 }, () => ({
     label: "",
     name: "",
@@ -62,6 +65,9 @@
         "fmtOocBrackets",
         "fmtActionPunctuation",
         "fmtCapitaliseQuotes",
+        "fmtEmDash",
+        "fmtNoSpaceBeforePunct",
+        "fmtSpaceAfterPunct",
         "rpPersonas",
         "rpActivePersonaIndex",
         "rpPersonaEnabled",
@@ -92,6 +98,9 @@
         fmtOocBrackets = data.fmtOocBrackets !== false;
         fmtActionPunctuation = data.fmtActionPunctuation !== false;
         fmtCapitaliseQuotes = data.fmtCapitaliseQuotes !== false;
+        fmtEmDash = data.fmtEmDash !== false;
+        fmtNoSpaceBeforePunct = data.fmtNoSpaceBeforePunct !== false;
+        fmtSpaceAfterPunct = data.fmtSpaceAfterPunct !== false;
         if (Array.isArray(data.rpPersonas) && data.rpPersonas.length > 0) {
           rpPersonas = data.rpPersonas.slice(0, 5);
           while (rpPersonas.length < 5)
@@ -241,9 +250,24 @@
     if (fmtStripAsterisks) text = text.replace(/\*/g, "");
     if (fmtNormaliseQuotes) text = text.replace(/[\u201C\u201D]/g, '"');
     if (fmtNormaliseApostrophes) text = text.replace(/[\u2018\u2019]/g, "'");
+    // Em-dash: exactly two hyphens between word-chars or spaces → —
+    // Exclude --- (horizontal rules / longer runs)
+    if (fmtEmDash) text = text.replace(/(?<!-)--(?!-)/g, "\u2014");
+    // Remove space(s) immediately before , . ! ? : ;
+    // but not before … (already an ellipsis character) and not mid-number periods
+    if (fmtNoSpaceBeforePunct)
+      text = text.replace(/ +([,!?:;])/g, "$1").replace(/ +(\.)(?!\d)/g, "$1");
     if (fmtNormaliseEllipsis) {
       text = text.replace(/\.{2,}/g, "...");
       text = text.replace(/\.{3}/g, "\u2026");
+    }
+    // Ensure exactly one space after , . ! ? : ; when followed directly by a letter
+    // Exceptions: skip digits after period (decimals), skip when char before is also punctuation
+    if (fmtSpaceAfterPunct) {
+      // Period: skip if preceded by a digit (decimal) or followed by a digit
+      text = text.replace(/(?<=[^\d\s.!?,;:\u2026])\.(?=[A-Za-z])/g, ". ");
+      // Other punctuation (,!?:;) always safe
+      text = text.replace(/([,!?:;])(?=[A-Za-z])/g, "$1 ");
     }
     if (fmtCollapseSpaces) text = text.replace(/[ \t]{2,}/g, " ");
     if (fmtCapitaliseI) text = text.replace(/\bi\b/g, "I");

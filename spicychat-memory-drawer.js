@@ -1364,6 +1364,9 @@
       "fmtRepairAsterisks",
       "fmtActionPunctuation",
       "fmtOocBrackets",
+      "fmtEmDash",
+      "fmtNoSpaceBeforePunct",
+      "fmtSpaceAfterPunct",
     ];
 
     const FMT_GROUPS = [
@@ -1413,6 +1416,24 @@
             name: "Capitalise dialogue opening letter",
             b: '"oh wow"',
             a: '"Oh wow"',
+          },
+          {
+            key: "fmtEmDash",
+            name: "Em-dash -- \u2192 \u2014",
+            b: "wait -- then",
+            a: "wait \u2014 then",
+          },
+          {
+            key: "fmtNoSpaceBeforePunct",
+            name: "Remove space before punctuation",
+            b: "hello , she said .",
+            a: "hello, she said.",
+          },
+          {
+            key: "fmtSpaceAfterPunct",
+            name: "Ensure space after punctuation",
+            b: "hello.she",
+            a: "hello. She",
           },
         ],
       },

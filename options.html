@@ -460,9 +460,27 @@
             </div>
             <label class="toggle-switch"><input type="checkbox" id="fmtCapitaliseQuotes" /><span class="toggle-track"></span></label>
           </div>
-        </div>
-
-        <div class="settings-group-label">STRUCTURE</div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Em-dash <code>--</code> → <code>—</code></span>
+              <span class="toggle-hint">Convert double-hyphen to a proper em-dash — she paused -- then spoke → she paused — then spoke</span>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" id="fmtEmDash" /><span class="toggle-track"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Remove space before punctuation</span>
+              <span class="toggle-hint">e.g. hello , world → hello, world &nbsp;·&nbsp; she said . → she said.</span>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" id="fmtNoSpaceBeforePunct" /><span class="toggle-track"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Ensure space after punctuation</span>
+              <span class="toggle-hint">e.g. hello.she → hello. She &nbsp;·&nbsp; wait,then → wait, then (skips decimals like 3.14)</span>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" id="fmtSpaceAfterPunct" /><span class="toggle-track"></span></label>
+          </div>
         <div class="card">
           <div class="toggle-row">
             <div class="toggle-info">
