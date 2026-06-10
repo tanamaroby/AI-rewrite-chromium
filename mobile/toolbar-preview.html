@@ -268,6 +268,223 @@
     0%   { transform: translateX(-200%); }
     100% { transform: translateX(360%); }
   }
+
+  /* ─────────────────────── RPG SHEET ─────────────────────── */
+  #ai-rpg-backdrop {
+    position: fixed; inset: 0; z-index: 2147483640;
+    background: rgba(0,0,0,0.65);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.22s;
+  }
+  #ai-rpg-backdrop.open { opacity: 1; pointer-events: all; }
+  #ai-rpg-sheet {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    z-index: 2147483641;
+    background: rgba(10,7,22,0.98);
+    backdrop-filter: blur(28px) saturate(180%);
+    border-top: 1px solid rgba(108,99,255,0.4);
+    border-radius: 18px 18px 0 0;
+    height: 95dvh;
+    display: flex; flex-direction: column;
+    transform: translateY(110%);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  #ai-rpg-sheet.open { transform: none; }
+  #ai-rpg-handle-area {
+    padding: 12px 0 4px; flex-shrink: 0; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #ai-rpg-handle {
+    width: 48px; height: 6px;
+    background: rgba(139,92,246,0.45);
+    border-radius: 3px; pointer-events: none;
+  }
+  #ai-rpg-header {
+    display: flex; align-items: center;
+    padding: 4px 14px 6px; gap: 8px; flex-shrink: 0;
+  }
+  #ai-rpg-title { font-size: 16px; font-weight: 800; color: #a78bfa; flex: 1; letter-spacing: 0.03em; }
+  .ai-rpg-hdr-btn {
+    font-size: 13px; font-weight: 700; padding: 9px 14px; border-radius: 10px;
+    border: 1px solid rgba(139,92,246,0.4);
+    background: rgba(30,20,60,0.8); color: #c4b5fd;
+    cursor: pointer; min-height: 44px;
+  }
+  .ai-rpg-hdr-btn:active { background: rgba(76,29,149,0.5); }
+  #ai-rpg-close-btn {
+    width: 44px; height: 44px; border-radius: 10px;
+    border: 1px solid rgba(139,92,246,0.25);
+    background: rgba(30,20,60,0.7); color: #94a3b8;
+    font-size: 18px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+  }
+  #ai-rpg-close-btn:active { background: rgba(76,29,149,0.4); color: #c4b5fd; }
+  #ai-rpg-tabs {
+    display: flex; overflow-x: auto; scrollbar-width: none;
+    gap: 6px; padding: 6px 14px 10px; flex-shrink: 0;
+    border-bottom: 1px solid rgba(108,99,255,0.12);
+  }
+  #ai-rpg-tabs::-webkit-scrollbar { display: none; }
+  .ai-rpg-tab {
+    flex-shrink: 0; padding: 10px 16px; border-radius: 22px;
+    border: 1px solid rgba(108,99,255,0.25);
+    background: transparent; color: #64748b;
+    font-size: 14px; font-weight: 700; white-space: nowrap;
+    cursor: pointer; min-height: 44px;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+  }
+  .ai-rpg-tab.active { background: rgba(108,99,255,0.22); border-color: rgba(108,99,255,0.7); color: #c4b5fd; }
+  #ai-rpg-content { flex: 1; overflow-y: auto; padding: 8px 16px 32px; }
+  .ai-rpg-section { display: none; }
+  .ai-rpg-section.active { display: block; }
+  .ai-tb-rpg-btn {
+    border-color: rgba(251,191,36,0.4) !important;
+    background: linear-gradient(145deg,rgba(30,20,10,0.95) 0%,rgba(20,14,5,0.95) 100%) !important;
+    color: #fbbf24 !important;
+  }
+  .ai-tb-rpg-btn:active {
+    background: linear-gradient(145deg,rgba(120,60,0,0.55) 0%,rgba(80,40,0,0.7) 100%) !important;
+    border-color: rgba(251,191,36,0.8) !important;
+  }
+  .rpg-card { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid rgba(108,99,255,0.09); flex-wrap:wrap; }
+  .rpg-card:last-child { border-bottom:none; }
+  .rpg-item-row { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid rgba(108,99,255,0.09); }
+  .rpg-item-row:last-child { border-bottom:none; }
+  .rpg-abl-card { padding:12px 0; border-bottom:1px solid rgba(108,99,255,0.09); }
+  .rpg-abl-card:last-child { border-bottom:none; }
+  .rpg-item-name { font-size:15px; color:#e2e8f0; }
+  .rpg-item-name.rpg-striked { text-decoration:line-through; color:#475569; }
+  .rpg-item-note { font-size:12px; color:#475569; margin-top:3px; }
+  .rpg-status-pill {
+    font-size:13px; font-weight:700; padding:10px 14px;
+    border-radius:14px; border:1px solid; cursor:pointer;
+    white-space:nowrap; flex-shrink:0; min-height:44px;
+    display:flex; align-items:center;
+  }
+  .rpg-q-active   { background:rgba(74,222,128,0.1);  border-color:rgba(74,222,128,0.4);  color:#4ade80; }
+  .rpg-q-done     { background:rgba(108,99,255,0.1);  border-color:rgba(108,99,255,0.4);  color:#a78bfa; }
+  .rpg-q-failed   { background:rgba(248,113,113,0.1); border-color:rgba(248,113,113,0.3); color:#f87171; }
+  .rpg-npc-neutral{ background:rgba(251,191,36,0.1);  border-color:rgba(251,191,36,0.3);  color:#fbbf24; }
+  .rpg-add-row { display:flex; align-items:center; gap:8px; padding:10px 0 12px; border-bottom:1px solid rgba(108,99,255,0.12); margin-bottom:6px; flex-wrap:wrap; }
+  .rpg-add-input {
+    flex:1; min-width:90px;
+    background:rgba(255,255,255,0.05); border:1px solid rgba(108,99,255,0.22);
+    border-radius:10px; color:#e2e8f0; font-size:16px; padding:12px 13px;
+    font-family:inherit; -webkit-appearance:none;
+  }
+  .rpg-add-input::placeholder { color:#334155; }
+  .rpg-add-input:focus { outline:none; border-color:rgba(108,99,255,0.55); }
+  .rpg-add-num {
+    width:60px; text-align:center;
+    background:rgba(255,255,255,0.05); border:1px solid rgba(108,99,255,0.22);
+    border-radius:10px; color:#e2e8f0; font-size:16px; padding:12px 4px;
+    font-family:inherit; -webkit-appearance:none;
+  }
+  .rpg-add-num:focus { outline:none; border-color:rgba(108,99,255,0.55); }
+  .rpg-add-btn {
+    padding:12px 18px; border-radius:10px; flex-shrink:0;
+    background:rgba(108,99,255,0.18); border:1px solid rgba(108,99,255,0.5);
+    color:#a78bfa; font-size:15px; font-weight:700; min-height:44px;
+    cursor:pointer; white-space:nowrap;
+  }
+  .rpg-add-btn:active { background:rgba(108,99,255,0.32); }
+  .rpg-del-btn {
+    width:44px; height:44px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:10px; border:1px solid rgba(239,68,68,0.22);
+    background:rgba(239,68,68,0.06); color:#ef4444; cursor:pointer;
+  }
+  .rpg-del-btn:active { background:rgba(239,68,68,0.22); }
+  .rpg-ins-btn {
+    width:44px; height:44px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:10px; border:1px solid rgba(108,99,255,0.3);
+    background:rgba(108,99,255,0.09); color:#7c6fb5; font-size:18px; cursor:pointer;
+  }
+  .rpg-ins-btn:active { background:rgba(108,99,255,0.22); color:#a78bfa; }
+  .rpg-done-btn {
+    padding:10px 14px; border-radius:10px; font-size:14px; font-weight:700;
+    border:1px solid rgba(74,222,128,0.35); min-height:44px;
+    background:rgba(74,222,128,0.08); color:#4ade80; cursor:pointer;
+  }
+  .rpg-done-btn:active { background:rgba(74,222,128,0.2); }
+  .rpg-empty { color:#334155; font-size:14px; padding:24px 0; text-align:center; }
+  .rpg-res-val { font-size:22px; font-weight:800; color:#e2e8f0; min-width:44px; text-align:center; }
+  .rpg-val-btn {
+    width:44px; height:44px; flex-shrink:0;
+    border-radius:10px; border:1px solid rgba(108,99,255,0.3);
+    background:rgba(108,99,255,0.1); color:#a78bfa;
+    font-size:24px; font-weight:700;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .rpg-val-btn:active { background:rgba(108,99,255,0.28); }
+  .rpg-abl-cur { font-size:16px; font-weight:700; color:#a78bfa; min-width:44px; text-align:center; }
+  .rpg-rst-btn {
+    padding:10px 14px; border-radius:10px; font-size:13px; font-weight:700;
+    border:1px solid rgba(74,222,128,0.3); min-height:44px;
+    background:rgba(74,222,128,0.08); color:#4ade80; cursor:pointer; flex-shrink:0;
+  }
+  .rpg-rst-btn:active { background:rgba(74,222,128,0.22); }
+  .rpg-use-btn {
+    flex:1; min-width:0; padding:12px 2px;
+    border-radius:8px; border:1px solid;
+    font-size:13px; font-weight:700; cursor:pointer;
+    font-family:inherit;
+  }
+  .rpg-use-btn.avail { background:rgba(108,99,255,0.15); border-color:rgba(108,99,255,0.4); color:#a78bfa; }
+  .rpg-use-btn.spent { background:rgba(108,99,255,0.03); border-color:rgba(108,99,255,0.08); color:#334155; opacity:0.38; }
+  .rpg-rumour-chk {
+    width:44px; height:44px; flex-shrink:0;
+    border-radius:50%; border:2px solid rgba(108,99,255,0.35);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .rpg-rumour-chk.done { background:rgba(74,222,128,0.12); border-color:rgba(74,222,128,0.5); }
+  .rpg-dice-grid { display:flex; flex-wrap:wrap; gap:8px; padding:6px 0 10px; }
+  .rpg-dice-face {
+    flex:1; min-width:52px; padding:14px 4px;
+    border-radius:12px; border:2px solid rgba(108,99,255,0.25);
+    background:rgba(20,14,40,0.9); color:#7c6fb5;
+    font-size:15px; font-weight:700; text-align:center; cursor:pointer;
+    transition:background 0.12s, border-color 0.12s, color 0.12s;
+    font-family:inherit;
+  }
+  .rpg-dice-face.active { background:rgba(108,99,255,0.28); border-color:rgba(108,99,255,0.75); color:#e9d5ff; }
+  .rpg-roll-btn {
+    width:100%; padding:18px; margin:6px 0 4px;
+    border-radius:14px; border:2px solid rgba(108,99,255,0.6);
+    background:linear-gradient(135deg,rgba(76,29,149,0.5),rgba(45,18,90,0.7));
+    color:#e9d5ff; font-size:20px; font-weight:700; cursor:pointer;
+    font-family:inherit;
+  }
+  .rpg-roll-btn:active { background:linear-gradient(135deg,rgba(109,40,217,0.65),rgba(76,29,149,0.8)); }
+  .rpg-dice-total { font-size:72px; font-weight:900; text-align:center; color:#e9d5ff; line-height:1; padding:14px 0 4px; }
+  .rpg-nat20 { color:#fbbf24 !important; }
+  .rpg-nat1  { color:#f87171 !important; }
+  .rpg-dice-hist { display:flex; flex-wrap:wrap; gap:5px; margin:6px 0; }
+  .rpg-dice-chip {
+    font-size:13px; padding:6px 12px;
+    border-radius:14px; border:1px solid rgba(108,99,255,0.25);
+    background:rgba(20,14,40,0.9); color:#94a3b8;
+  }
+  .rpg-sync-btn {
+    display:block; width:100%; padding:16px; margin-bottom:8px;
+    border-radius:12px; border:1px solid rgba(139,92,246,0.45);
+    background:rgba(108,99,255,0.15); color:#a78bfa;
+    font-size:16px; font-weight:700; cursor:pointer; min-height:52px;
+    font-family:inherit;
+  }
+  .rpg-sync-btn:active { background:rgba(108,99,255,0.28); }
+  .rpg-sync-import { border-color:rgba(74,222,128,0.45); background:rgba(74,222,128,0.1); color:#4ade80; }
+  .rpg-sync-import:active { background:rgba(74,222,128,0.22); }
+  .rpg-sync-area {
+    display:block; width:100%; min-height:120px; box-sizing:border-box;
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(108,99,255,0.22); border-radius:10px;
+    color:#94a3b8; font-size:13px; padding:12px; font-family:monospace;
+    resize:none;
+  }
+  .rpg-sync-area:focus { outline:none; border-color:rgba(108,99,255,0.5); }
 </style>
 </head>
 <body>
@@ -285,6 +502,7 @@
         <span id="ai-tb-status">Ready</span>
       </div>
       <div id="ai-tb-buttons">
+        <button class="ai-tb-btn ai-tb-rpg-btn" onclick="openRpgSheet()"><span class="ai-tb-btn-emoji">🗡️</span>RPG</button>
         <button class="ai-tb-btn" onclick="demoCmd(this,'Rewrite')"><span class="ai-tb-btn-emoji">✏️</span>Rewrite</button>
         <button class="ai-tb-btn" onclick="demoCmd(this,'Moan')"><span class="ai-tb-btn-emoji">💗</span>Moan</button>
         <button class="ai-tb-btn" onclick="demoCmd(this,'Brain')"><span class="ai-tb-btn-emoji">🧠</span>Brain</button>
@@ -297,6 +515,20 @@
   <div id="ai-tb-progress-track"><div id="ai-tb-progress-fill"></div></div>
 </div>
 
+<!-- ─── RPG Backdrop + Sheet ─── -->
+<div id="ai-rpg-backdrop" onclick="closeRpgSheet()"></div>
+<div id="ai-rpg-sheet">
+  <div id="ai-rpg-handle-area"><div id="ai-rpg-handle"></div></div>
+  <div id="ai-rpg-header">
+    <span id="ai-rpg-title">⚔️ RPG Tracker</span>
+    <button class="ai-rpg-hdr-btn" onclick="doRpgExport()">↑ Share</button>
+    <button class="ai-rpg-hdr-btn" onclick="setRpgTab('sync')">↓ Import</button>
+    <button id="ai-rpg-close-btn" onclick="closeRpgSheet()">✕</button>
+  </div>
+  <div id="ai-rpg-tabs"></div>
+  <div id="ai-rpg-content"></div>
+</div>
+
 <!-- ─── Page content ─── -->
 <div class="content">
   <h2>Toolbar Preview</h2>
@@ -306,10 +538,356 @@
 </div>
 
 <script>
-  const statusEl = document.getElementById('ai-tb-status');
+  // ─── RPG Tracker ──────────────────────────────────────────────────────────
+  const RPG_CHAT_ID = 'preview';
+  const KEYS = {
+    quests:  'sc_quests_v1_'   + RPG_CHAT_ID,
+    res:     'sc_res_v1_'      + RPG_CHAT_ID,
+    abl:     'sc_abl_v1_'      + RPG_CHAT_ID,
+    party:   'sc_party_v1_'    + RPG_CHAT_ID,
+    npc:     'sc_npc_v1_'      + RPG_CHAT_ID,
+    rumours: 'sc_rumour_v1_'   + RPG_CHAT_ID,
+    dice:    'sc_dice_mod_v1_' + RPG_CHAT_ID,
+  };
+  function rpgLoad(k)  { try { return JSON.parse(localStorage.getItem(k)) || []; } catch { return []; } }
+  function rpgSave(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+
+  let rpgQuests=[], rpgRes=[], rpgAbl=[], rpgParty=[], rpgNpcs=[], rpgRumours=[], rpgDiceMods=[];
+  let diceSelectedFaces = new Set([20]);
+  let rpgDiceCount = 1, rpgDiceLastResult = null, rpgDiceHistory = [];
+  let rpgActiveTab = 'quests';
+
+  const RPG_TABS = [
+    {id:'quests', label:'Quests'},{id:'res', label:'Res'},{id:'abl', label:'Abl'},
+    {id:'party', label:'Party'},{id:'npc', label:'NPCs'},{id:'rumours', label:'Rum'},
+    {id:'dice', label:'Dice'},{id:'sync', label:'⇄ Sync'},
+  ];
+  const rpgTabsEl    = document.getElementById('ai-rpg-tabs');
+  const rpgContentEl = document.getElementById('ai-rpg-content');
+  const rpgPanels    = {};
+
+  RPG_TABS.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'ai-rpg-tab'; btn.dataset.tab = t.id; btn.textContent = t.label;
+    btn.onclick = () => setRpgTab(t.id);
+    rpgTabsEl.appendChild(btn);
+    const p = document.createElement('div');
+    p.className = 'ai-rpg-section'; p.id = 'ai-rpg-sec-' + t.id;
+    rpgContentEl.appendChild(p);
+    rpgPanels[t.id] = p;
+  });
+
+  // Swipe-down to close
+  (function(){
+    const ha = document.getElementById('ai-rpg-handle-area');
+    const sh = document.getElementById('ai-rpg-sheet');
+    let sy=0, drag=false;
+    ha.addEventListener('touchstart', e=>{ sy=e.touches[0].clientY; drag=true; sh.style.transition='none'; },{passive:true});
+    ha.addEventListener('touchmove',  e=>{ if(!drag) return; const dy=e.touches[0].clientY-sy; if(dy>0) sh.style.transform=`translateY(${dy}px)`; },{passive:true});
+    ha.addEventListener('touchend',   e=>{ if(!drag) return; drag=false; const dy=e.changedTouches[0].clientY-sy; sh.style.transition=''; if(dy>80) closeRpgSheet(); else sh.style.transform=''; });
+  })();
+
+  function openRpgSheet() {
+    rpgQuests  = rpgLoad(KEYS.quests);
+    rpgRes     = rpgLoad(KEYS.res);
+    rpgAbl     = rpgLoad(KEYS.abl);
+    rpgParty   = rpgLoad(KEYS.party);
+    rpgNpcs    = rpgLoad(KEYS.npc);
+    rpgRumours = rpgLoad(KEYS.rumours);
+    rpgDiceMods= rpgLoad(KEYS.dice);
+    document.getElementById('ai-rpg-sheet').classList.add('open');
+    document.getElementById('ai-rpg-backdrop').classList.add('open');
+    setRpgTab(rpgActiveTab);
+  }
+  function closeRpgSheet() {
+    document.getElementById('ai-rpg-sheet').classList.remove('open');
+    document.getElementById('ai-rpg-backdrop').classList.remove('open');
+    document.getElementById('ai-rpg-sheet').style.transform = '';
+  }
+  function setRpgTab(id) {
+    rpgActiveTab = id;
+    document.querySelectorAll('.ai-rpg-tab').forEach(b => b.classList.toggle('active', b.dataset.tab===id));
+    Object.entries(rpgPanels).forEach(([k,p]) => p.classList.toggle('active', k===id));
+    renderRpgTab();
+  }
+  function renderRpgTab() {
+    const p = rpgPanels[rpgActiveTab];
+    const m = {quests:renderRpgQuests, res:renderRpgRes, abl:renderRpgAbl, party:renderRpgParty,
+               npc:renderRpgNpcs, rumours:renderRpgRumours, dice:renderRpgDice, sync:renderRpgSync};
+    if (m[rpgActiveTab]) m[rpgActiveTab](p);
+  }
+
+  // helpers
+  function rpgMkInput(ph) {
+    const e=document.createElement('input'); e.type='text'; e.placeholder=ph; e.className='rpg-add-input'; return e;
+  }
+  function rpgMkDelBtn() {
+    const b=document.createElement('button'); b.className='rpg-del-btn';
+    b.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    return b;
+  }
+  function rpgMkInsBtn(textFn) {
+    const b=document.createElement('button'); b.className='rpg-ins-btn'; b.textContent='⎘';
+    b.onclick=()=>{ const t=textFn(); if(t){ previewInsert(t); b.textContent='✔'; setTimeout(()=>b.textContent='⎘',1200);} };
+    return b;
+  }
+  function previewInsert(text) {
+    const ta=document.getElementById('demo-text');
+    ta.value += (ta.value && !ta.value.endsWith('\n') ? '\n' : '') + text;
+  }
+  function rpgMkEmpty(panel, msg) {
+    const e=document.createElement('div'); e.className='rpg-empty'; e.textContent=msg; panel.appendChild(e);
+  }
+
+  // QUESTS
+  const QUEST_STATES=['active','done','failed'];
+  function renderRpgQuests(panel) {
+    panel.innerHTML='';
+    const titleIn=rpgMkInput('Quest title…');
+    const addBtn=document.createElement('button'); addBtn.className='rpg-add-btn'; addBtn.textContent='+ Add Quest';
+    const addRow=document.createElement('div'); addRow.className='rpg-add-row';
+    addRow.append(titleIn,addBtn); panel.appendChild(addRow);
+    const doAdd=()=>{ const t=titleIn.value.trim(); if(!t)return; rpgQuests.unshift({id:Date.now(),title:t,notes:'',state:'active',updates:[]}); rpgSave(KEYS.quests,rpgQuests); titleIn.value=''; renderRpgQuests(panel); };
+    addBtn.onclick=doAdd; titleIn.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doAdd();}};
+    if(!rpgQuests.length){rpgMkEmpty(panel,'No quests yet.');return;}
+    rpgQuests.forEach((q,idx)=>{
+      const card=document.createElement('div'); card.className='rpg-card';
+      const statusBtn=document.createElement('button');
+      statusBtn.className=`rpg-status-pill rpg-q-${q.state}`;
+      statusBtn.textContent=q.state==='active'?'○':q.state==='done'?'✓':'✗';
+      statusBtn.onclick=()=>{ q.state=QUEST_STATES[(QUEST_STATES.indexOf(q.state)+1)%3]; rpgSave(KEYS.quests,rpgQuests); renderRpgQuests(panel); };
+      const body=document.createElement('div'); body.style.cssText='flex:1;min-width:0;';
+      const nameEl=document.createElement('div'); nameEl.className='rpg-item-name'+(q.state!=='active'?' rpg-striked':''); nameEl.textContent=q.title; nameEl.style.cursor='pointer';
+      const notesEl=document.createElement('div'); notesEl.className='rpg-item-note'; notesEl.textContent=q.notes; notesEl.style.display=q.notes?'':'none';
+      const editWrap=document.createElement('div'); editWrap.style.cssText='display:none;flex-direction:column;gap:5px;padding-top:5px;';
+      const eTi=rpgMkInput('Title…'); eTi.value=q.title; eTi.oninput=()=>{q.title=eTi.value;rpgSave(KEYS.quests,rpgQuests);};
+      const eNo=rpgMkInput('Notes…'); eNo.value=q.notes; eNo.oninput=()=>{q.notes=eNo.value;rpgSave(KEYS.quests,rpgQuests);};
+      const doneBtn=document.createElement('button'); doneBtn.className='rpg-done-btn'; doneBtn.textContent='✓ Done';
+      doneBtn.onclick=()=>{ editWrap.style.display='none'; nameEl.style.display=''; nameEl.textContent=q.title; nameEl.className='rpg-item-name'+(q.state!=='active'?' rpg-striked':''); notesEl.textContent=q.notes; notesEl.style.display=q.notes?'':'none'; };
+      nameEl.onclick=()=>{ editWrap.style.display='flex'; nameEl.style.display='none'; notesEl.style.display='none'; eTi.value=q.title; eNo.value=q.notes; eTi.focus(); };
+      editWrap.append(eTi,eNo,doneBtn); body.append(nameEl,notesEl,editWrap);
+      const ins=rpgMkInsBtn(()=>`[Quest: ${q.state==='done'?'✓':q.state==='failed'?'✗':'○'} ${q.title}${q.notes?' — '+q.notes:''}]`);
+      const del=rpgMkDelBtn(); del.onclick=()=>{rpgQuests.splice(idx,1);rpgSave(KEYS.quests,rpgQuests);renderRpgQuests(panel);};
+      card.append(statusBtn,body,ins,del); panel.appendChild(card);
+    });
+  }
+
+  // RESOURCES
+  function renderRpgRes(panel) {
+    panel.innerHTML='';
+    const nameIn=rpgMkInput('Resource name…');
+    const valIn=document.createElement('input'); valIn.type='number'; valIn.className='rpg-add-num'; valIn.value='0'; valIn.min='0';
+    const addBtn=document.createElement('button'); addBtn.className='rpg-add-btn'; addBtn.textContent='+ Add';
+    const addRow=document.createElement('div'); addRow.className='rpg-add-row'; addRow.append(nameIn,valIn,addBtn); panel.appendChild(addRow);
+    const doAdd=()=>{ const n=nameIn.value.trim(); if(!n)return; rpgRes.push({id:Date.now(),name:n,value:parseInt(valIn.value)||0,notes:''}); rpgSave(KEYS.res,rpgRes); nameIn.value=''; valIn.value='0'; renderRpgRes(panel); };
+    addBtn.onclick=doAdd; nameIn.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doAdd();}};
+    if(!rpgRes.length){rpgMkEmpty(panel,'No resources yet.');return;}
+    rpgRes.forEach((r,idx)=>{
+      const row=document.createElement('div'); row.className='rpg-item-row';
+      const nameEl=document.createElement('span'); nameEl.className='rpg-item-name'; nameEl.style.flex='1'; nameEl.textContent=r.name;
+      const minBtn=document.createElement('button'); minBtn.className='rpg-val-btn'; minBtn.textContent='−';
+      const valEl=document.createElement('span'); valEl.className='rpg-res-val'; valEl.textContent=r.value;
+      const plusBtn=document.createElement('button'); plusBtn.className='rpg-val-btn'; plusBtn.textContent='+';
+      minBtn.onclick=()=>{r.value=Math.max(0,r.value-1);valEl.textContent=r.value;rpgSave(KEYS.res,rpgRes);};
+      plusBtn.onclick=()=>{r.value++;valEl.textContent=r.value;rpgSave(KEYS.res,rpgRes);};
+      const ins=rpgMkInsBtn(()=>`[${r.name}: ${r.value}]`);
+      const del=rpgMkDelBtn(); del.onclick=()=>{rpgRes.splice(idx,1);rpgSave(KEYS.res,rpgRes);renderRpgRes(panel);};
+      row.append(nameEl,minBtn,valEl,plusBtn,ins,del); panel.appendChild(row);
+    });
+  }
+
+  // ABILITIES
+  function renderRpgAbl(panel) {
+    panel.innerHTML='';
+    const nameIn=rpgMkInput('Ability name…');
+    const maxIn=document.createElement('input'); maxIn.type='number'; maxIn.className='rpg-add-num'; maxIn.value='3'; maxIn.min='1'; maxIn.max='99';
+    const addBtn=document.createElement('button'); addBtn.className='rpg-add-btn'; addBtn.textContent='+ Add';
+    const addRow=document.createElement('div'); addRow.className='rpg-add-row'; addRow.append(nameIn,maxIn,addBtn); panel.appendChild(addRow);
+    const doAdd=()=>{ const n=nameIn.value.trim(); if(!n)return; const mx=Math.max(1,parseInt(maxIn.value)||3); rpgAbl.push({id:Date.now(),name:n,notes:'',current:mx,max:mx}); rpgSave(KEYS.abl,rpgAbl); nameIn.value=''; maxIn.value='3'; renderRpgAbl(panel); };
+    addBtn.onclick=doAdd;
+    if(!rpgAbl.length){rpgMkEmpty(panel,'No abilities yet.');return;}
+    rpgAbl.forEach((a,idx)=>{
+      const card=document.createElement('div'); card.className='rpg-abl-card';
+      const top=document.createElement('div'); top.className='rpg-item-row'; top.style.borderBottom='none'; top.style.paddingBottom='4px';
+      const nameEl=document.createElement('span'); nameEl.className='rpg-item-name'; nameEl.style.flex='1'; nameEl.textContent=a.name;
+      const curEl=document.createElement('span'); curEl.className='rpg-abl-cur'; curEl.textContent=`${a.current}/${a.max}`;
+      const rst=document.createElement('button'); rst.className='rpg-rst-btn'; rst.textContent='RST';
+      rst.onclick=()=>{a.current=a.max;rpgSave(KEYS.abl,rpgAbl);renderRpgAbl(panel);};
+      const del=rpgMkDelBtn(); del.onclick=()=>{rpgAbl.splice(idx,1);rpgSave(KEYS.abl,rpgAbl);renderRpgAbl(panel);};
+      top.append(nameEl,curEl,rst,del); card.appendChild(top);
+      const useRow=document.createElement('div'); useRow.style.cssText='display:flex;gap:4px;flex-wrap:wrap;padding-bottom:4px;';
+      for(let i=0;i<Math.min(a.max,8);i++){
+        const btn=document.createElement('button'); btn.className='rpg-use-btn '+(i<a.current?'avail':'spent'); btn.textContent='Use';
+        btn.onclick=()=>{ if(a.current<=0)return; a.current--; curEl.textContent=`${a.current}/${a.max}`; rpgSave(KEYS.abl,rpgAbl); renderRpgAbl(panel); };
+        useRow.appendChild(btn);
+      }
+      card.appendChild(useRow); panel.appendChild(card);
+    });
+  }
+
+  // PARTY
+  const PARTY_STATUSES=['active','downed','dead','absent'];
+  const PARTY_CLS={active:'rpg-q-active',downed:'rpg-q-failed',dead:'rpg-q-failed',absent:'rpg-q-done'};
+  function renderRpgParty(panel) {
+    panel.innerHTML='';
+    const nameIn=rpgMkInput('Member name…');
+    const addBtn=document.createElement('button'); addBtn.className='rpg-add-btn'; addBtn.textContent='+ Add';
+    const addRow=document.createElement('div'); addRow.className='rpg-add-row'; addRow.append(nameIn,addBtn); panel.appendChild(addRow);
+    const doAdd=()=>{ const n=nameIn.value.trim(); if(!n)return; rpgParty.push({id:Date.now(),name:n,status:'active'}); rpgSave(KEYS.party,rpgParty); nameIn.value=''; renderRpgParty(panel); };
+    addBtn.onclick=doAdd; nameIn.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doAdd();}};
+    if(!rpgParty.length){rpgMkEmpty(panel,'No party members yet.');return;}
+    rpgParty.forEach((m,idx)=>{
+      const row=document.createElement('div'); row.className='rpg-item-row';
+      const sb=document.createElement('button'); sb.className=`rpg-status-pill ${PARTY_CLS[m.status]||'rpg-q-active'}`;
+      sb.textContent=m.status.charAt(0).toUpperCase()+m.status.slice(1);
+      sb.onclick=()=>{ m.status=PARTY_STATUSES[(PARTY_STATUSES.indexOf(m.status)+1)%4]; rpgSave(KEYS.party,rpgParty); renderRpgParty(panel); };
+      const nameEl=document.createElement('span'); nameEl.className='rpg-item-name'; nameEl.style.flex='1'; nameEl.textContent=m.name;
+      const del=rpgMkDelBtn(); del.onclick=()=>{rpgParty.splice(idx,1);rpgSave(KEYS.party,rpgParty);renderRpgParty(panel);};
+      row.append(sb,nameEl,del); panel.appendChild(row);
+    });
+  }
+
+  // NPCs
+  const NPC_DISPS=['friendly','neutral','hostile'];
+  const NPC_CLS={friendly:'rpg-q-active',neutral:'rpg-npc-neutral',hostile:'rpg-q-failed'};
+  function renderRpgNpcs(panel) {
+    panel.innerHTML='';
+    const nameIn=rpgMkInput('NPC name…');
+    const addBtn=document.createElement('button'); addBtn.className='rpg-add-btn'; addBtn.textContent='+ Add';
+    const addRow=document.createElement('div'); addRow.className='rpg-add-row'; addRow.append(nameIn,addBtn); panel.appendChild(addRow);
+    const doAdd=()=>{ const n=nameIn.value.trim(); if(!n)return; rpgNpcs.push({id:Date.now(),name:n,note:'',disp:'neutral'}); rpgSave(KEYS.npc,rpgNpcs); nameIn.value=''; renderRpgNpcs(panel); };
+    addBtn.onclick=doAdd; nameIn.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doAdd();}};
+    if(!rpgNpcs.length){rpgMkEmpty(panel,'No NPCs yet.');return;}
+    rpgNpcs.forEach((n,idx)=>{
+      const card=document.createElement('div'); card.className='rpg-card';
+      const db=document.createElement('button'); db.className=`rpg-status-pill ${NPC_CLS[n.disp]||'rpg-npc-neutral'}`;
+      db.textContent=n.disp.charAt(0).toUpperCase()+n.disp.slice(1);
+      db.onclick=()=>{ n.disp=NPC_DISPS[(NPC_DISPS.indexOf(n.disp)+1)%3]; rpgSave(KEYS.npc,rpgNpcs); renderRpgNpcs(panel); };
+      const body=document.createElement('div'); body.style.cssText='flex:1;min-width:0;';
+      const nameEl=document.createElement('div'); nameEl.className='rpg-item-name'; nameEl.textContent=n.name; body.appendChild(nameEl);
+      const del=rpgMkDelBtn(); del.onclick=()=>{rpgNpcs.splice(idx,1);rpgSave(KEYS.npc,rpgNpcs);renderRpgNpcs(panel);};
+      card.append(db,body,del); panel.appendChild(card);
+    });
+  }
+
+  // RUMOURS
+  function renderRpgRumours(panel) {
+    panel.innerHTML='';
+    const addBtn=document.createElement('button'); addBtn.className='rpg-add-btn'; addBtn.style.cssText='display:block;width:100%;margin-bottom:10px;';
+    addBtn.textContent='+ Add Rumour';
+    addBtn.onclick=()=>{ rpgRumours.push({id:Date.now(),text:'',done:false}); rpgSave(KEYS.rumours,rpgRumours); renderRpgRumours(panel); setTimeout(()=>{ const tas=panel.querySelectorAll('.rpg-rumour-ta'); if(tas.length) tas[tas.length-1].focus(); },0); };
+    panel.appendChild(addBtn);
+    if(!rpgRumours.length){rpgMkEmpty(panel,'No rumours yet.');return;}
+    rpgRumours.forEach((r,idx)=>{
+      const row=document.createElement('div'); row.className='rpg-item-row'; row.style.alignItems='flex-start';
+      const chk=document.createElement('div'); chk.className='rpg-rumour-chk'+(r.done?' done':''); chk.style.marginTop='6px';
+      if(r.done) chk.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      chk.onclick=()=>{r.done=!r.done;rpgSave(KEYS.rumours,rpgRumours);renderRpgRumours(panel);};
+      const ta=document.createElement('textarea'); ta.className='rpg-add-input rpg-rumour-ta'; ta.value=r.text; ta.rows=2; ta.style.resize='none';
+      if(r.done){ta.style.opacity='0.45';ta.style.textDecoration='line-through';}
+      ta.oninput=()=>{r.text=ta.value;rpgSave(KEYS.rumours,rpgRumours);};
+      const del=rpgMkDelBtn(); del.style.marginTop='6px'; del.onclick=()=>{rpgRumours.splice(idx,1);rpgSave(KEYS.rumours,rpgRumours);renderRpgRumours(panel);};
+      row.append(chk,ta,del); panel.appendChild(row);
+    });
+  }
+
+  // DICE
+  const RPG_DICE_FACES=[4,6,8,10,12,20,100];
+  function renderRpgDice(panel) {
+    panel.innerHTML='';
+    const grid=document.createElement('div'); grid.className='rpg-dice-grid';
+    RPG_DICE_FACES.forEach(f=>{
+      const btn=document.createElement('button'); btn.className='rpg-dice-face'+(diceSelectedFaces.has(f)?' active':''); btn.textContent='d'+f;
+      btn.onclick=()=>{ btn.classList.toggle('active'); if(btn.classList.contains('active')) diceSelectedFaces.add(f); else { diceSelectedFaces.delete(f); if(!diceSelectedFaces.size){diceSelectedFaces.add(f);btn.classList.add('active');} } };
+      grid.appendChild(btn);
+    }); panel.appendChild(grid);
+    const cRow=document.createElement('div'); cRow.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 0;';
+    const dec=document.createElement('button'); dec.className='rpg-val-btn'; dec.textContent='−';
+    const cEl=document.createElement('span'); cEl.style.cssText='font-size:16px;font-weight:700;color:#e2e8f0;min-width:26px;text-align:center;';
+    cEl.textContent=rpgDiceCount;
+    const inc=document.createElement('button'); inc.className='rpg-val-btn'; inc.textContent='+';
+    const clbl=document.createElement('span'); clbl.style.cssText='font-size:12px;color:#475569;'; clbl.textContent='dice each';
+    dec.onclick=()=>{rpgDiceCount=Math.max(1,rpgDiceCount-1);cEl.textContent=rpgDiceCount;};
+    inc.onclick=()=>{rpgDiceCount=Math.min(20,rpgDiceCount+1);cEl.textContent=rpgDiceCount;};
+    cRow.append(dec,cEl,inc,clbl); panel.appendChild(cRow);
+    const rollBtn=document.createElement('button'); rollBtn.className='rpg-roll-btn'; rollBtn.textContent='🎲 Roll'; panel.appendChild(rollBtn);
+    const totalEl=document.createElement('div'); totalEl.className='rpg-dice-total';
+    totalEl.textContent=rpgDiceLastResult?rpgDiceLastResult.total:'—';
+    if(rpgDiceLastResult&&rpgDiceLastResult.natClass) totalEl.classList.add('rpg-'+rpgDiceLastResult.natClass);
+    panel.appendChild(totalEl);
+    const natEl=document.createElement('div'); natEl.style.cssText='text-align:center;font-size:14px;font-weight:700;min-height:20px;margin-bottom:4px;';
+    if(rpgDiceLastResult&&rpgDiceLastResult.natMsg){natEl.textContent=rpgDiceLastResult.natMsg;natEl.style.color=rpgDiceLastResult.natClass==='nat20'?'#fbbf24':'#f87171';}
+    panel.appendChild(natEl);
+    const brkEl=document.createElement('div'); brkEl.style.cssText='text-align:center;font-size:11px;color:#475569;min-height:14px;margin-bottom:8px;font-family:monospace;';
+    if(rpgDiceLastResult&&rpgDiceLastResult.breakdown) brkEl.textContent=rpgDiceLastResult.breakdown;
+    panel.appendChild(brkEl);
+    const histEl=document.createElement('div'); histEl.className='rpg-dice-hist';
+    rpgDiceHistory.forEach(h=>{ const c=document.createElement('span'); c.className='rpg-dice-chip'+(h.natClass?' rpg-'+h.natClass:''); c.textContent=h.label+': '+h.total; histEl.appendChild(c); });
+    panel.appendChild(histEl);
+    rollBtn.onclick=()=>{
+      const fa=[...diceSelectedFaces].sort((a,b)=>a-b);
+      const allR=[]; const perD={};
+      fa.forEach(f=>{perD[f]=[];for(let i=0;i<rpgDiceCount;i++){const r=Math.floor(Math.random()*f)+1;perD[f].push(r);allR.push(r);}});
+      const raw=allR.reduce((a,b)=>a+b,0), total=raw;
+      let breakdown=allR.length>1?(fa.length===1?'['+perD[fa[0]].join(', ')+']':fa.map(f=>'d'+f+':['+perD[f].join(',')+']').join(' ')):""; 
+      let natMsg='',natClass='';
+      if(fa.length===1&&fa[0]===20&&rpgDiceCount===1){if(allR[0]===20){natMsg='Natural 20!';natClass='nat20';}else if(allR[0]===1){natMsg='Critical Fail!';natClass='nat1';}}
+      const label=fa.map(f=>rpgDiceCount+'d'+f).join('+');
+      rpgDiceLastResult={total,breakdown,natMsg,natClass};
+      rpgDiceHistory.unshift({label,total,natClass}); if(rpgDiceHistory.length>8)rpgDiceHistory.pop();
+      // Insert roll result into the demo textarea
+      const modSuffix='';
+      const logLine = natMsg
+        ? `[Roll ${label}${modSuffix}: ${total} — ${natMsg}${breakdown?' '+breakdown:''}]`
+        : breakdown
+          ? `[Roll ${label}${modSuffix}: ${total} ${breakdown}]`
+          : `[Roll ${label}${modSuffix}: ${total}]`;
+      previewInsert(logLine);
+      renderRpgDice(panel);
+    };
+  }
+
+  // SYNC
+  function doRpgExport() {
+    const json=JSON.stringify({version:1,chatId:RPG_CHAT_ID,quests:rpgQuests,resources:rpgRes,abilities:rpgAbl,party:rpgParty,npcs:rpgNpcs,rumours:rpgRumours,diceMods:rpgDiceMods},null,2);
+    if(navigator.share){navigator.share({title:'RPG Export',text:json}).catch(()=>navigator.clipboard.writeText(json));}
+    else{navigator.clipboard.writeText(json).then(()=>alert('Copied to clipboard!'));}
+  }
+  function renderRpgSync(panel) {
+    panel.innerHTML='';
+    const info=document.createElement('div'); info.style.cssText='font-size:13px;color:#475569;line-height:1.7;margin-bottom:16px;';
+    info.innerHTML='<b style="color:#a78bfa">Chat:</b> '+RPG_CHAT_ID+'<br><br>Data is saved to <code style="color:#a78bfa">localStorage</code> in this preview.<br><br>Export copies JSON to clipboard. Import parses pasted JSON.';
+    panel.appendChild(info);
+    const expBtn=document.createElement('button'); expBtn.className='rpg-sync-btn'; expBtn.textContent='↑ Export to Clipboard';
+    expBtn.onclick=doRpgExport; panel.appendChild(expBtn);
+    const hr=document.createElement('hr'); hr.style.cssText='border:none;border-top:1px solid rgba(108,99,255,0.15);margin:16px 0 14px;'; panel.appendChild(hr);
+    const lbl=document.createElement('div'); lbl.style.cssText='font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;'; lbl.textContent='Import — paste JSON'; panel.appendChild(lbl);
+    const ta=document.createElement('textarea'); ta.className='rpg-sync-area'; ta.placeholder='Paste exported JSON here…'; panel.appendChild(ta);
+    const impBtn=document.createElement('button'); impBtn.className='rpg-sync-btn rpg-sync-import'; impBtn.style.marginTop='10px'; impBtn.textContent='↓ Import & Replace';
+    impBtn.onclick=()=>{
+      let d; try{d=JSON.parse(ta.value.trim());}catch{alert('Invalid JSON');return;}
+      if(!d||d.version!==1){alert('Unknown format');return;}
+      if(!confirm('Replace all RPG data in this preview?'))return;
+      if(Array.isArray(d.quests))   {rpgQuests  =d.quests;   rpgSave(KEYS.quests,rpgQuests);}
+      if(Array.isArray(d.resources)){rpgRes      =d.resources;rpgSave(KEYS.res,rpgRes);}
+      if(Array.isArray(d.abilities)){rpgAbl      =d.abilities;rpgSave(KEYS.abl,rpgAbl);}
+      if(Array.isArray(d.party))    {rpgParty    =d.party;    rpgSave(KEYS.party,rpgParty);}
+      if(Array.isArray(d.npcs))     {rpgNpcs     =d.npcs;     rpgSave(KEYS.npc,rpgNpcs);}
+      if(Array.isArray(d.rumours))  {rpgRumours  =d.rumours;  rpgSave(KEYS.rumours,rpgRumours);}
+      ta.value=''; alert('Imported!'); setRpgTab('quests');
+    };
+    panel.appendChild(impBtn);
+  }
+
+  // boot
+  setRpgTab('quests');
+
+  // ─── Toolbar demo state ──────────────────────────────────────────────────
+  const statusEl      = document.getElementById('ai-tb-status');
   const progressTrack = document.getElementById('ai-tb-progress-track');
-  const fmtPin = document.getElementById('ai-tb-fmt-pin');
-  const allBtns = document.querySelectorAll('.ai-tb-btn');
+  const fmtPin        = document.getElementById('ai-tb-fmt-pin');
+  const allBtns       = document.querySelectorAll('.ai-tb-btn');
+
   let demoTimer = null;
 
   function setStatus(text, type = '') {
