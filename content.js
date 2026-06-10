@@ -311,7 +311,7 @@
     if (fmtActionPunctuation) {
       result = result.replace(/\*([^*\n]+)\*/g, (_, inner) => {
         const t = inner.trimEnd();
-        return /[.!?\u2026\u2014\-_]$/.test(t) ? `*${inner}*` : `*${t}.*`;
+        return /[.!?,:\u2026\u2014\-_]$/.test(t) ? `*${inner}*` : `*${t}.*`;
       });
     }
     // Capitalise the first letter of each *action* that follows a sentence end:
