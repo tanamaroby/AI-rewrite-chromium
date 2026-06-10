@@ -329,6 +329,12 @@
       display: flex; align-items: center;
     }
     .ql-delete-btn:hover { color: #f87171; background: rgba(239,68,68,0.08); }
+    .ql-insert-btn {
+      background: none; border: none; padding: 3px 5px; cursor: pointer;
+      color: #6c63ff; border-radius: 4px; font-size: 11px; font-family: inherit;
+      transition: color 0.12s, background 0.12s;
+    }
+    .ql-insert-btn:hover { color: #a78bfa; background: rgba(108,99,255,0.12); }
     .ql-empty-state { text-align: center; color: #334155; font-size: 12px; padding: 16px 0; }
 
     /* ── Dice roller (inside quests tab) ── */
@@ -1742,9 +1748,26 @@
           renderQuests();
         });
 
+        const insertQuestBtn = document.createElement("button");
+        insertQuestBtn.className = "ql-insert-btn";
+        insertQuestBtn.title = "Insert this quest into chat";
+        insertQuestBtn.textContent = "⎘";
+        insertQuestBtn.addEventListener("click", () => {
+          const st =
+            q.state === "done" ? "✓" : q.state === "failed" ? "✗" : "○";
+          const upd = q.updates && q.updates.length ? ` > ${q.updates[0]}` : "";
+          const text = `[Quest: ${st} ${q.title || "(untitled)"}${q.notes ? " \u2014 " + q.notes : ""}${upd}]`;
+          document.dispatchEvent(
+            new CustomEvent("sc-rp-inject", {
+              detail: { text: "\n" + text, silent: true },
+            }),
+          );
+          flashCopyBtnLabel(insertQuestBtn, "⎘");
+        });
+
         const bottom = document.createElement("div");
         bottom.className = "ql-item-bottom";
-        bottom.append(stateRow, toggleBtn, delBtn);
+        bottom.append(stateRow, toggleBtn, insertQuestBtn, delBtn);
         card.append(top, bottom);
 
         // Update row (always interactive)
