@@ -338,6 +338,23 @@
         <div id="sc-notes-list" style="display: flex; flex-direction: column; gap: 8px;">
           <p style="color: var(--text-muted); font-size: 12.5px; padding: 12px 0;" id="sc-notes-empty">No RPG data saved yet.</p>
         </div>
+
+        <!-- Import from mobile -->
+        <div class="card" style="padding: 16px; margin-top: 16px;">
+          <h3 style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin: 0 0 6px;">Import from mobile</h3>
+          <p style="font-size: 12px; color: var(--text-muted); margin: 0 0 12px; line-height: 1.5;">
+            On iPhone, open the RPG tracker → <strong>⇄ Sync</strong> → <strong>Share Export</strong>, then AirDrop or copy the JSON and paste it here.
+          </p>
+          <textarea
+            id="sc-rpg-import-area"
+            style="width:100%; min-height:80px; box-sizing:border-box; background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:8px; color:var(--text-primary); font-size:11.5px; padding:9px 11px; font-family:ui-monospace,monospace; resize:vertical;"
+            placeholder='Paste exported JSON here… {"version":1,"chatId":"…",…}'
+          ></textarea>
+          <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+            <button class="btn-primary" id="sc-rpg-import-btn" style="font-size:12px; padding:6px 16px;">Import &amp; Replace</button>
+            <span class="save-feedback" id="sc-rpg-import-fb"></span>
+          </div>
+        </div>
       </section>
 
       <!-- Formatter Section -->

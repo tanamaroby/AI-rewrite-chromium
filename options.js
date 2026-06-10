@@ -352,10 +352,59 @@ function renderNotesList(chats) {
         <div style="font-size:12px; font-weight:600; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escHtml(chat.chatId)}</div>
         <div style="font-size:11px; color:var(--text-muted); margin-top:3px;">${escHtml(summary)}</div>
       </div>
-      <button class="btn-ghost sc-rpg-delete-btn" style="font-size:11px; padding:3px 10px; color:#ef4444; border-color:rgba(239,68,68,0.4); flex-shrink:0;" data-chat-id="${escHtml(chat.chatId)}">Delete all</button>
+      <div style="display:flex; gap:6px; flex-shrink:0;">
+        <button class="btn-ghost sc-rpg-export-btn" style="font-size:11px; padding:3px 10px;" data-chat-id="${escHtml(chat.chatId)}">Export</button>
+        <button class="btn-ghost sc-rpg-delete-btn" style="font-size:11px; padding:3px 10px; color:#ef4444; border-color:rgba(239,68,68,0.4);" data-chat-id="${escHtml(chat.chatId)}">Delete all</button>
+      </div>
     `;
     scNotesListEl.appendChild(card);
   }
+
+  scNotesListEl.querySelectorAll(".sc-rpg-export-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const chatId = btn.dataset.chatId;
+      const keys = [
+        `sc_quests_v1_${chatId}`,
+        `sc_res_v1_${chatId}`,
+        `sc_abl_v1_${chatId}`,
+        `sc_party_v1_${chatId}`,
+        `sc_npc_v1_${chatId}`,
+        `sc_rumour_v1_${chatId}`,
+        `sc_dice_mod_v1_${chatId}`,
+      ];
+      chrome.storage.local.get(keys, (items) => {
+        const payload = JSON.stringify(
+          {
+            version: 1,
+            chatId,
+            quests: items[`sc_quests_v1_${chatId}`] || [],
+            resources: items[`sc_res_v1_${chatId}`] || [],
+            abilities: items[`sc_abl_v1_${chatId}`] || [],
+            party: items[`sc_party_v1_${chatId}`] || [],
+            npcs: items[`sc_npc_v1_${chatId}`] || [],
+            rumours: items[`sc_rumour_v1_${chatId}`] || [],
+            diceMods: items[`sc_dice_mod_v1_${chatId}`] || [],
+          },
+          null,
+          2,
+        );
+        navigator.clipboard
+          .writeText(payload)
+          .then(() => {
+            btn.textContent = "✓ Copied!";
+            setTimeout(() => {
+              btn.textContent = "Export";
+            }, 2200);
+          })
+          .catch(() => {
+            btn.textContent = "Failed";
+            setTimeout(() => {
+              btn.textContent = "Export";
+            }, 2200);
+          });
+      });
+    });
+  });
 
   scNotesListEl.querySelectorAll(".sc-rpg-delete-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -392,6 +441,55 @@ function loadSavedNotes() {
 
 scNotesRefreshBtn.addEventListener("click", loadSavedNotes);
 loadSavedNotes();
+
+// ── RPG Import (from mobile) ──
+const scRpgImportArea = document.getElementById("sc-rpg-import-area");
+const scRpgImportBtn = document.getElementById("sc-rpg-import-btn");
+const scRpgImportFb = document.getElementById("sc-rpg-import-fb");
+
+scRpgImportBtn.addEventListener("click", () => {
+  const raw = scRpgImportArea.value.trim();
+  if (!raw) return;
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    showFeedback(scRpgImportFb, "✗ Invalid JSON", false);
+    return;
+  }
+  if (!data || data.version !== 1) {
+    showFeedback(scRpgImportFb, "✗ Unknown format or version", false);
+    return;
+  }
+  if (
+    !confirm(
+      `Import RPG data for chat "${data.chatId}" and replace any existing data?`,
+    )
+  )
+    return;
+  const chatId = data.chatId;
+  const toSet = {};
+  if (Array.isArray(data.quests)) toSet[`sc_quests_v1_${chatId}`] = data.quests;
+  if (Array.isArray(data.resources))
+    toSet[`sc_res_v1_${chatId}`] = data.resources;
+  if (Array.isArray(data.abilities))
+    toSet[`sc_abl_v1_${chatId}`] = data.abilities;
+  if (Array.isArray(data.party)) toSet[`sc_party_v1_${chatId}`] = data.party;
+  if (Array.isArray(data.npcs)) toSet[`sc_npc_v1_${chatId}`] = data.npcs;
+  if (Array.isArray(data.rumours))
+    toSet[`sc_rumour_v1_${chatId}`] = data.rumours;
+  if (Array.isArray(data.diceMods))
+    toSet[`sc_dice_mod_v1_${chatId}`] = data.diceMods;
+  chrome.storage.local.set(toSet, () => {
+    scRpgImportArea.value = "";
+    showFeedback(
+      scRpgImportFb,
+      "✓ Imported! Reload SpicyChat to see changes.",
+      true,
+    );
+    loadSavedNotes();
+  });
+});
 
 // ─── Formatter ─────────────────────────────────────────────────────────────────────
 
