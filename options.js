@@ -735,6 +735,52 @@ saveRpPersonasBtn.addEventListener("click", () => {
   );
 });
 
+// Export config for mobile
+document
+  .getElementById("export-mobile-config-btn")
+  .addEventListener("click", () => {
+    const fb = document.getElementById("export-mobile-config-fb");
+    chrome.storage.sync.get(
+      ["commands", "rpPersonas", "rpActivePersonaIndex", "rpGlobalStyle"],
+      (data) => {
+        const rawCmds =
+          Array.isArray(data.commands) && data.commands.length
+            ? data.commands
+            : DEFAULT_COMMANDS;
+        const mobileCommands = rawCmds.map((cmd) => ({
+          label: cmd.label || "",
+          emoji: cmd.emoji || "✏️",
+          prompt: cmd.prompt || "",
+        }));
+
+        const personas = Array.isArray(data.rpPersonas) ? data.rpPersonas : [];
+        const activeIdx =
+          typeof data.rpActivePersonaIndex === "number"
+            ? data.rpActivePersonaIndex
+            : -1;
+        const activePersona =
+          activeIdx >= 0 && personas[activeIdx] ? personas[activeIdx] : null;
+
+        const config = {
+          version: 1,
+          type: "config",
+          commands: mobileCommands,
+          persona: {
+            enabled: activePersona !== null,
+            name: activePersona ? activePersona.name || "" : "",
+            prepend: activePersona ? activePersona.prepend || "" : "",
+          },
+          globalStyle: data.rpGlobalStyle || "",
+        };
+
+        navigator.clipboard
+          .writeText(JSON.stringify(config, null, 2))
+          .then(() => showFeedback(fb, "✓ Copied to clipboard!", true))
+          .catch(() => showFeedback(fb, "✗ Copy failed", false));
+      },
+    );
+  });
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function showFeedback(el, message, success) {
