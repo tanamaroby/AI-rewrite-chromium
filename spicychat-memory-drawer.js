@@ -78,6 +78,66 @@
     #sc-np-tab:hover { background: #271f4a; }
     html.sc-np-open #sc-np-tab { right: var(--sc-np-w, ${DEFAULT_W}px); }
 
+    /* ── Inline formatter prepend toggle ── */
+    #sc-np-prepend-fmt-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 7px 10px;
+      border-radius: 7px;
+      border: 1px solid rgba(108,99,255,0.22);
+      background: rgba(108,99,255,0.06);
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s, border-color 0.15s;
+      margin-top: 6px;
+      margin-bottom: 2px;
+    }
+    #sc-np-prepend-fmt-toggle:hover {
+      background: rgba(108,99,255,0.12);
+      border-color: rgba(108,99,255,0.38);
+    }
+    #sc-np-prepend-fmt-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+    .sc-np-prepend-track {
+      width: 26px;
+      height: 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(108,99,255,0.35);
+      background: rgba(0,0,0,0.35);
+      position: relative;
+      flex-shrink: 0;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .sc-np-prepend-track::after {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #64748b;
+      position: absolute;
+      top: 1px;
+      left: 1px;
+      transition: transform 0.2s, background 0.2s;
+    }
+    #sc-np-prepend-fmt-toggle input:checked + .sc-np-prepend-track {
+      background: rgba(108,99,255,0.35);
+      border-color: rgba(108,99,255,0.6);
+    }
+    #sc-np-prepend-fmt-toggle input:checked + .sc-np-prepend-track::after {
+      transform: translateX(12px);
+      background: #a78bfa;
+    }
+    .sc-np-prepend-label {
+      font-size: 10.5px;
+      line-height: 1.2;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      color: #c4b5fd;
+      white-space: normal;
+    }
+
     /* ── Resize handle (fixed, above everything) ── */
     #sc-np-resize {
       position: fixed;
@@ -699,11 +759,12 @@
 
     /* ── Party Tracker ── */
     .party-item {
-      display: flex; align-items: center; gap: 7px;
+      display: flex; align-items: flex-start; gap: 7px; flex-direction: column;
       background: rgba(255,255,255,0.025); border: 1px solid rgba(108,99,255,0.13);
       border-radius: 6px; padding: 6px 10px; transition: border-color 0.12s;
     }
     .party-item:focus-within { border-color: rgba(108,99,255,0.35); }
+    .party-top { display: flex; align-items: center; gap: 7px; width: 100%; }
     .party-status-btn {
       flex-shrink: 0; padding: 2px 8px; border-radius: 100px; border: 1px solid transparent;
       font-size: 9.5px; font-weight: 700; cursor: pointer; font-family: inherit; min-width: 54px;
@@ -719,6 +780,13 @@
       caret-color: #a78bfa; min-width: 0;
     }
     .party-name-input::placeholder { color: #334155; }
+    .party-note-input {
+      width: 100%; box-sizing: border-box; background: transparent;
+      border: none; border-top: 1px solid rgba(108,99,255,0.07); outline: none;
+      color: #64748b; font-size: 11px; font-family: inherit; font-style: italic;
+      padding: 3px 0 1px; caret-color: #a78bfa;
+    }
+    .party-note-input::placeholder { color: #2a3447; }
     .party-delete-btn {
       background: none; border: none; padding: 2px 3px; cursor: pointer; flex-shrink: 0;
       color: #293548; border-radius: 3px; transition: color 0.12s; display: flex; align-items: center;
@@ -964,6 +1032,11 @@
             <button id="sc-np-export-all" class="ql-copy-btn">⎘ Insert All</button>
             <span id="sc-np-quest-sheet-status" class="ql-sheet-status" aria-live="polite"></span>
           </div>
+          <label id="sc-np-prepend-fmt-toggle" title="Inject Tracker Summary on Format">
+            <input type="checkbox" id="sc-np-prepend-fmt-toggle-input" data-ai-rewriter-ignore="1" />
+            <span class="sc-np-prepend-track"></span>
+            <span class="sc-np-prepend-label">Inject Tracker Summary on Format</span>
+          </label>
           <input id="sc-np-quest-sheet-file" type="file" accept="application/json,.json" style="display:none" data-ai-rewriter-ignore="1" />
           <!-- Quest Log -->
           <div class="ql-section-header">
@@ -1242,6 +1315,25 @@
     document.documentElement.appendChild(drawer);
     document.documentElement.appendChild(tab);
     document.documentElement.appendChild(resizeHandle);
+
+    const FMT_PREPEND_KEY = "fmtPrependTrackerSummaryOnFormat";
+    const prependFmtToggleInput = document.getElementById(
+      "sc-np-prepend-fmt-toggle-input",
+    );
+
+    function loadPrependFmtToggle() {
+      chrome.storage.sync.get(FMT_PREPEND_KEY, (d) => {
+        prependFmtToggleInput.checked = d[FMT_PREPEND_KEY] === true;
+      });
+    }
+
+    prependFmtToggleInput.addEventListener("change", () => {
+      chrome.storage.sync.set({
+        [FMT_PREPEND_KEY]: prependFmtToggleInput.checked,
+      });
+    });
+
+    loadPrependFmtToggle();
 
     /* ── Element refs ── */
     const questsPanel = document.getElementById("sc-np-quests-panel");
@@ -1710,12 +1802,14 @@
     function normalizeImportedPartyMember(raw, idx) {
       if (!raw || typeof raw !== "object") return null;
       const name = typeof raw.name === "string" ? raw.name : "";
+      const notes = typeof raw.notes === "string" ? raw.notes : "";
       const status = PARTY_STATUSES.includes(raw.status)
         ? raw.status
         : "active";
       return {
         id: normalizeId(raw.id, idx),
         name,
+        notes,
         status,
       };
     }
@@ -1894,6 +1988,7 @@
           {
             id: m.id,
             name: m.name,
+            notes: m.notes,
             status: m.status,
           },
           idx,
@@ -3100,7 +3195,12 @@
     const partyListEl = document.getElementById("sc-np-party-list");
 
     function newPartyMember() {
-      return { id: Date.now() + Math.random(), name: "", status: "active" };
+      return {
+        id: Date.now() + Math.random(),
+        name: "",
+        notes: "",
+        status: "active",
+      };
     }
     function saveParty() {
       chrome.storage.local.set({ [PARTY_KEY]: party });
@@ -3123,6 +3223,8 @@
       party.forEach((m, idx) => {
         const row = document.createElement("div");
         row.className = "party-item";
+        const top = document.createElement("div");
+        top.className = "party-top";
         const statusBtn = document.createElement("button");
         statusBtn.className = "party-status-btn party-status-" + m.status;
         statusBtn.textContent =
@@ -3135,7 +3237,8 @@
           statusBtn.textContent =
             m.status.charAt(0).toUpperCase() + m.status.slice(1);
           saveParty();
-          addLog(`[Party: ${m.name || "(unnamed)"} → ${m.status}]`);
+          const notesPart = m.notes ? ` — ${m.notes}` : "";
+          addLog(`[Party: ${m.name || "(unnamed)"} → ${m.status}${notesPart}]`);
         });
         const nameSpan = document.createElement("span");
         nameSpan.className = "item-disp-name";
@@ -3152,6 +3255,22 @@
           m.name = nameEditIn.value;
           schedulePartySave();
         });
+        const notesSpan = document.createElement("div");
+        notesSpan.className = "item-disp-note";
+        notesSpan.textContent = m.notes || "";
+        notesSpan.style.display = m.notes ? "" : "none";
+        const notesEditIn = document.createElement("input");
+        notesEditIn.type = "text";
+        notesEditIn.className = "party-note-input";
+        notesEditIn.value = m.notes || "";
+        notesEditIn.placeholder = "Notes (optional)…";
+        notesEditIn.maxLength = 80;
+        notesEditIn.style.display = "none";
+        notesEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+        notesEditIn.addEventListener("input", () => {
+          m.notes = notesEditIn.value;
+          schedulePartySave();
+        });
         const toggleBtn = document.createElement("button");
         toggleBtn.className = "item-toggle-btn edit";
         toggleBtn.textContent = "✎";
@@ -3161,13 +3280,19 @@
           if (isEditing) {
             nameSpan.style.display = "none";
             nameEditIn.style.display = "";
+            notesSpan.style.display = "none";
+            notesEditIn.style.display = "";
             toggleBtn.className = "item-toggle-btn save";
             toggleBtn.textContent = "✓ Save";
             nameEditIn.value = m.name;
+            notesEditIn.value = m.notes || "";
             nameEditIn.focus();
           } else {
             nameEditIn.style.display = "none";
             nameSpan.style.display = "";
+            notesEditIn.style.display = "none";
+            notesSpan.textContent = m.notes || "";
+            notesSpan.style.display = m.notes ? "" : "none";
             toggleBtn.className = "item-toggle-btn edit";
             toggleBtn.textContent = "✎";
             nameSpan.textContent = m.name || "(unnamed)";
@@ -3178,12 +3303,14 @@
         delBtn.title = "Remove";
         delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
         delBtn.addEventListener("click", () => {
-          addLog(`[Party: ${m.name || "(unnamed)"} removed]`);
+          const notesPart = m.notes ? ` — ${m.notes}` : "";
+          addLog(`[Party: ${m.name || "(unnamed)"} removed${notesPart}]`);
           party.splice(idx, 1);
           saveParty();
           renderParty();
         });
-        row.append(statusBtn, nameSpan, nameEditIn, toggleBtn, delBtn);
+        top.append(statusBtn, nameSpan, nameEditIn, toggleBtn, delBtn);
+        row.append(top, notesSpan, notesEditIn);
         partyListEl.appendChild(row);
       });
     }
@@ -3208,26 +3335,38 @@
         opt.textContent = s.charAt(0).toUpperCase() + s.slice(1);
         statusSel.appendChild(opt);
       });
+      const notesIn = document.createElement("input");
+      notesIn.type = "text";
+      notesIn.className = "af-input";
+      notesIn.placeholder = "Notes (optional)…";
+      notesIn.maxLength = 80;
+      notesIn.setAttribute("data-ai-rewriter-ignore", "1");
       const submitBtn = document.createElement("button");
       submitBtn.className = "af-submit";
       submitBtn.textContent = "+ Add";
       const row = document.createElement("div");
       row.className = "af-row";
       row.append(nameIn, statusSel, submitBtn);
-      form.appendChild(row);
+      form.append(row, notesIn);
       partyListEl.parentNode.insertBefore(form, partyListEl);
       const doAdd = () => {
         const name = nameIn.value.trim();
         const status = statusSel.value || "active";
+        const notes = notesIn.value.trim();
         const member = newPartyMember();
         member.name = name;
         member.status = status;
+        member.notes = notes;
         party.push(member);
         saveParty();
         renderParty();
-        addLog(`[Party: ${name || "(unnamed)"} joined — ${status}]`);
+        const notesPart = notes ? ` — ${notes}` : "";
+        addLog(
+          `[Party: ${name || "(unnamed)"} joined — ${status}${notesPart}]`,
+        );
         nameIn.value = "";
         statusSel.value = "active";
+        notesIn.value = "";
         nameIn.focus();
       };
       submitBtn.addEventListener("click", doAdd);
@@ -3997,6 +4136,7 @@
       "fmtEmDash",
       "fmtNoSpaceBeforePunct",
       "fmtSpaceAfterPunct",
+      "fmtPrependTrackerSummaryOnFormat",
     ];
 
     const FMT_GROUPS = [
@@ -4138,6 +4278,7 @@
       const keyword = d.formatterKeyword || "//format";
       const shortcut = "Ctrl+" + (d.fmtShortcut || "m").toUpperCase();
       const autoFmt = d.autoFormatAfterRewrite !== false;
+      const prependSummary = d.fmtPrependTrackerSummaryOnFormat === true;
 
       // ── Header card ──
       const hCard = document.createElement("div");
@@ -4153,6 +4294,8 @@
           <span style="margin-left:4px;">shortcut</span><span class="fmt-meta-chip">${escH(shortcut)}</span>
           <span style="margin-left:4px;">auto after rewrite</span>
           <span class="fmt-master-badge ${autoFmt ? "on" : "off"}" style="font-size:9.5px;">${autoFmt ? "ON" : "OFF"}</span>
+          <span style="margin-left:4px;">inject tracker summary on format</span>
+          <span class="fmt-master-badge ${prependSummary ? "on" : "off"}" style="font-size:9.5px;">${prependSummary ? "ON" : "OFF"}</span>
         </div>
         <div style="font-size:10px;color:#334155;font-style:italic;margin-top:2px;">
           Text outside quotes &amp; [brackets] is wrapped in
@@ -4272,7 +4415,11 @@
     }
 
     // Live-reload when settings change while Formatter tab is active
-    chrome.storage.onChanged.addListener((changes) => {
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === "sync" && FMT_PREPEND_KEY in changes) {
+        prependFmtToggleInput.checked =
+          changes[FMT_PREPEND_KEY].newValue === true;
+      }
       if (activeTab === "fmt" && FMT_KEYS_TO_WATCH.some((k) => k in changes)) {
         loadFormatterPanel();
       }
@@ -4387,9 +4534,10 @@
 
     function exportParty() {
       if (!party.length) return "[Party: none]";
-      const parts = party.map(
-        (m) => `${m.name || "(unnamed)"} \u2014 ${m.status}`,
-      );
+      const parts = party.map((m) => {
+        const note = m.notes ? ` (${m.notes})` : "";
+        return `${m.name || "(unnamed)"} \u2014 ${m.status}${note}`;
+      });
       return `[Party: ${parts.join(" | ")}]`;
     }
 

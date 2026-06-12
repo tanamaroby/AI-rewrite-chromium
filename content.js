@@ -38,6 +38,7 @@
   let lastRewrite = null; // { el, before, after, label, ts }
   let lastFocusedEl = null; // last focused SpicyChat input
   let fmtShortcut = "m"; // keyboard shortcut key for format (Ctrl+key)
+  let fmtPrependTrackerSummaryOnFormat = false;
   const isSpicyChat = location.hostname.includes("spicychat.ai");
 
   // Load settings from storage
@@ -68,6 +69,7 @@
         "fmtEmDash",
         "fmtNoSpaceBeforePunct",
         "fmtSpaceAfterPunct",
+        "fmtPrependTrackerSummaryOnFormat",
         "rpPersonas",
         "rpActivePersonaIndex",
         "rpPersonaEnabled",
@@ -101,6 +103,8 @@
         fmtEmDash = data.fmtEmDash !== false;
         fmtNoSpaceBeforePunct = data.fmtNoSpaceBeforePunct !== false;
         fmtSpaceAfterPunct = data.fmtSpaceAfterPunct !== false;
+        fmtPrependTrackerSummaryOnFormat =
+          data.fmtPrependTrackerSummaryOnFormat === true;
         if (Array.isArray(data.rpPersonas) && data.rpPersonas.length > 0) {
           rpPersonas = data.rpPersonas.slice(0, 5);
           while (rpPersonas.length < 5)
@@ -230,6 +234,72 @@
       // Move cursor to end
       el.selectionStart = el.selectionEnd = newText.length;
     }
+  }
+
+  function getSpicyChatChatId() {
+    if (!isSpicyChat) return "";
+    return location.pathname.replace(/^\/chat\//, "").replace(/\/$/, "");
+  }
+
+  function formatPartyStatusLabel(status) {
+    const s = String(status || "active").toLowerCase();
+    if (s === "downed") return "Downed";
+    if (s === "dead") return "Dead";
+    if (s === "absent") return "Absent";
+    return "Active";
+  }
+
+  function hasTrackerHeaderAtTop(text) {
+    if (!text) return false;
+    // Ignore leading whitespace/newlines and check if top header is exactly [TRACKER]
+    return /^\s*\[TRACKER\](?:\r?\n|$)/.test(String(text));
+  }
+
+  function buildTrackerSummaryForFormat(done) {
+    if (!isSpicyChat || !fmtPrependTrackerSummaryOnFormat) {
+      done("");
+      return;
+    }
+    const chatId = getSpicyChatChatId();
+    if (!chatId) {
+      done("");
+      return;
+    }
+
+    const partyKey = "sc_party_v1_" + chatId;
+    const resourcesKey = "sc_res_v1_" + chatId;
+    chrome.storage.local.get([partyKey, resourcesKey], (data) => {
+      const party = Array.isArray(data[partyKey]) ? data[partyKey] : [];
+      const resources = Array.isArray(data[resourcesKey])
+        ? data[resourcesKey]
+        : [];
+      const lines = [];
+
+      if (party.length) {
+        const partyParts = party.map((m) => {
+          const name = String(m?.name || "").trim() || "(unnamed)";
+          const notes = String(m?.notes || "").trim();
+          return notes
+            ? `${name} (${formatPartyStatusLabel(m?.status)}; ${notes})`
+            : `${name} (${formatPartyStatusLabel(m?.status)})`;
+        });
+        lines.push(`Party: ${partyParts.join(" | ")}`);
+      }
+
+      if (resources.length) {
+        const resourceParts = resources.map((r) => {
+          const name = String(r?.name || "").trim() || "(unnamed)";
+          const value = Number.isFinite(Number(r?.value))
+            ? Number(r.value)
+            : String(r?.value || "0").trim() || "0";
+          const notes = String(r?.notes || "").trim();
+          return notes ? `${name}: ${value} (${notes})` : `${name}: ${value}`;
+        });
+        lines.push(`Resources: ${resourceParts.join(" | ")}`);
+      }
+
+      done(lines.length ? `[TRACKER]\n${lines.join("\n")}` : "");
+    });
   }
 
   // ─── Text formatter (no AI) ─────────────────────────────────────────────────
@@ -413,9 +483,22 @@
     createFormatOverlay(el);
     const formatted = formatText(original);
     setTimeout(() => {
-      replaceText(el, formatted);
-      removeFormatOverlay(el);
-      showToast("✓ Formatted");
+      buildTrackerSummaryForFormat((summary) => {
+        const hasExistingTracker = hasTrackerHeaderAtTop(formatted);
+        const shouldPrependSummary = !!summary && !hasExistingTracker;
+        const finalText = shouldPrependSummary
+          ? `${summary}\n\n${formatted}`
+          : formatted;
+        replaceText(el, finalText);
+        removeFormatOverlay(el);
+        if (shouldPrependSummary) {
+          showToast("✓ Formatted + tracker summary");
+        } else if (summary && hasExistingTracker) {
+          showToast("✓ Formatted (tracker already present)");
+        } else {
+          showToast("✓ Formatted");
+        }
+      });
     }, 250);
   }
 

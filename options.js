@@ -498,6 +498,9 @@ const formatterKeywordInput = document.getElementById("formatterKeywordInput");
 const autoFormatAfterRewriteToggle = document.getElementById(
   "autoFormatAfterRewriteToggle",
 );
+const fmtPrependTrackerSummaryToggle = document.getElementById(
+  "fmtPrependTrackerSummaryToggle",
+);
 const fmtExtraDelimitersInput = document.getElementById(
   "fmtExtraDelimitersInput",
 );
@@ -526,11 +529,14 @@ const FMT_TOGGLES = [
 ];
 
 function syncAutoFormatRowState() {
-  const row = autoFormatAfterRewriteToggle.closest(".toggle-row");
+  const rows = [
+    autoFormatAfterRewriteToggle.closest(".toggle-row"),
+    document.getElementById("fmtPrependTrackerRow"),
+  ].filter(Boolean);
   if (formatterToggle.checked) {
-    row.classList.remove("disabled");
+    rows.forEach((row) => row.classList.remove("disabled"));
   } else {
-    row.classList.add("disabled");
+    rows.forEach((row) => row.classList.add("disabled"));
   }
 }
 
@@ -539,6 +545,7 @@ chrome.storage.sync.get(
     "formatterEnabled",
     "formatterKeyword",
     "autoFormatAfterRewrite",
+    "fmtPrependTrackerSummaryOnFormat",
     "fmtExtraDelimiters",
     "fmtShortcut",
     ...FMT_TOGGLES,
@@ -548,6 +555,8 @@ chrome.storage.sync.get(
     formatterKeywordInput.value = data.formatterKeyword || "//format";
     autoFormatAfterRewriteToggle.checked =
       data.autoFormatAfterRewrite !== false;
+    fmtPrependTrackerSummaryToggle.checked =
+      data.fmtPrependTrackerSummaryOnFormat === true;
     fmtExtraDelimitersInput.value = data.fmtExtraDelimiters || "";
     fmtShortcutInput.value = (data.fmtShortcut || "m").toUpperCase();
     for (const key of FMT_TOGGLES) {
@@ -583,6 +592,7 @@ saveFormatterBtn.addEventListener("click", () => {
     formatterEnabled: formatterToggle.checked,
     formatterKeyword: kw || "//format",
     autoFormatAfterRewrite: autoFormatAfterRewriteToggle.checked,
+    fmtPrependTrackerSummaryOnFormat: fmtPrependTrackerSummaryToggle.checked,
     fmtExtraDelimiters: fmtExtraDelimitersInput.value.trim(),
     fmtShortcut: fmtShortcutInput.value.trim().slice(0, 1).toLowerCase() || "m",
   };
