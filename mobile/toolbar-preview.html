@@ -2,938 +2,549 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Toolbar Preview</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Rewriter — Mobile Toolbar Preview</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: #1a1230;
-    color: #e2e0ff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    padding-top: 90px;
-    padding-bottom: 40px;
-    min-height: 100vh;
-  }
-  .content {
-    max-width: 480px;
-    margin: 0 auto;
-    padding: 24px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-  h2 { font-size: 14px; color: rgba(167,139,250,0.7); letter-spacing: 0.1em; text-transform: uppercase; }
-  p { font-size: 14px; color: rgba(224,222,255,0.5); line-height: 1.6; }
-  textarea {
-    width: 100%;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(139,92,246,0.3);
-    border-radius: 10px;
-    color: #e2e0ff;
-    font-size: 14px;
-    padding: 12px;
-    resize: vertical;
-    min-height: 100px;
-    outline: none;
-    font-family: inherit;
-    line-height: 1.5;
-  }
-  textarea:focus { border-color: rgba(139,92,246,0.65); }
-  .note {
-    font-size: 12px;
-    color: rgba(167,139,250,0.55);
-    text-align: center;
-    margin-top: 8px;
-  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin:0; padding:0; background:#0a0514; color:#e2e8f0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; min-height:100vh; }
+  .page-content { padding:88px 20px 200px; max-width:600px; margin:0 auto; }
+  h1 { font-size:20px; font-weight:800; color:#c4b5fd; margin-bottom:8px; }
+  .subtitle { color:#475569; font-size:14px; margin-bottom:28px; }
+  label { display:block; font-size:12px; font-weight:700; color:rgba(139,92,246,0.6); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:8px; }
+  textarea { width:100%; min-height:160px; background:rgba(255,255,255,0.04); border:1px solid rgba(139,92,246,0.2); border-radius:14px; color:#e2e8f0; font-size:15px; padding:14px 16px; resize:vertical; font-family:inherit; line-height:1.6; }
+  textarea:focus { outline:none; border-color:rgba(139,92,246,0.5); }
+  .status-msg { font-size:13px; color:#475569; margin-top:10px; font-style:italic; }
 
-  /* ─────────────────────── TOOLBAR ─────────────────────── */
-  #ai-mobile-toolbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    will-change: transform;
-    z-index: 2147483647;
-    background: rgba(8, 5, 20, 0.97);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    backdrop-filter: blur(24px) saturate(180%);
-    border-bottom: 1px solid rgba(139, 92, 246, 0.4);
-    box-shadow: 0 0 0 1px rgba(109, 40, 217, 0.15),
-                0 6px 32px rgba(0, 0, 0, 0.7),
-                0 0 60px rgba(109, 40, 217, 0.12);
-    display: flex;
-    flex-direction: column;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    -webkit-user-select: none;
-    user-select: none;
-    touch-action: manipulation;
-  }
+  /* Toolbar */
+  #ai-mobile-toolbar { position:fixed; top:0; left:0; right:0; background:rgba(8,5,20,0.97); -webkit-backdrop-filter:blur(24px) saturate(180%); backdrop-filter:blur(24px) saturate(180%); border-bottom:1px solid rgba(139,92,246,0.4); box-shadow:0 0 0 1px rgba(109,40,217,0.15),0 6px 32px rgba(0,0,0,0.7); display:flex; flex-direction:column; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; -webkit-user-select:none; user-select:none; z-index:100; }
+  #ai-tb-main-row { display:flex; flex-direction:row; align-items:stretch; height:68px; }
+  #ai-tb-fmt-pin { flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center; width:70px; gap:4px; cursor:pointer; background:linear-gradient(160deg,rgba(16,185,129,0.18) 0%,rgba(5,12,10,0) 100%); border:none; border-right:1px solid rgba(52,211,153,0.25); padding:0; transition:background 0.15s; }
+  #ai-tb-fmt-pin:active { background:linear-gradient(160deg,rgba(16,185,129,0.35) 0%,rgba(5,30,20,0.6) 100%); }
+  #ai-tb-fmt-pin .fmt-emoji { font-size:22px; line-height:1; display:block; }
+  #ai-tb-fmt-pin .fmt-label { font-size:11px; font-weight:700; letter-spacing:0.04em; color:#34d399; text-transform:uppercase; }
+  #ai-tb-right { flex:1; min-width:0; display:flex; flex-direction:column; overflow:hidden; }
+  #ai-tb-status-row { display:flex; align-items:center; padding:5px 10px 2px; gap:6px; flex-shrink:0; }
+  #ai-tb-label { font-size:9px; font-weight:800; color:rgba(139,92,246,0.7); letter-spacing:0.14em; text-transform:uppercase; flex-shrink:0; }
+  #ai-tb-status { font-size:11px; color:rgba(224,222,255,0.35); flex:1; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transition:color 0.2s; }
+  #ai-tb-status.working { color:#a78bfa; }
+  #ai-tb-status.error   { color:#f87171; }
+  #ai-tb-status.done    { color:#6ee7b7; }
+  #ai-tb-buttons { display:flex; flex-direction:row; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; gap:6px; padding:3px 10px 10px; flex:1; align-items:center; }
+  #ai-tb-buttons::-webkit-scrollbar { display:none; }
+  #ai-tb-settings-btn { flex-shrink:0; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; border:1px solid rgba(139,92,246,0.22); background:transparent; color:rgba(139,92,246,0.45); font-size:17px; cursor:pointer; transition:all 0.12s; }
+  #ai-tb-settings-btn:active { background:rgba(139,92,246,0.15); color:#a78bfa; }
+  .ai-tb-persona-pill { flex-shrink:0; height:26px; padding:0 9px; border-radius:13px; border:1px solid rgba(52,211,153,0.12); background:transparent; color:rgba(52,211,153,0.22); font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap; transition:all 0.12s; display:flex; align-items:center; }
+  .ai-tb-persona-pill.configured { color:#334155; border-color:rgba(52,211,153,0.22); }
+  .ai-tb-persona-pill.active { border-color:rgba(52,211,153,0.55); background:rgba(52,211,153,0.13); color:#34d399; box-shadow:0 0 8px rgba(52,211,153,0.18); }
+  .ai-tb-pill-sep { width:1px; height:22px; background:rgba(139,92,246,0.1); flex-shrink:0; margin:0 4px; align-self:center; }
+  .ai-tb-btn { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0; min-width:54px; padding:6px 10px 5px; border-radius:12px; border:1px solid rgba(109,40,217,0.4); background:linear-gradient(145deg,rgba(30,20,60,0.95) 0%,rgba(20,14,40,0.95) 100%); color:#ddd6fe; font-size:10.5px; font-weight:600; line-height:1.2; cursor:pointer; transition:all 0.1s; box-shadow:0 2px 8px rgba(0,0,0,0.4); }
+  .ai-tb-btn:active { background:linear-gradient(145deg,rgba(109,40,217,0.55) 0%,rgba(76,29,149,0.7) 100%); border-color:rgba(167,139,250,0.8); transform:scale(0.91); }
+  .ai-tb-btn-emoji { display:block; font-size:17px; line-height:1; margin-bottom:2px; }
+  .ai-tb-dice-btn { border-color:rgba(251,191,36,0.35) !important; background:linear-gradient(145deg,rgba(25,18,5,0.95),rgba(15,10,3,0.95)) !important; color:#fbbf24 !important; }
+  .ai-tb-dice-btn:active { background:linear-gradient(145deg,rgba(90,60,0,0.5),rgba(60,40,0,0.65)) !important; border-color:rgba(251,191,36,0.7) !important; transform:scale(0.91); }
 
-  /* ─── Main row ─── */
-  #ai-tb-main-row {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    height: 68px;
-  }
+  /* Settings sheet */
+  #ai-settings-backdrop { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,0.65); opacity:0; pointer-events:none; transition:opacity 0.22s; }
+  #ai-settings-backdrop.open { opacity:1; pointer-events:all; }
+  #ai-settings-sheet { position:fixed; left:0; right:0; bottom:0; z-index:201; background:rgba(7,4,18,0.99); -webkit-backdrop-filter:blur(32px) saturate(200%); backdrop-filter:blur(32px) saturate(200%); border-top:1px solid rgba(139,92,246,0.3); border-radius:22px 22px 0 0; height:95vh; display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.3s cubic-bezier(0.4,0,0.2,1); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+  #ai-settings-sheet.open { transform:none; }
+  #ai-settings-handle-area { padding:14px 0 8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  #ai-settings-handle { width:44px; height:5px; background:rgba(139,92,246,0.3); border-radius:3px; pointer-events:none; }
+  #ai-settings-header { display:flex; align-items:center; padding:2px 22px 16px; gap:14px; flex-shrink:0; }
+  #ai-settings-title { font-size:22px; font-weight:800; color:#e2e8f0; flex:1; letter-spacing:-0.02em; }
+  #ai-settings-close { width:36px; height:36px; border-radius:50%; border:1px solid rgba(139,92,246,0.18); background:rgba(20,14,40,0.6); color:#475569; font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+  #ai-settings-close:active { background:rgba(76,29,149,0.4); color:#a78bfa; }
+  #ai-settings-tabs { display:flex; overflow-x:auto; scrollbar-width:none; gap:8px; padding:0 22px 18px; flex-shrink:0; border-bottom:1px solid rgba(139,92,246,0.09); }
+  #ai-settings-tabs::-webkit-scrollbar { display:none; }
+  .ai-stg-tab { flex-shrink:0; padding:11px 22px; border-radius:24px; border:1px solid rgba(139,92,246,0.18); background:transparent; color:#475569; font-size:15px; font-weight:700; white-space:nowrap; cursor:pointer; transition:all 0.14s; }
+  .ai-stg-tab.active { background:rgba(139,92,246,0.16); border-color:rgba(139,92,246,0.55); color:#c4b5fd; }
+  #ai-settings-content { flex:1; overflow-y:auto; padding:22px 22px 48px; }
+  .ai-stg-section-label { font-size:11px; font-weight:800; color:rgba(139,92,246,0.5); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:10px; display:block; }
+  .ai-stg-hint { font-size:14px; color:#475569; line-height:1.6; margin-bottom:20px; }
+  .ai-stg-input { display:block; width:100%; box-sizing:border-box; background:rgba(255,255,255,0.04); border:1px solid rgba(139,92,246,0.18); border-radius:14px; color:#e2e8f0; font-size:16px; padding:15px 16px; font-family:inherit; -webkit-appearance:none; margin-bottom:10px; }
+  .ai-stg-input:focus { outline:none; border-color:rgba(139,92,246,0.48); }
+  .ai-stg-input::placeholder { color:#2d3748; }
+  .ai-stg-textarea { resize:none; line-height:1.65; }
+  .ai-stg-btn { display:inline-flex; align-items:center; justify-content:center; padding:14px 20px; border-radius:14px; border:1px solid rgba(139,92,246,0.4); background:rgba(139,92,246,0.12); color:#a78bfa; font-size:15px; font-weight:700; cursor:pointer; transition:all 0.12s; }
+  .ai-stg-btn:active { background:rgba(139,92,246,0.26); }
+  .ai-stg-btn-block { display:block; width:100%; margin-bottom:10px; text-align:center; }
+  .ai-stg-btn-green { border-color:rgba(52,211,153,0.4); background:rgba(52,211,153,0.1); color:#34d399; }
+  .ai-stg-btn-green:active { background:rgba(52,211,153,0.22); }
+  .ai-stg-btn-danger { border-color:rgba(239,68,68,0.3); background:rgba(239,68,68,0.05); color:#f87171; }
+  .ai-stg-persona-slot { border:1px solid rgba(139,92,246,0.12); border-radius:16px; margin-bottom:10px; overflow:hidden; background:rgba(16,11,32,0.7); }
+  .ai-stg-persona-slot.slot-active { border-color:rgba(52,211,153,0.4); background:rgba(10,24,16,0.7); }
+  .ai-stg-persona-header { display:flex; align-items:center; padding:18px 20px; gap:14px; cursor:pointer; user-select:none; }
+  .ai-stg-persona-num { width:30px; height:30px; border-radius:50%; flex-shrink:0; border:2px solid rgba(139,92,246,0.2); background:rgba(25,17,50,0.8); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; color:#475569; }
+  .slot-active .ai-stg-persona-num { border-color:#34d399; background:rgba(10,40,25,0.8); color:#34d399; }
+  .ai-stg-persona-label-text { flex:1; font-size:16px; font-weight:600; color:#64748b; }
+  .slot-active .ai-stg-persona-label-text { color:#6ee7b7; }
+  .ai-stg-active-badge { font-size:10px; font-weight:800; color:#34d399; background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.3); border-radius:8px; padding:3px 9px; flex-shrink:0; }
+  .ai-stg-chevron { color:#2d3748; font-size:20px; flex-shrink:0; transition:transform 0.18s; }
+  .ai-stg-chevron.open { transform:rotate(90deg); }
+  .ai-stg-persona-body { padding:0 20px 20px; display:none; flex-direction:column; gap:10px; }
+  .ai-stg-persona-body.open { display:flex; }
+  .ai-stg-persona-actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .ai-stg-cmd-card { border:1px solid rgba(139,92,246,0.12); border-radius:16px; margin-bottom:10px; overflow:hidden; background:rgba(16,11,32,0.7); }
+  .ai-stg-cmd-header { display:flex; align-items:center; padding:16px 20px; gap:12px; cursor:pointer; user-select:none; }
+  .ai-stg-emoji-input { width:46px; font-size:22px; text-align:center; background:rgba(255,255,255,0.04); border:1px solid rgba(139,92,246,0.15); border-radius:10px; color:#e2e8f0; padding:6px 2px; -webkit-appearance:none; flex-shrink:0; }
+  .ai-stg-cmd-label-input { flex:1; font-size:16px; font-weight:700; background:rgba(255,255,255,0.04); border:1px solid rgba(139,92,246,0.15); border-radius:10px; color:#e2e8f0; padding:12px 14px; -webkit-appearance:none; }
+  .ai-stg-cmd-label-input:focus { outline:none; border-color:rgba(139,92,246,0.45); }
+  .ai-stg-cmd-body { padding:0 20px 20px; display:none; flex-direction:column; gap:10px; }
+  .ai-stg-cmd-body.open { display:flex; }
 
-  /* ─── Format button — pinned left, full height ─── */
-  #ai-tb-fmt-pin {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 70px;
-    gap: 4px;
-    cursor: pointer;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-    background: linear-gradient(160deg, rgba(16, 185, 129, 0.18) 0%, rgba(5, 12, 10, 0.0) 100%);
-    border-right: 1px solid rgba(52, 211, 153, 0.25);
-    border: none;
-    position: relative;
-    transition: background 0.15s;
-    border-right: 1px solid rgba(52, 211, 153, 0.25);
-  }
-  #ai-tb-fmt-pin:active, #ai-tb-fmt-pin.demo-active {
-    background: linear-gradient(160deg, rgba(16, 185, 129, 0.35) 0%, rgba(5, 30, 20, 0.6) 100%);
-  }
-  #ai-tb-fmt-pin .ai-tb-fmt-emoji {
-    font-size: 22px;
-    line-height: 1;
-    position: relative;
-    display: block;
-  }
-  #ai-tb-fmt-pin .ai-tb-fmt-label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    color: #34d399;
-    text-transform: uppercase;
-  }
-  #ai-tb-fmt-pin.ai-tb-running .ai-tb-fmt-emoji { visibility: hidden; }
-  #ai-tb-fmt-pin.ai-tb-running .ai-tb-fmt-emoji::after {
-    content: '';
-    visibility: visible;
-    position: absolute;
-    top: 50%; left: 50%;
-    margin: -9px 0 0 -9px;
-    width: 18px; height: 18px;
-    border: 2px solid rgba(52, 211, 153, 0.2);
-    border-top-color: #34d399;
-    border-radius: 50%;
-    animation: ai-tb-spin 0.65s linear infinite;
-  }
-  #ai-tb-fmt-pin.ai-tb-busy { opacity: 0.35; pointer-events: none; }
-
-  /* ─── Right section ─── */
-  #ai-tb-right {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  /* ─── Status bar ─── */
-  #ai-tb-status-row {
-    display: flex;
-    align-items: center;
-    padding: 5px 12px 2px;
-    gap: 6px;
-    flex-shrink: 0;
-  }
-  #ai-tb-label {
-    font-size: 9px;
-    font-weight: 800;
-    color: rgba(139, 92, 246, 0.7);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    flex-shrink: 0;
-  }
-  #ai-tb-status {
-    font-size: 11px;
-    color: rgba(224, 222, 255, 0.35);
-    flex: 1;
-    text-align: right;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    transition: color 0.2s;
-  }
-  #ai-tb-status.ai-tb-working { color: #a78bfa; }
-  #ai-tb-status.ai-tb-error   { color: #f87171; }
-  #ai-tb-status.ai-tb-done    { color: #6ee7b7; }
-
-  /* ─── Scrollable command buttons ─── */
-  #ai-tb-buttons {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    gap: 7px;
-    padding: 4px 12px 10px;
-    flex: 1;
-    align-items: center;
-  }
-  #ai-tb-buttons::-webkit-scrollbar { display: none; }
-
-  /* ─── Command buttons ─── */
-  .ai-tb-btn {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    min-width: 58px;
-    padding: 7px 11px 6px;
-    border-radius: 12px;
-    border: 1px solid rgba(109, 40, 217, 0.4);
-    background: linear-gradient(145deg, rgba(30, 20, 60, 0.95) 0%, rgba(20, 14, 40, 0.95) 100%);
-    color: #ddd6fe;
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 1.2;
-    cursor: pointer;
-    touch-action: manipulation;
-    transition: background 0.12s, border-color 0.12s, transform 0.08s, opacity 0.15s, box-shadow 0.12s;
-    -webkit-tap-highlight-color: transparent;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(167, 139, 250, 0.06);
-  }
-  .ai-tb-btn:active, .ai-tb-btn.demo-active {
-    background: linear-gradient(145deg, rgba(109, 40, 217, 0.55) 0%, rgba(76, 29, 149, 0.7) 100%);
-    border-color: rgba(167, 139, 250, 0.8);
-    box-shadow: 0 0 16px rgba(139, 92, 246, 0.45), inset 0 1px 0 rgba(167, 139, 250, 0.12);
-    transform: scale(0.91);
-  }
-  .ai-tb-btn.ai-tb-busy { opacity: 0.28; pointer-events: none; }
-  .ai-tb-btn.ai-tb-running {
-    opacity: 1 !important;
-    border-color: rgba(167, 139, 250, 0.65);
-    background: linear-gradient(145deg, rgba(76, 29, 149, 0.5) 0%, rgba(45, 18, 90, 0.7) 100%);
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.35), inset 0 1px 0 rgba(167, 139, 250, 0.1);
-    pointer-events: none;
-  }
-
-  /* ─── Emoji slot ─── */
-  .ai-tb-btn-emoji {
-    display: block;
-    position: relative;
-    font-size: 18px;
-    line-height: 1;
-    margin-bottom: 3px;
-  }
-  .ai-tb-btn.ai-tb-running .ai-tb-btn-emoji { visibility: hidden; }
-  .ai-tb-btn.ai-tb-running .ai-tb-btn-emoji::after {
-    content: '';
-    visibility: visible;
-    position: absolute;
-    top: 50%; left: 50%;
-    margin: -8px 0 0 -8px;
-    width: 16px; height: 16px;
-    border: 2px solid rgba(196, 181, 253, 0.2);
-    border-top-color: #c4b5fd;
-    border-radius: 50%;
-    animation: ai-tb-spin 0.65s linear infinite;
-  }
-
-  /* ─── Progress bar ─── */
-  #ai-tb-progress-track {
-    height: 2px;
-    overflow: hidden;
-    position: relative;
-    opacity: 0;
-    transition: opacity 0.25s;
-    flex-shrink: 0;
-  }
-  #ai-tb-progress-track.ai-tb-loading { opacity: 1; }
-  #ai-tb-progress-fill {
-    position: absolute;
-    top: 0; left: 0;
-    height: 100%;
-    width: 40%;
-    background: linear-gradient(90deg, transparent 0%, #7c3aed 20%, #a78bfa 50%, #34d399 80%, transparent 100%);
-    transform: translateX(-200%);
-  }
-  #ai-tb-progress-track.ai-tb-loading #ai-tb-progress-fill {
-    animation: ai-tb-shimmer 1.3s ease-in-out infinite;
-  }
-
-  @keyframes ai-tb-spin { to { transform: rotate(360deg); } }
-  @keyframes ai-tb-shimmer {
-    0%   { transform: translateX(-200%); }
-    100% { transform: translateX(360%); }
-  }
-
-  /* ─────────────────────── RPG SHEET ─────────────────────── */
-  #ai-rpg-backdrop {
-    position: fixed; inset: 0; z-index: 2147483640;
-    background: rgba(0,0,0,0.65);
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.22s;
-  }
-  #ai-rpg-backdrop.open { opacity: 1; pointer-events: all; }
-  #ai-rpg-sheet {
-    position: fixed; left: 0; right: 0; bottom: 0;
-    z-index: 2147483641;
-    background: rgba(10,7,22,0.98);
-    backdrop-filter: blur(28px) saturate(180%);
-    border-top: 1px solid rgba(108,99,255,0.4);
-    border-radius: 18px 18px 0 0;
-    height: 95dvh;
-    display: flex; flex-direction: column;
-    transform: translateY(110%);
-    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  }
-  #ai-rpg-sheet.open { transform: none; }
-  #ai-rpg-handle-area {
-    padding: 12px 0 4px; flex-shrink: 0; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-  }
-  #ai-rpg-handle {
-    width: 48px; height: 6px;
-    background: rgba(139,92,246,0.45);
-    border-radius: 3px; pointer-events: none;
-  }
-  #ai-rpg-header {
-    display: flex; align-items: center;
-    padding: 4px 14px 6px; gap: 8px; flex-shrink: 0;
-  }
-  #ai-rpg-title { font-size: 16px; font-weight: 800; color: #a78bfa; flex: 1; letter-spacing: 0.03em; }
-  .ai-rpg-hdr-btn {
-    font-size: 13px; font-weight: 700; padding: 9px 14px; border-radius: 10px;
-    border: 1px solid rgba(139,92,246,0.4);
-    background: rgba(30,20,60,0.8); color: #c4b5fd;
-    cursor: pointer; min-height: 44px;
-  }
-  .ai-rpg-hdr-btn:active { background: rgba(76,29,149,0.5); }
-  #ai-rpg-close-btn {
-    width: 44px; height: 44px; border-radius: 10px;
-    border: 1px solid rgba(139,92,246,0.25);
-    background: rgba(30,20,60,0.7); color: #94a3b8;
-    font-size: 18px; display: flex; align-items: center; justify-content: center;
-    cursor: pointer; flex-shrink: 0;
-  }
-  #ai-rpg-close-btn:active { background: rgba(76,29,149,0.4); color: #c4b5fd; }
-  #ai-rpg-tabs {
-    display: flex; overflow-x: auto; scrollbar-width: none;
-    gap: 6px; padding: 6px 14px 10px; flex-shrink: 0;
-    border-bottom: 1px solid rgba(108,99,255,0.12);
-  }
-  #ai-rpg-tabs::-webkit-scrollbar { display: none; }
-  .ai-rpg-tab {
-    flex-shrink: 0; padding: 10px 16px; border-radius: 22px;
-    border: 1px solid rgba(108,99,255,0.25);
-    background: transparent; color: #64748b;
-    font-size: 14px; font-weight: 700; white-space: nowrap;
-    cursor: pointer; min-height: 44px;
-    transition: background 0.12s, color 0.12s, border-color 0.12s;
-  }
-  .ai-rpg-tab.active { background: rgba(108,99,255,0.22); border-color: rgba(108,99,255,0.7); color: #c4b5fd; }
-  #ai-rpg-content { flex: 1; overflow-y: auto; padding: 8px 16px 32px; }
-  .ai-rpg-section { display: none; }
-  .ai-rpg-section.active { display: block; }
-  .ai-tb-rpg-btn {
-    border-color: rgba(251,191,36,0.4) !important;
-    background: linear-gradient(145deg,rgba(30,20,10,0.95) 0%,rgba(20,14,5,0.95) 100%) !important;
-    color: #fbbf24 !important;
-  }
-  .ai-tb-rpg-btn:active {
-    background: linear-gradient(145deg,rgba(120,60,0,0.55) 0%,rgba(80,40,0,0.7) 100%) !important;
-    border-color: rgba(251,191,36,0.8) !important;
-  }
-  .rpg-card { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid rgba(108,99,255,0.09); flex-wrap:wrap; }
-  .rpg-card:last-child { border-bottom:none; }
-  .rpg-item-row { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid rgba(108,99,255,0.09); }
-  .rpg-item-row:last-child { border-bottom:none; }
-  .rpg-abl-card { padding:12px 0; border-bottom:1px solid rgba(108,99,255,0.09); }
-  .rpg-abl-card:last-child { border-bottom:none; }
-  .rpg-item-name { font-size:15px; color:#e2e8f0; }
-  .rpg-item-name.rpg-striked { text-decoration:line-through; color:#475569; }
-  .rpg-item-note { font-size:12px; color:#475569; margin-top:3px; }
-  .rpg-status-pill {
-    font-size:13px; font-weight:700; padding:10px 14px;
-    border-radius:14px; border:1px solid; cursor:pointer;
-    white-space:nowrap; flex-shrink:0; min-height:44px;
-    display:flex; align-items:center;
-  }
-  .rpg-q-active   { background:rgba(74,222,128,0.1);  border-color:rgba(74,222,128,0.4);  color:#4ade80; }
-  .rpg-q-done     { background:rgba(108,99,255,0.1);  border-color:rgba(108,99,255,0.4);  color:#a78bfa; }
-  .rpg-q-failed   { background:rgba(248,113,113,0.1); border-color:rgba(248,113,113,0.3); color:#f87171; }
-  .rpg-npc-neutral{ background:rgba(251,191,36,0.1);  border-color:rgba(251,191,36,0.3);  color:#fbbf24; }
-  .rpg-add-row { display:flex; align-items:center; gap:8px; padding:10px 0 12px; border-bottom:1px solid rgba(108,99,255,0.12); margin-bottom:6px; flex-wrap:wrap; }
-  .rpg-add-input {
-    flex:1; min-width:90px;
-    background:rgba(255,255,255,0.05); border:1px solid rgba(108,99,255,0.22);
-    border-radius:10px; color:#e2e8f0; font-size:16px; padding:12px 13px;
-    font-family:inherit; -webkit-appearance:none;
-  }
-  .rpg-add-input::placeholder { color:#334155; }
-  .rpg-add-input:focus { outline:none; border-color:rgba(108,99,255,0.55); }
-  .rpg-add-num {
-    width:60px; text-align:center;
-    background:rgba(255,255,255,0.05); border:1px solid rgba(108,99,255,0.22);
-    border-radius:10px; color:#e2e8f0; font-size:16px; padding:12px 4px;
-    font-family:inherit; -webkit-appearance:none;
-  }
-  .rpg-add-num:focus { outline:none; border-color:rgba(108,99,255,0.55); }
-  .rpg-add-btn {
-    padding:12px 18px; border-radius:10px; flex-shrink:0;
-    background:rgba(108,99,255,0.18); border:1px solid rgba(108,99,255,0.5);
-    color:#a78bfa; font-size:15px; font-weight:700; min-height:44px;
-    cursor:pointer; white-space:nowrap;
-  }
-  .rpg-add-btn:active { background:rgba(108,99,255,0.32); }
-  .rpg-del-btn {
-    width:44px; height:44px; flex-shrink:0;
-    display:flex; align-items:center; justify-content:center;
-    border-radius:10px; border:1px solid rgba(239,68,68,0.22);
-    background:rgba(239,68,68,0.06); color:#ef4444; cursor:pointer;
-  }
-  .rpg-del-btn:active { background:rgba(239,68,68,0.22); }
-  .rpg-ins-btn {
-    width:44px; height:44px; flex-shrink:0;
-    display:flex; align-items:center; justify-content:center;
-    border-radius:10px; border:1px solid rgba(108,99,255,0.3);
-    background:rgba(108,99,255,0.09); color:#7c6fb5; font-size:18px; cursor:pointer;
-  }
-  .rpg-ins-btn:active { background:rgba(108,99,255,0.22); color:#a78bfa; }
-  .rpg-done-btn {
-    padding:10px 14px; border-radius:10px; font-size:14px; font-weight:700;
-    border:1px solid rgba(74,222,128,0.35); min-height:44px;
-    background:rgba(74,222,128,0.08); color:#4ade80; cursor:pointer;
-  }
-  .rpg-done-btn:active { background:rgba(74,222,128,0.2); }
-  .rpg-empty { color:#334155; font-size:14px; padding:24px 0; text-align:center; }
-  .rpg-res-val { font-size:22px; font-weight:800; color:#e2e8f0; min-width:44px; text-align:center; }
-  .rpg-val-btn {
-    width:44px; height:44px; flex-shrink:0;
-    border-radius:10px; border:1px solid rgba(108,99,255,0.3);
-    background:rgba(108,99,255,0.1); color:#a78bfa;
-    font-size:24px; font-weight:700;
-    display:flex; align-items:center; justify-content:center; cursor:pointer;
-  }
-  .rpg-val-btn:active { background:rgba(108,99,255,0.28); }
-  .rpg-abl-cur { font-size:16px; font-weight:700; color:#a78bfa; min-width:44px; text-align:center; }
-  .rpg-rst-btn {
-    padding:10px 14px; border-radius:10px; font-size:13px; font-weight:700;
-    border:1px solid rgba(74,222,128,0.3); min-height:44px;
-    background:rgba(74,222,128,0.08); color:#4ade80; cursor:pointer; flex-shrink:0;
-  }
-  .rpg-rst-btn:active { background:rgba(74,222,128,0.22); }
-  .rpg-use-btn {
-    flex:1; min-width:0; padding:12px 2px;
-    border-radius:8px; border:1px solid;
-    font-size:13px; font-weight:700; cursor:pointer;
-    font-family:inherit;
-  }
-  .rpg-use-btn.avail { background:rgba(108,99,255,0.15); border-color:rgba(108,99,255,0.4); color:#a78bfa; }
-  .rpg-use-btn.spent { background:rgba(108,99,255,0.03); border-color:rgba(108,99,255,0.08); color:#334155; opacity:0.38; }
-  .rpg-rumour-chk {
-    width:44px; height:44px; flex-shrink:0;
-    border-radius:50%; border:2px solid rgba(108,99,255,0.35);
-    display:flex; align-items:center; justify-content:center; cursor:pointer;
-  }
-  .rpg-rumour-chk.done { background:rgba(74,222,128,0.12); border-color:rgba(74,222,128,0.5); }
-  .rpg-dice-grid { display:flex; flex-wrap:wrap; gap:8px; padding:6px 0 10px; }
-  .rpg-dice-face {
-    flex:1; min-width:52px; padding:14px 4px;
-    border-radius:12px; border:2px solid rgba(108,99,255,0.25);
-    background:rgba(20,14,40,0.9); color:#7c6fb5;
-    font-size:15px; font-weight:700; text-align:center; cursor:pointer;
-    transition:background 0.12s, border-color 0.12s, color 0.12s;
-    font-family:inherit;
-  }
-  .rpg-dice-face.active { background:rgba(108,99,255,0.28); border-color:rgba(108,99,255,0.75); color:#e9d5ff; }
-  .rpg-roll-btn {
-    width:100%; padding:18px; margin:6px 0 4px;
-    border-radius:14px; border:2px solid rgba(108,99,255,0.6);
-    background:linear-gradient(135deg,rgba(76,29,149,0.5),rgba(45,18,90,0.7));
-    color:#e9d5ff; font-size:20px; font-weight:700; cursor:pointer;
-    font-family:inherit;
-  }
-  .rpg-roll-btn:active { background:linear-gradient(135deg,rgba(109,40,217,0.65),rgba(76,29,149,0.8)); }
-  .rpg-dice-total { font-size:72px; font-weight:900; text-align:center; color:#e9d5ff; line-height:1; padding:14px 0 4px; }
-  .rpg-nat20 { color:#fbbf24 !important; }
-  .rpg-nat1  { color:#f87171 !important; }
-  .rpg-dice-hist { display:flex; flex-wrap:wrap; gap:5px; margin:6px 0; }
-  .rpg-dice-chip {
-    font-size:13px; padding:6px 12px;
-    border-radius:14px; border:1px solid rgba(108,99,255,0.25);
-    background:rgba(20,14,40,0.9); color:#94a3b8;
-  }
-  .rpg-sync-btn {
-    display:block; width:100%; padding:16px; margin-bottom:8px;
-    border-radius:12px; border:1px solid rgba(139,92,246,0.45);
-    background:rgba(108,99,255,0.15); color:#a78bfa;
-    font-size:16px; font-weight:700; cursor:pointer; min-height:52px;
-    font-family:inherit;
-  }
-  .rpg-sync-btn:active { background:rgba(108,99,255,0.28); }
-  .rpg-sync-import { border-color:rgba(74,222,128,0.45); background:rgba(74,222,128,0.1); color:#4ade80; }
-  .rpg-sync-import:active { background:rgba(74,222,128,0.22); }
-  .rpg-sync-area {
-    display:block; width:100%; min-height:120px; box-sizing:border-box;
-    background:rgba(255,255,255,0.04);
-    border:1px solid rgba(108,99,255,0.22); border-radius:10px;
-    color:#94a3b8; font-size:13px; padding:12px; font-family:monospace;
-    resize:none;
-  }
-  .rpg-sync-area:focus { outline:none; border-color:rgba(108,99,255,0.5); }
+  /* Dice overlay */
+  #ai-dice-overlay { position:fixed; inset:0; z-index:300; background:rgba(0,0,0,0.88); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.2s; }
+  #ai-dice-overlay.open { opacity:1; pointer-events:all; }
+  #ai-dice-card { width:min(340px,88vw); background:rgba(8,5,20,0.98); border:1px solid rgba(139,92,246,0.3); border-radius:26px; padding:28px 24px 24px; display:flex; flex-direction:column; gap:20px; box-shadow:0 0 60px rgba(109,40,217,0.22),0 24px 64px rgba(0,0,0,0.65); }
+  #ai-dice-title { font-size:20px; font-weight:800; color:#e2e8f0; text-align:center; letter-spacing:-0.01em; }
+  #ai-dice-selectors { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .ai-dice-face-btn { padding:20px 10px; border-radius:18px; border:2px solid rgba(139,92,246,0.18); background:rgba(16,11,32,0.8); color:#334155; font-size:28px; font-weight:900; cursor:pointer; transition:all 0.14s; text-align:center; }
+  .ai-dice-face-btn.active { border-color:rgba(139,92,246,0.65); background:rgba(60,22,120,0.35); color:#e9d5ff; box-shadow:0 0 20px rgba(109,40,217,0.28); }
+  .ai-dice-face-btn:active { transform:scale(0.94); }
+  #ai-dice-roll-btn { width:100%; padding:20px; border-radius:18px; border:2px solid rgba(139,92,246,0.5); background:linear-gradient(135deg,rgba(76,29,149,0.5),rgba(45,18,90,0.7)); color:#e9d5ff; font-size:22px; font-weight:800; cursor:pointer; transition:all 0.12s; }
+  #ai-dice-roll-btn:active { background:linear-gradient(135deg,rgba(109,40,217,0.65),rgba(76,29,149,0.8)); transform:scale(0.97); }
+  #ai-dice-result-area { text-align:center; min-height:110px; display:flex; flex-direction:column; align-items:center; gap:6px; }
+  #ai-dice-result-num { font-size:100px; font-weight:900; line-height:1; color:#e9d5ff; transition:color 0.2s; }
+  #ai-dice-result-num.nat20 { color:#fbbf24; }
+  #ai-dice-result-num.nat1  { color:#f87171; }
+  #ai-dice-result-label { font-size:15px; font-weight:700; color:#64748b; min-height:22px; }
+  #ai-dice-result-label.special20 { color:#fbbf24; }
+  #ai-dice-result-label.special1  { color:#f87171; }
+  #ai-dice-result-break { font-size:13px; color:#2d3748; font-family:monospace; min-height:18px; }
+  #ai-dice-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  #ai-dice-copy-btn { padding:16px; border-radius:14px; border:1px solid rgba(52,211,153,0.35); background:rgba(52,211,153,0.1); color:#34d399; font-size:15px; font-weight:700; cursor:pointer; }
+  #ai-dice-copy-btn:active { background:rgba(52,211,153,0.22); }
+  #ai-dice-dismiss-btn { padding:16px; border-radius:14px; border:1px solid rgba(139,92,246,0.18); background:rgba(20,14,40,0.6); color:#475569; font-size:15px; font-weight:700; cursor:pointer; }
+  #ai-dice-dismiss-btn:active { background:rgba(76,29,149,0.35); color:#a78bfa; }
 </style>
 </head>
 <body>
 
-<!-- ─── Toolbar ─── -->
 <div id="ai-mobile-toolbar">
   <div id="ai-tb-main-row">
-    <button id="ai-tb-fmt-pin" onclick="demoFormat()">
-      <span class="ai-tb-fmt-emoji">✨</span>
-      <span class="ai-tb-fmt-label">Format</span>
+    <button id="ai-tb-fmt-pin">
+      <span class="fmt-emoji">✨</span>
+      <span class="fmt-label">Format</span>
     </button>
     <div id="ai-tb-right">
       <div id="ai-tb-status-row">
         <span id="ai-tb-label">AI Rewriter</span>
-        <span id="ai-tb-status">Ready</span>
+        <span id="ai-tb-status">Preview Mode</span>
       </div>
       <div id="ai-tb-buttons">
-        <button class="ai-tb-btn ai-tb-rpg-btn" onclick="openRpgSheet()"><span class="ai-tb-btn-emoji">🗡️</span>RPG</button>
-        <button class="ai-tb-btn" onclick="demoCmd(this,'Rewrite')"><span class="ai-tb-btn-emoji">✏️</span>Rewrite</button>
-        <button class="ai-tb-btn" onclick="demoCmd(this,'Moan')"><span class="ai-tb-btn-emoji">💗</span>Moan</button>
-        <button class="ai-tb-btn" onclick="demoCmd(this,'Brain')"><span class="ai-tb-btn-emoji">🧠</span>Brain</button>
-        <button class="ai-tb-btn" onclick="demoCmd(this,'Open')"><span class="ai-tb-btn-emoji">😮</span>Open</button>
-        <button class="ai-tb-btn" onclick="demoCmd(this,'BJ')"><span class="ai-tb-btn-emoji">💦</span>BJ</button>
-        <button class="ai-tb-btn" onclick="demoCmd(this,'Slutty')"><span class="ai-tb-btn-emoji">🎀</span>Slutty</button>
+        <button id="ai-tb-settings-btn">&#9881;</button>
+        <div id="ai-tb-persona-pills-zone" style="display:flex;align-items:center;flex-shrink:0;gap:4px;"></div>
+        <div class="ai-tb-pill-sep"></div>
       </div>
     </div>
   </div>
-  <div id="ai-tb-progress-track"><div id="ai-tb-progress-fill"></div></div>
 </div>
 
-<!-- ─── RPG Backdrop + Sheet ─── -->
-<div id="ai-rpg-backdrop" onclick="closeRpgSheet()"></div>
-<div id="ai-rpg-sheet">
-  <div id="ai-rpg-handle-area"><div id="ai-rpg-handle"></div></div>
-  <div id="ai-rpg-header">
-    <span id="ai-rpg-title">⚔️ RPG Tracker</span>
-    <button class="ai-rpg-hdr-btn" onclick="doRpgExport()">↑ Share</button>
-    <button class="ai-rpg-hdr-btn" onclick="setRpgTab('sync')">↓ Import</button>
-    <button id="ai-rpg-close-btn" onclick="closeRpgSheet()">✕</button>
+<div id="ai-settings-backdrop"></div>
+<div id="ai-settings-sheet">
+  <div id="ai-settings-handle-area"><div id="ai-settings-handle"></div></div>
+  <div id="ai-settings-header">
+    <span id="ai-settings-title">Settings</span>
+    <button id="ai-settings-close">&#10005;</button>
   </div>
-  <div id="ai-rpg-tabs"></div>
-  <div id="ai-rpg-content"></div>
+  <div id="ai-settings-tabs"></div>
+  <div id="ai-settings-content"></div>
 </div>
 
-<!-- ─── Page content ─── -->
-<div class="content">
-  <h2>Toolbar Preview</h2>
-  <p>This is a static preview of the redesigned AI Rewriter toolbar above. The buttons below are interactive demos — click/tap them to simulate states.</p>
-  <textarea id="demo-text" placeholder="Type or paste some text here, then try the toolbar buttons above…">This is a sample text for previewing the toolbar. You can click any button above to see the loading state and status bar update in real time.</textarea>
-  <p class="note">Scroll the command buttons row horizontally →</p>
+<div id="ai-dice-overlay">
+  <div id="ai-dice-card">
+    <div id="ai-dice-title">&#127922; Dice Roll</div>
+    <div id="ai-dice-selectors">
+      <button class="ai-dice-face-btn" data-faces="6">d6</button>
+      <button class="ai-dice-face-btn active" data-faces="20">d20</button>
+    </div>
+    <button id="ai-dice-roll-btn">Roll</button>
+    <div id="ai-dice-result-area">
+      <div id="ai-dice-result-num">&#8212;</div>
+      <div id="ai-dice-result-label"></div>
+      <div id="ai-dice-result-break"></div>
+    </div>
+    <div id="ai-dice-actions">
+      <button id="ai-dice-copy-btn">Copy</button>
+      <button id="ai-dice-dismiss-btn">Dismiss</button>
+    </div>
+  </div>
+</div>
+
+<div class="page-content">
+  <h1>Mobile Toolbar Preview</h1>
+  <p class="subtitle">Live interactive preview. Settings and personas persist via localStorage.</p>
+  <label for="demo-textarea">Demo Text Area</label>
+  <textarea id="demo-textarea" placeholder="Type some text here and use the toolbar above to format or rewrite it...">The quick brown fox jumped over the lazy dog. she said "i can't believe it" and ran away. He looked at her, wondering what had gone wrong...</textarea>
+  <p class="status-msg" id="page-status">Click Format or any AI command button above.</p>
 </div>
 
 <script>
-  // ─── RPG Tracker ──────────────────────────────────────────────────────────
-  const RPG_CHAT_ID = 'preview';
-  const KEYS = {
-    quests:  'sc_quests_v1_'   + RPG_CHAT_ID,
-    res:     'sc_res_v1_'      + RPG_CHAT_ID,
-    abl:     'sc_abl_v1_'      + RPG_CHAT_ID,
-    party:   'sc_party_v1_'    + RPG_CHAT_ID,
-    npc:     'sc_npc_v1_'      + RPG_CHAT_ID,
-    rumours: 'sc_rumour_v1_'   + RPG_CHAT_ID,
-    dice:    'sc_dice_mod_v1_' + RPG_CHAT_ID,
-  };
-  function rpgLoad(k)  { try { return JSON.parse(localStorage.getItem(k)) || []; } catch { return []; } }
-  function rpgSave(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+(function () {
+  "use strict";
 
-  let rpgQuests=[], rpgRes=[], rpgAbl=[], rpgParty=[], rpgNpcs=[], rpgRumours=[], rpgDiceMods=[];
-  let diceSelectedFaces = new Set([20]);
-  let rpgDiceCount = 1, rpgDiceLastResult = null, rpgDiceHistory = [];
-  let rpgActiveTab = 'quests';
-
-  const RPG_TABS = [
-    {id:'quests', label:'Quests'},{id:'res', label:'Res'},{id:'abl', label:'Abl'},
-    {id:'party', label:'Party'},{id:'npc', label:'NPCs'},{id:'rumours', label:'Rum'},
-    {id:'dice', label:'Dice'},{id:'sync', label:'⇄ Sync'},
+  const COMMANDS_DEFAULT = [
+    { label: "Rewrite", emoji: "\u270F\uFE0F", prompt: "(AI rewrite prompt)" },
+    { label: "Moan",    emoji: "\uD83D\uDC97", prompt: "(Moan rewrite prompt)" },
+    { label: "Brain",   emoji: "\uD83E\uDDE0", prompt: "(Brain rewrite prompt)" },
+    { label: "Open",    emoji: "\uD83D\uDE2E", prompt: "(Open rewrite prompt)" },
+    { label: "BJ",      emoji: "\uD83D\uDCA6", prompt: "(BJ rewrite prompt)" },
+    { label: "Slutty",  emoji: "\uD83C\uDF80", prompt: "(Slutty rewrite prompt)" },
   ];
-  const rpgTabsEl    = document.getElementById('ai-rpg-tabs');
-  const rpgContentEl = document.getElementById('ai-rpg-content');
-  const rpgPanels    = {};
 
-  RPG_TABS.forEach(t => {
-    const btn = document.createElement('button');
-    btn.className = 'ai-rpg-tab'; btn.dataset.tab = t.id; btn.textContent = t.label;
-    btn.onclick = () => setRpgTab(t.id);
-    rpgTabsEl.appendChild(btn);
-    const p = document.createElement('div');
-    p.className = 'ai-rpg-section'; p.id = 'ai-rpg-sec-' + t.id;
-    rpgContentEl.appendChild(p);
-    rpgPanels[t.id] = p;
+  function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+  function load(key, def) { try { var v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : def; } catch { return def; } }
+
+  var mobileCommands         = load("preview_commands_v1", null) || COMMANDS_DEFAULT.slice();
+  var mobilePersonas         = load("preview_personas_v1", null) || Array.from({ length: 10 }, function() { return { label: "", name: "", prepend: "" }; });
+  while (mobilePersonas.length < 10) mobilePersonas.push({ label: "", name: "", prepend: "" });
+  var mobileActivePersonaIdx = load("preview_active_persona_v1", -1);
+  var mobileGlobalStyle      = load("preview_global_style_v1", "");
+
+  var btnRow          = document.getElementById("ai-tb-buttons");
+  var personaPillsZone = document.getElementById("ai-tb-persona-pills-zone");
+  var statusEl        = document.getElementById("ai-tb-status");
+  var demoTextarea    = document.getElementById("demo-textarea");
+  var pageStatus      = document.getElementById("page-status");
+
+  function setStatus(text, cls) {
+    statusEl.textContent = text;
+    statusEl.className = cls || "";
+  }
+
+  function formatText(text) {
+    text = text.replace(/\(\(\s*([\s\S]*?)\s*\)\)/g, "($1)");
+    text = text.replace(/\*/g, "");
+    text = text.replace(/[\u201C\u201D]/g, '"');
+    text = text.replace(/[\u2018\u2019]/g, "'");
+    text = text.replace(/[ \t]{2,}/g, " ");
+    text = text.replace(/\bi\b/g, "I");
+    text = text.split("\n").map(function(l) { return l.trim(); }).join("\n");
+    text = text.replace(/\n+/g, "\n\n");
+    text = text.replace(/(^|\n\n)([a-z])/g, function(_, sep, ch) { return sep + ch.toUpperCase(); });
+    return text;
+  }
+
+  function rebuildCmdButtons() {
+    Array.from(btnRow.querySelectorAll(".ai-tb-btn")).forEach(function(b) { b.remove(); });
+    mobileCommands.forEach(function(cmd) {
+      var btn = document.createElement("button");
+      btn.className = "ai-tb-btn";
+      btn.innerHTML = '<span class="ai-tb-btn-emoji">' + cmd.emoji + '</span>' + cmd.label;
+      btn.addEventListener("click", function() {
+        setStatus(cmd.label + " (preview \u2014 no AI call)", "working");
+        pageStatus.textContent = "Would run: " + cmd.label + " prompt via OpenRouter.";
+        setTimeout(function() { setStatus("Ready"); }, 2000);
+      });
+      btnRow.appendChild(btn);
+    });
+    var diceBtn = document.createElement("button");
+    diceBtn.className = "ai-tb-btn ai-tb-dice-btn";
+    diceBtn.innerHTML = '<span class="ai-tb-btn-emoji">\uD83C\uDFB2</span>Dice';
+    diceBtn.addEventListener("click", openDiceOverlay);
+    btnRow.appendChild(diceBtn);
+  }
+  rebuildCmdButtons();
+
+  function rebuildPersonaPills() {
+    personaPillsZone.innerHTML = "";
+    for (var i = 0; i < 10; i++) {
+      (function(idx) {
+        var p = mobilePersonas[idx];
+        var isActive = idx === mobileActivePersonaIdx;
+        var hasContent = !!(p.label || p.name || p.prepend);
+        var pill = document.createElement("button");
+        pill.className = "ai-tb-persona-pill" + (isActive ? " active" : hasContent ? " configured" : "");
+        pill.textContent = p.label ? p.label.slice(0, 6) : String(idx + 1);
+        pill.addEventListener("click", function() {
+          mobileActivePersonaIdx = (mobileActivePersonaIdx === idx) ? -1 : idx;
+          save("preview_active_persona_v1", mobileActivePersonaIdx);
+          rebuildPersonaPills();
+          if (mobileActivePersonaIdx >= 0) {
+            var name = mobilePersonas[mobileActivePersonaIdx].label || ("P" + (mobileActivePersonaIdx + 1));
+            setStatus("Persona: " + name, "done");
+            setTimeout(function() { setStatus("Ready"); }, 2200);
+          } else {
+            setStatus("Persona off");
+            setTimeout(function() { setStatus("Ready"); }, 1400);
+          }
+        });
+        personaPillsZone.appendChild(pill);
+      })(i);
+    }
+  }
+  rebuildPersonaPills();
+
+  document.getElementById("ai-tb-fmt-pin").addEventListener("click", function() {
+    var text = demoTextarea.value.trim();
+    if (!text) return;
+    demoTextarea.value = formatText(text);
+    setStatus("\u2713 Formatted", "done");
+    pageStatus.textContent = "Text formatted locally (no AI call).";
+    setTimeout(function() { setStatus("Ready"); }, 2000);
   });
 
-  // Swipe-down to close
-  (function(){
-    const ha = document.getElementById('ai-rpg-handle-area');
-    const sh = document.getElementById('ai-rpg-sheet');
-    let sy=0, drag=false;
-    ha.addEventListener('touchstart', e=>{ sy=e.touches[0].clientY; drag=true; sh.style.transition='none'; },{passive:true});
-    ha.addEventListener('touchmove',  e=>{ if(!drag) return; const dy=e.touches[0].clientY-sy; if(dy>0) sh.style.transform=`translateY(${dy}px)`; },{passive:true});
-    ha.addEventListener('touchend',   e=>{ if(!drag) return; drag=false; const dy=e.changedTouches[0].clientY-sy; sh.style.transition=''; if(dy>80) closeRpgSheet(); else sh.style.transform=''; });
-  })();
+  var stgBackdrop  = document.getElementById("ai-settings-backdrop");
+  var stgSheet     = document.getElementById("ai-settings-sheet");
+  var stgTabsEl    = document.getElementById("ai-settings-tabs");
+  var stgContentEl = document.getElementById("ai-settings-content");
+  var stgActiveTab = "personas";
 
-  function openRpgSheet() {
-    rpgQuests  = rpgLoad(KEYS.quests);
-    rpgRes     = rpgLoad(KEYS.res);
-    rpgAbl     = rpgLoad(KEYS.abl);
-    rpgParty   = rpgLoad(KEYS.party);
-    rpgNpcs    = rpgLoad(KEYS.npc);
-    rpgRumours = rpgLoad(KEYS.rumours);
-    rpgDiceMods= rpgLoad(KEYS.dice);
-    document.getElementById('ai-rpg-sheet').classList.add('open');
-    document.getElementById('ai-rpg-backdrop').classList.add('open');
-    setRpgTab(rpgActiveTab);
+  var SETTINGS_TABS = [
+    { id: "personas", label: "Personas" },
+    { id: "style",    label: "Style" },
+    { id: "commands", label: "Commands" },
+    { id: "import",   label: "Import" },
+  ];
+  SETTINGS_TABS.forEach(function(t) {
+    var btn = document.createElement("button");
+    btn.className = "ai-stg-tab"; btn.dataset.tab = t.id; btn.textContent = t.label;
+    btn.addEventListener("click", function() { setSettingsTab(t.id); });
+    stgTabsEl.appendChild(btn);
+  });
+
+  function openSettings() { stgSheet.classList.add("open"); stgBackdrop.classList.add("open"); setSettingsTab(stgActiveTab); }
+  function closeSettings() { stgSheet.classList.remove("open"); stgBackdrop.classList.remove("open"); }
+  function setSettingsTab(id) {
+    stgActiveTab = id;
+    stgTabsEl.querySelectorAll(".ai-stg-tab").forEach(function(b) { b.classList.toggle("active", b.dataset.tab === id); });
+    renderSettingsTab();
   }
-  function closeRpgSheet() {
-    document.getElementById('ai-rpg-sheet').classList.remove('open');
-    document.getElementById('ai-rpg-backdrop').classList.remove('open');
-    document.getElementById('ai-rpg-sheet').style.transform = '';
-  }
-  function setRpgTab(id) {
-    rpgActiveTab = id;
-    document.querySelectorAll('.ai-rpg-tab').forEach(b => b.classList.toggle('active', b.dataset.tab===id));
-    Object.entries(rpgPanels).forEach(([k,p]) => p.classList.toggle('active', k===id));
-    renderRpgTab();
-  }
-  function renderRpgTab() {
-    const p = rpgPanels[rpgActiveTab];
-    const m = {quests:renderRpgQuests, res:renderRpgRes, abl:renderRpgAbl, party:renderRpgParty,
-               npc:renderRpgNpcs, rumours:renderRpgRumours, dice:renderRpgDice, sync:renderRpgSync};
-    if (m[rpgActiveTab]) m[rpgActiveTab](p);
+  function renderSettingsTab() {
+    stgContentEl.innerHTML = "";
+    if (stgActiveTab === "personas") renderPersonasTab();
+    else if (stgActiveTab === "style") renderStyleTab();
+    else if (stgActiveTab === "commands") renderCommandsTab();
+    else if (stgActiveTab === "import") renderImportTab();
   }
 
-  // helpers
-  function rpgMkInput(ph) {
-    const e=document.createElement('input'); e.type='text'; e.placeholder=ph; e.className='rpg-add-input'; return e;
-  }
-  function rpgMkDelBtn() {
-    const b=document.createElement('button'); b.className='rpg-del-btn';
-    b.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-    return b;
-  }
-  function rpgMkInsBtn(textFn) {
-    const b=document.createElement('button'); b.className='rpg-ins-btn'; b.textContent='⎘';
-    b.onclick=()=>{ const t=textFn(); if(t){ previewInsert(t); b.textContent='✔'; setTimeout(()=>b.textContent='⎘',1200);} };
-    return b;
-  }
-  function previewInsert(text) {
-    const ta=document.getElementById('demo-text');
-    ta.value += (ta.value && !ta.value.endsWith('\n') ? '\n' : '') + text;
-  }
-  function rpgMkEmpty(panel, msg) {
-    const e=document.createElement('div'); e.className='rpg-empty'; e.textContent=msg; panel.appendChild(e);
-  }
+  document.getElementById("ai-tb-settings-btn").addEventListener("click", openSettings);
+  document.getElementById("ai-settings-close").addEventListener("click", closeSettings);
+  stgBackdrop.addEventListener("click", closeSettings);
 
-  // QUESTS
-  const QUEST_STATES=['active','done','failed'];
-  function renderRpgQuests(panel) {
-    panel.innerHTML='';
-    const titleIn=rpgMkInput('Quest title…');
-    const addBtn=document.createElement('button'); addBtn.className='rpg-add-btn'; addBtn.textContent='+ Add Quest';
-    const addRow=document.createElement('div'); addRow.className='rpg-add-row';
-    addRow.append(titleIn,addBtn); panel.appendChild(addRow);
-    const doAdd=()=>{ const t=titleIn.value.trim(); if(!t)return; rpgQuests.unshift({id:Date.now(),title:t,notes:'',state:'active',updates:[]}); rpgSave(KEYS.quests,rpgQuests); titleIn.value=''; renderRpgQuests(panel); };
-    addBtn.onclick=doAdd; titleIn.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doAdd();}};
-    if(!rpgQuests.length){rpgMkEmpty(panel,'No quests yet.');return;}
-    rpgQuests.forEach((q,idx)=>{
-      const card=document.createElement('div'); card.className='rpg-card';
-      const statusBtn=document.createElement('button');
-      statusBtn.className=`rpg-status-pill rpg-q-${q.state}`;
-      statusBtn.textContent=q.state==='active'?'○':q.state==='done'?'✓':'✗';
-      statusBtn.onclick=()=>{ q.state=QUEST_STATES[(QUEST_STATES.indexOf(q.state)+1)%3]; rpgSave(KEYS.quests,rpgQuests); renderRpgQuests(panel); };
-      const body=document.createElement('div'); body.style.cssText='flex:1;min-width:0;';
-      const nameEl=document.createElement('div'); nameEl.className='rpg-item-name'+(q.state!=='active'?' rpg-striked':''); nameEl.textContent=q.title; nameEl.style.cursor='pointer';
-      const notesEl=document.createElement('div'); notesEl.className='rpg-item-note'; notesEl.textContent=q.notes; notesEl.style.display=q.notes?'':'none';
-      const editWrap=document.createElement('div'); editWrap.style.cssText='display:none;flex-direction:column;gap:5px;padding-top:5px;';
-      const eTi=rpgMkInput('Title…'); eTi.value=q.title; eTi.oninput=()=>{q.title=eTi.value;rpgSave(KEYS.quests,rpgQuests);};
-      const eNo=rpgMkInput('Notes…'); eNo.value=q.notes; eNo.oninput=()=>{q.notes=eNo.value;rpgSave(KEYS.quests,rpgQuests);};
-      const doneBtn=document.createElement('button'); doneBtn.className='rpg-done-btn'; doneBtn.textContent='✓ Done';
-      doneBtn.onclick=()=>{ editWrap.style.display='none'; nameEl.style.display=''; nameEl.textContent=q.title; nameEl.className='rpg-item-name'+(q.state!=='active'?' rpg-striked':''); notesEl.textContent=q.notes; notesEl.style.display=q.notes?'':'none'; };
-      nameEl.onclick=()=>{ editWrap.style.display='flex'; nameEl.style.display='none'; notesEl.style.display='none'; eTi.value=q.title; eNo.value=q.notes; eTi.focus(); };
-      editWrap.append(eTi,eNo,doneBtn); body.append(nameEl,notesEl,editWrap);
-      const ins=rpgMkInsBtn(()=>`[Quest: ${q.state==='done'?'✓':q.state==='failed'?'✗':'○'} ${q.title}${q.notes?' — '+q.notes:''}]`);
-      const del=rpgMkDelBtn(); del.onclick=()=>{rpgQuests.splice(idx,1);rpgSave(KEYS.quests,rpgQuests);renderRpgQuests(panel);};
-      card.append(statusBtn,body,ins,del); panel.appendChild(card);
-    });
-  }
+  function mkLabel(text) { var el = document.createElement("span"); el.className = "ai-stg-section-label"; el.textContent = text; return el; }
+  function mkHint(text)  { var el = document.createElement("p"); el.className = "ai-stg-hint"; el.textContent = text; return el; }
+  function mkInput(ph, val) { var el = document.createElement("input"); el.type = "text"; el.className = "ai-stg-input"; el.placeholder = ph; el.value = val || ""; return el; }
+  function mkTextarea(ph, val, minH) { var el = document.createElement("textarea"); el.className = "ai-stg-input ai-stg-textarea"; el.placeholder = ph; el.value = val || ""; el.style.minHeight = (minH || 90) + "px"; return el; }
+  function mkBtn(text, cls) { var el = document.createElement("button"); el.className = "ai-stg-btn" + (cls ? " " + cls : ""); el.textContent = text; return el; }
 
-  // RESOURCES
-  function renderRpgRes(panel) {
-    panel.innerHTML='';
-    const nameIn=rpgMkInput('Resource name…');
-    const valIn=document.createElement('input'); valIn.type='number'; valIn.className='rpg-add-num'; valIn.value='0'; valIn.min='0';
-    const addBtn=document.createElement('button'); addBtn.className='rpg-add-btn'; addBtn.textContent='+ Add';
-    const addRow=document.createElement('div'); addRow.className='rpg-add-row'; addRow.append(nameIn,valIn,addBtn); panel.appendChild(addRow);
-    const doAdd=()=>{ const n=nameIn.value.trim(); if(!n)return; rpgRes.push({id:Date.now(),name:n,value:parseInt(valIn.value)||0,notes:''}); rpgSave(KEYS.res,rpgRes); nameIn.value=''; valIn.value='0'; renderRpgRes(panel); };
-    addBtn.onclick=doAdd; nameIn.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doAdd();}};
-    if(!rpgRes.length){rpgMkEmpty(panel,'No resources yet.');return;}
-    rpgRes.forEach((r,idx)=>{
-      const row=document.createElement('div'); row.className='rpg-item-row';
-      const nameEl=document.createElement('span'); nameEl.className='rpg-item-name'; nameEl.style.flex='1'; nameEl.textContent=r.name;
-      const minBtn=document.createElement('button'); minBtn.className='rpg-val-btn'; minBtn.textContent='−';
-      const valEl=document.createElement('span'); valEl.className='rpg-res-val'; valEl.textContent=r.value;
-      const plusBtn=document.createElement('button'); plusBtn.className='rpg-val-btn'; plusBtn.textContent='+';
-      minBtn.onclick=()=>{r.value=Math.max(0,r.value-1);valEl.textContent=r.value;rpgSave(KEYS.res,rpgRes);};
-      plusBtn.onclick=()=>{r.value++;valEl.textContent=r.value;rpgSave(KEYS.res,rpgRes);};
-      const ins=rpgMkInsBtn(()=>`[${r.name}: ${r.value}]`);
-      const del=rpgMkDelBtn(); del.onclick=()=>{rpgRes.splice(idx,1);rpgSave(KEYS.res,rpgRes);renderRpgRes(panel);};
-      row.append(nameEl,minBtn,valEl,plusBtn,ins,del); panel.appendChild(row);
-    });
-  }
-
-  // ABILITIES
-  function renderRpgAbl(panel) {
-    panel.innerHTML='';
-    const nameIn=rpgMkInput('Ability name…');
-    const maxIn=document.createElement('input'); maxIn.type='number'; maxIn.className='rpg-add-num'; maxIn.value='3'; maxIn.min='1'; maxIn.max='99';
-    const addBtn=document.createElement('button'); addBtn.className='rpg-add-btn'; addBtn.textContent='+ Add';
-    const addRow=document.createElement('div'); addRow.className='rpg-add-row'; addRow.append(nameIn,maxIn,addBtn); panel.appendChild(addRow);
-    const doAdd=()=>{ const n=nameIn.value.trim(); if(!n)return; const mx=Math.max(1,parseInt(maxIn.value)||3); rpgAbl.push({id:Date.now(),name:n,notes:'',current:mx,max:mx}); rpgSave(KEYS.abl,rpgAbl); nameIn.value=''; maxIn.value='3'; renderRpgAbl(panel); };
-    addBtn.onclick=doAdd;
-    if(!rpgAbl.length){rpgMkEmpty(panel,'No abilities yet.');return;}
-    rpgAbl.forEach((a,idx)=>{
-      const card=document.createElement('div'); card.className='rpg-abl-card';
-      const top=document.createElement('div'); top.className='rpg-item-row'; top.style.borderBottom='none'; top.style.paddingBottom='4px';
-      const nameEl=document.createElement('span'); nameEl.className='rpg-item-name'; nameEl.style.flex='1'; nameEl.textContent=a.name;
-      const curEl=document.createElement('span'); curEl.className='rpg-abl-cur'; curEl.textContent=`${a.current}/${a.max}`;
-      const rst=document.createElement('button'); rst.className='rpg-rst-btn'; rst.textContent='RST';
-      rst.onclick=()=>{a.current=a.max;rpgSave(KEYS.abl,rpgAbl);renderRpgAbl(panel);};
-      const del=rpgMkDelBtn(); del.onclick=()=>{rpgAbl.splice(idx,1);rpgSave(KEYS.abl,rpgAbl);renderRpgAbl(panel);};
-      top.append(nameEl,curEl,rst,del); card.appendChild(top);
-      const useRow=document.createElement('div'); useRow.style.cssText='display:flex;gap:4px;flex-wrap:wrap;padding-bottom:4px;';
-      for(let i=0;i<Math.min(a.max,8);i++){
-        const btn=document.createElement('button'); btn.className='rpg-use-btn '+(i<a.current?'avail':'spent'); btn.textContent='Use';
-        btn.onclick=()=>{ if(a.current<=0)return; a.current--; curEl.textContent=`${a.current}/${a.max}`; rpgSave(KEYS.abl,rpgAbl); renderRpgAbl(panel); };
-        useRow.appendChild(btn);
-      }
-      card.appendChild(useRow); panel.appendChild(card);
-    });
-  }
-
-  // PARTY
-  const PARTY_STATUSES=['active','downed','dead','absent'];
-  const PARTY_CLS={active:'rpg-q-active',downed:'rpg-q-failed',dead:'rpg-q-failed',absent:'rpg-q-done'};
-  function renderRpgParty(panel) {
-    panel.innerHTML='';
-    const nameIn=rpgMkInput('Member name…');
-    const addBtn=document.createElement('button'); addBtn.className='rpg-add-btn'; addBtn.textContent='+ Add';
-    const addRow=document.createElement('div'); addRow.className='rpg-add-row'; addRow.append(nameIn,addBtn); panel.appendChild(addRow);
-    const doAdd=()=>{ const n=nameIn.value.trim(); if(!n)return; rpgParty.push({id:Date.now(),name:n,status:'active'}); rpgSave(KEYS.party,rpgParty); nameIn.value=''; renderRpgParty(panel); };
-    addBtn.onclick=doAdd; nameIn.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doAdd();}};
-    if(!rpgParty.length){rpgMkEmpty(panel,'No party members yet.');return;}
-    rpgParty.forEach((m,idx)=>{
-      const row=document.createElement('div'); row.className='rpg-item-row';
-      const sb=document.createElement('button'); sb.className=`rpg-status-pill ${PARTY_CLS[m.status]||'rpg-q-active'}`;
-      sb.textContent=m.status.charAt(0).toUpperCase()+m.status.slice(1);
-      sb.onclick=()=>{ m.status=PARTY_STATUSES[(PARTY_STATUSES.indexOf(m.status)+1)%4]; rpgSave(KEYS.party,rpgParty); renderRpgParty(panel); };
-      const nameEl=document.createElement('span'); nameEl.className='rpg-item-name'; nameEl.style.flex='1'; nameEl.textContent=m.name;
-      const del=rpgMkDelBtn(); del.onclick=()=>{rpgParty.splice(idx,1);rpgSave(KEYS.party,rpgParty);renderRpgParty(panel);};
-      row.append(sb,nameEl,del); panel.appendChild(row);
-    });
-  }
-
-  // NPCs
-  const NPC_DISPS=['friendly','neutral','hostile'];
-  const NPC_CLS={friendly:'rpg-q-active',neutral:'rpg-npc-neutral',hostile:'rpg-q-failed'};
-  function renderRpgNpcs(panel) {
-    panel.innerHTML='';
-    const nameIn=rpgMkInput('NPC name…');
-    const addBtn=document.createElement('button'); addBtn.className='rpg-add-btn'; addBtn.textContent='+ Add';
-    const addRow=document.createElement('div'); addRow.className='rpg-add-row'; addRow.append(nameIn,addBtn); panel.appendChild(addRow);
-    const doAdd=()=>{ const n=nameIn.value.trim(); if(!n)return; rpgNpcs.push({id:Date.now(),name:n,note:'',disp:'neutral'}); rpgSave(KEYS.npc,rpgNpcs); nameIn.value=''; renderRpgNpcs(panel); };
-    addBtn.onclick=doAdd; nameIn.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doAdd();}};
-    if(!rpgNpcs.length){rpgMkEmpty(panel,'No NPCs yet.');return;}
-    rpgNpcs.forEach((n,idx)=>{
-      const card=document.createElement('div'); card.className='rpg-card';
-      const db=document.createElement('button'); db.className=`rpg-status-pill ${NPC_CLS[n.disp]||'rpg-npc-neutral'}`;
-      db.textContent=n.disp.charAt(0).toUpperCase()+n.disp.slice(1);
-      db.onclick=()=>{ n.disp=NPC_DISPS[(NPC_DISPS.indexOf(n.disp)+1)%3]; rpgSave(KEYS.npc,rpgNpcs); renderRpgNpcs(panel); };
-      const body=document.createElement('div'); body.style.cssText='flex:1;min-width:0;';
-      const nameEl=document.createElement('div'); nameEl.className='rpg-item-name'; nameEl.textContent=n.name; body.appendChild(nameEl);
-      const del=rpgMkDelBtn(); del.onclick=()=>{rpgNpcs.splice(idx,1);rpgSave(KEYS.npc,rpgNpcs);renderRpgNpcs(panel);};
-      card.append(db,body,del); panel.appendChild(card);
-    });
-  }
-
-  // RUMOURS
-  function renderRpgRumours(panel) {
-    panel.innerHTML='';
-    const addBtn=document.createElement('button'); addBtn.className='rpg-add-btn'; addBtn.style.cssText='display:block;width:100%;margin-bottom:10px;';
-    addBtn.textContent='+ Add Rumour';
-    addBtn.onclick=()=>{ rpgRumours.push({id:Date.now(),text:'',done:false}); rpgSave(KEYS.rumours,rpgRumours); renderRpgRumours(panel); setTimeout(()=>{ const tas=panel.querySelectorAll('.rpg-rumour-ta'); if(tas.length) tas[tas.length-1].focus(); },0); };
-    panel.appendChild(addBtn);
-    if(!rpgRumours.length){rpgMkEmpty(panel,'No rumours yet.');return;}
-    rpgRumours.forEach((r,idx)=>{
-      const row=document.createElement('div'); row.className='rpg-item-row'; row.style.alignItems='flex-start';
-      const chk=document.createElement('div'); chk.className='rpg-rumour-chk'+(r.done?' done':''); chk.style.marginTop='6px';
-      if(r.done) chk.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-      chk.onclick=()=>{r.done=!r.done;rpgSave(KEYS.rumours,rpgRumours);renderRpgRumours(panel);};
-      const ta=document.createElement('textarea'); ta.className='rpg-add-input rpg-rumour-ta'; ta.value=r.text; ta.rows=2; ta.style.resize='none';
-      if(r.done){ta.style.opacity='0.45';ta.style.textDecoration='line-through';}
-      ta.oninput=()=>{r.text=ta.value;rpgSave(KEYS.rumours,rpgRumours);};
-      const del=rpgMkDelBtn(); del.style.marginTop='6px'; del.onclick=()=>{rpgRumours.splice(idx,1);rpgSave(KEYS.rumours,rpgRumours);renderRpgRumours(panel);};
-      row.append(chk,ta,del); panel.appendChild(row);
-    });
-  }
-
-  // DICE
-  const RPG_DICE_FACES=[4,6,8,10,12,20,100];
-  function renderRpgDice(panel) {
-    panel.innerHTML='';
-    const grid=document.createElement('div'); grid.className='rpg-dice-grid';
-    RPG_DICE_FACES.forEach(f=>{
-      const btn=document.createElement('button'); btn.className='rpg-dice-face'+(diceSelectedFaces.has(f)?' active':''); btn.textContent='d'+f;
-      btn.onclick=()=>{ btn.classList.toggle('active'); if(btn.classList.contains('active')) diceSelectedFaces.add(f); else { diceSelectedFaces.delete(f); if(!diceSelectedFaces.size){diceSelectedFaces.add(f);btn.classList.add('active');} } };
-      grid.appendChild(btn);
-    }); panel.appendChild(grid);
-    const cRow=document.createElement('div'); cRow.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 0;';
-    const dec=document.createElement('button'); dec.className='rpg-val-btn'; dec.textContent='−';
-    const cEl=document.createElement('span'); cEl.style.cssText='font-size:16px;font-weight:700;color:#e2e8f0;min-width:26px;text-align:center;';
-    cEl.textContent=rpgDiceCount;
-    const inc=document.createElement('button'); inc.className='rpg-val-btn'; inc.textContent='+';
-    const clbl=document.createElement('span'); clbl.style.cssText='font-size:12px;color:#475569;'; clbl.textContent='dice each';
-    dec.onclick=()=>{rpgDiceCount=Math.max(1,rpgDiceCount-1);cEl.textContent=rpgDiceCount;};
-    inc.onclick=()=>{rpgDiceCount=Math.min(20,rpgDiceCount+1);cEl.textContent=rpgDiceCount;};
-    cRow.append(dec,cEl,inc,clbl); panel.appendChild(cRow);
-    const rollBtn=document.createElement('button'); rollBtn.className='rpg-roll-btn'; rollBtn.textContent='🎲 Roll'; panel.appendChild(rollBtn);
-    const totalEl=document.createElement('div'); totalEl.className='rpg-dice-total';
-    totalEl.textContent=rpgDiceLastResult?rpgDiceLastResult.total:'—';
-    if(rpgDiceLastResult&&rpgDiceLastResult.natClass) totalEl.classList.add('rpg-'+rpgDiceLastResult.natClass);
-    panel.appendChild(totalEl);
-    const natEl=document.createElement('div'); natEl.style.cssText='text-align:center;font-size:14px;font-weight:700;min-height:20px;margin-bottom:4px;';
-    if(rpgDiceLastResult&&rpgDiceLastResult.natMsg){natEl.textContent=rpgDiceLastResult.natMsg;natEl.style.color=rpgDiceLastResult.natClass==='nat20'?'#fbbf24':'#f87171';}
-    panel.appendChild(natEl);
-    const brkEl=document.createElement('div'); brkEl.style.cssText='text-align:center;font-size:11px;color:#475569;min-height:14px;margin-bottom:8px;font-family:monospace;';
-    if(rpgDiceLastResult&&rpgDiceLastResult.breakdown) brkEl.textContent=rpgDiceLastResult.breakdown;
-    panel.appendChild(brkEl);
-    const histEl=document.createElement('div'); histEl.className='rpg-dice-hist';
-    rpgDiceHistory.forEach(h=>{ const c=document.createElement('span'); c.className='rpg-dice-chip'+(h.natClass?' rpg-'+h.natClass:''); c.textContent=h.label+': '+h.total; histEl.appendChild(c); });
-    panel.appendChild(histEl);
-    rollBtn.onclick=()=>{
-      const fa=[...diceSelectedFaces].sort((a,b)=>a-b);
-      const allR=[]; const perD={};
-      fa.forEach(f=>{perD[f]=[];for(let i=0;i<rpgDiceCount;i++){const r=Math.floor(Math.random()*f)+1;perD[f].push(r);allR.push(r);}});
-      const raw=allR.reduce((a,b)=>a+b,0), total=raw;
-      let breakdown=allR.length>1?(fa.length===1?'['+perD[fa[0]].join(', ')+']':fa.map(f=>'d'+f+':['+perD[f].join(',')+']').join(' ')):""; 
-      let natMsg='',natClass='';
-      if(fa.length===1&&fa[0]===20&&rpgDiceCount===1){if(allR[0]===20){natMsg='Natural 20!';natClass='nat20';}else if(allR[0]===1){natMsg='Critical Fail!';natClass='nat1';}}
-      const label=fa.map(f=>rpgDiceCount+'d'+f).join('+');
-      rpgDiceLastResult={total,breakdown,natMsg,natClass};
-      rpgDiceHistory.unshift({label,total,natClass}); if(rpgDiceHistory.length>8)rpgDiceHistory.pop();
-      // Insert roll result into the demo textarea
-      const modSuffix='';
-      const logLine = natMsg
-        ? `[Roll ${label}${modSuffix}: ${total} — ${natMsg}${breakdown?' '+breakdown:''}]`
-        : breakdown
-          ? `[Roll ${label}${modSuffix}: ${total} ${breakdown}]`
-          : `[Roll ${label}${modSuffix}: ${total}]`;
-      previewInsert(logLine);
-      renderRpgDice(panel);
-    };
-  }
-
-  // SYNC
-  function doRpgExport() {
-    const json=JSON.stringify({version:1,chatId:RPG_CHAT_ID,quests:rpgQuests,resources:rpgRes,abilities:rpgAbl,party:rpgParty,npcs:rpgNpcs,rumours:rpgRumours,diceMods:rpgDiceMods},null,2);
-    if(navigator.share){navigator.share({title:'RPG Export',text:json}).catch(()=>navigator.clipboard.writeText(json));}
-    else{navigator.clipboard.writeText(json).then(()=>alert('Copied to clipboard!'));}
-  }
-  function renderRpgSync(panel) {
-    panel.innerHTML='';
-    const info=document.createElement('div'); info.style.cssText='font-size:13px;color:#475569;line-height:1.7;margin-bottom:16px;';
-    info.innerHTML='<b style="color:#a78bfa">Chat:</b> '+RPG_CHAT_ID+'<br><br>Data is saved to <code style="color:#a78bfa">localStorage</code> in this preview.<br><br>Export copies JSON to clipboard. Import parses pasted JSON.';
-    panel.appendChild(info);
-    const expBtn=document.createElement('button'); expBtn.className='rpg-sync-btn'; expBtn.textContent='↑ Export to Clipboard';
-    expBtn.onclick=doRpgExport; panel.appendChild(expBtn);
-    const hr=document.createElement('hr'); hr.style.cssText='border:none;border-top:1px solid rgba(108,99,255,0.15);margin:16px 0 14px;'; panel.appendChild(hr);
-    const lbl=document.createElement('div'); lbl.style.cssText='font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;'; lbl.textContent='Import — paste JSON'; panel.appendChild(lbl);
-    const ta=document.createElement('textarea'); ta.className='rpg-sync-area'; ta.placeholder='Paste exported JSON here…'; panel.appendChild(ta);
-    const impBtn=document.createElement('button'); impBtn.className='rpg-sync-btn rpg-sync-import'; impBtn.style.marginTop='10px'; impBtn.textContent='↓ Import & Replace';
-    impBtn.onclick=()=>{
-      let d; try{d=JSON.parse(ta.value.trim());}catch{alert('Invalid JSON');return;}
-      if(!d||d.version!==1){alert('Unknown format');return;}
-      if(!confirm('Replace all RPG data in this preview?'))return;
-      if(Array.isArray(d.quests))   {rpgQuests  =d.quests;   rpgSave(KEYS.quests,rpgQuests);}
-      if(Array.isArray(d.resources)){rpgRes      =d.resources;rpgSave(KEYS.res,rpgRes);}
-      if(Array.isArray(d.abilities)){rpgAbl      =d.abilities;rpgSave(KEYS.abl,rpgAbl);}
-      if(Array.isArray(d.party))    {rpgParty    =d.party;    rpgSave(KEYS.party,rpgParty);}
-      if(Array.isArray(d.npcs))     {rpgNpcs     =d.npcs;     rpgSave(KEYS.npc,rpgNpcs);}
-      if(Array.isArray(d.rumours))  {rpgRumours  =d.rumours;  rpgSave(KEYS.rumours,rpgRumours);}
-      ta.value=''; alert('Imported!'); setRpgTab('quests');
-    };
-    panel.appendChild(impBtn);
-  }
-
-  // boot
-  setRpgTab('quests');
-
-  // ─── Toolbar demo state ──────────────────────────────────────────────────
-  const statusEl      = document.getElementById('ai-tb-status');
-  const progressTrack = document.getElementById('ai-tb-progress-track');
-  const fmtPin        = document.getElementById('ai-tb-fmt-pin');
-  const allBtns       = document.querySelectorAll('.ai-tb-btn');
-
-  let demoTimer = null;
-
-  function setStatus(text, type = '') {
-    statusEl.textContent = text;
-    statusEl.className = type ? 'ai-tb-' + type : '';
-  }
-
-  function setBusy(val, runningBtn = null) {
-    progressTrack.classList.toggle('ai-tb-loading', val);
-    allBtns.forEach(b => {
-      if (b === runningBtn) {
-        b.classList.toggle('ai-tb-running', val);
-        b.classList.remove('ai-tb-busy');
-      } else {
-        b.classList.toggle('ai-tb-busy', val);
-        b.classList.remove('ai-tb-running');
-      }
-    });
-    if (fmtPin !== runningBtn) {
-      fmtPin.classList.toggle('ai-tb-busy', val);
-      fmtPin.classList.remove('ai-tb-running');
+  function renderPersonasTab() {
+    stgContentEl.appendChild(mkLabel("RP Personas"));
+    stgContentEl.appendChild(mkHint("Tap a slot to expand. Use the numbered pills in the toolbar to activate/deactivate on the fly."));
+    for (var i = 0; i < 10; i++) {
+      (function(idx) {
+        var p = mobilePersonas[idx];
+        var isActive = idx === mobileActivePersonaIdx;
+        var slot = document.createElement("div");
+        slot.className = "ai-stg-persona-slot" + (isActive ? " slot-active" : "");
+        var hdr = document.createElement("div"); hdr.className = "ai-stg-persona-header";
+        var numCircle = document.createElement("div"); numCircle.className = "ai-stg-persona-num"; numCircle.textContent = String(idx + 1);
+        var labelText = document.createElement("div"); labelText.className = "ai-stg-persona-label-text";
+        labelText.textContent = p.label || p.name || ("Slot " + (idx + 1));
+        var chevron = document.createElement("span"); chevron.className = "ai-stg-chevron"; chevron.textContent = "\u203A";
+        hdr.appendChild(numCircle); hdr.appendChild(labelText);
+        if (isActive) { var b = document.createElement("span"); b.className = "ai-stg-active-badge"; b.textContent = "Active"; hdr.appendChild(b); }
+        hdr.appendChild(chevron);
+        var body = document.createElement("div"); body.className = "ai-stg-persona-body";
+        var labelIn  = mkInput("Short label (shown as pill)\u2026", p.label);
+        var nameIn   = mkInput("Character name \u2014 replaces {{user}}\u2026", p.name);
+        var prependTa = mkTextarea("Persona text prepended before every AI prompt\u2026", p.prepend, 110);
+        var actRow = document.createElement("div"); actRow.className = "ai-stg-persona-actions";
+        var actBtn = mkBtn(isActive ? "\u2713 Active \u2014 Deactivate" : "Activate", "ai-stg-btn-green");
+        var saveBtn = mkBtn("Save");
+        actRow.appendChild(actBtn); actRow.appendChild(saveBtn);
+        body.appendChild(labelIn); body.appendChild(nameIn); body.appendChild(prependTa); body.appendChild(actRow);
+        var savePersona = function() {
+          mobilePersonas[idx] = { label: labelIn.value.trim(), name: nameIn.value.trim(), prepend: prependTa.value };
+          save("preview_personas_v1", mobilePersonas);
+          rebuildPersonaPills();
+        };
+        actBtn.addEventListener("click", function() {
+          savePersona();
+          mobileActivePersonaIdx = (mobileActivePersonaIdx === idx) ? -1 : idx;
+          save("preview_active_persona_v1", mobileActivePersonaIdx);
+          rebuildPersonaPills();
+          renderPersonasTab();
+        });
+        saveBtn.addEventListener("click", function() {
+          savePersona();
+          labelText.textContent = mobilePersonas[idx].label || mobilePersonas[idx].name || ("Slot " + (idx + 1));
+          saveBtn.textContent = "\u2713 Saved";
+          setTimeout(function() { saveBtn.textContent = "Save"; }, 1600);
+        });
+        var expanded = false;
+        hdr.addEventListener("click", function() {
+          expanded = !expanded;
+          body.classList.toggle("open", expanded);
+          chevron.classList.toggle("open", expanded);
+        });
+        slot.appendChild(hdr); slot.appendChild(body);
+        stgContentEl.appendChild(slot);
+      })(i);
     }
   }
 
-  function demoCmd(btn, label) {
-    if (demoTimer) return;
-    setStatus(label + '…', 'working');
-    setBusy(true, btn);
-    demoTimer = setTimeout(() => {
-      setBusy(false);
-      setStatus('✓ ' + label + ' · mimo-v2.5 · 2.3s', 'done');
-      demoTimer = null;
-    }, 2500);
+  function renderStyleTab() {
+    stgContentEl.appendChild(mkLabel("Global Style Rules"));
+    stgContentEl.appendChild(mkHint("Prepended before every AI prompt when non-empty."));
+    var ta = mkTextarea("e.g. Always write in second-person present tense\u2026", mobileGlobalStyle, 150);
+    var saveBtn = mkBtn("Save Style Rules", "ai-stg-btn-block");
+    saveBtn.style.marginTop = "6px";
+    saveBtn.addEventListener("click", function() {
+      mobileGlobalStyle = ta.value;
+      save("preview_global_style_v1", mobileGlobalStyle);
+      saveBtn.textContent = "\u2713 Saved";
+      setTimeout(function() { saveBtn.textContent = "Save Style Rules"; }, 1600);
+    });
+    stgContentEl.appendChild(ta);
+    stgContentEl.appendChild(saveBtn);
   }
 
-  function demoFormat() {
-    if (demoTimer) return;
-    fmtPin.classList.add('ai-tb-running');
-    setBusy(true, fmtPin);
-    setStatus('Formatting…', 'working');
-    setTimeout(() => {
-      fmtPin.classList.remove('ai-tb-running');
-      setBusy(false);
-      setStatus('✓ Formatted', 'done');
-    }, 400);
+  function renderCommandsTab() {
+    stgContentEl.appendChild(mkLabel("AI Commands"));
+    stgContentEl.appendChild(mkHint("Edit labels, emojis, and prompts. Changes apply to the toolbar immediately."));
+    mobileCommands.forEach(function(cmd, i) {
+      var card = document.createElement("div"); card.className = "ai-stg-cmd-card";
+      var hdr = document.createElement("div"); hdr.className = "ai-stg-cmd-header";
+      var emojiIn = document.createElement("input");
+      emojiIn.type = "text"; emojiIn.className = "ai-stg-emoji-input"; emojiIn.value = cmd.emoji || "\u270F\uFE0F";
+      emojiIn.addEventListener("click", function(e) { e.stopPropagation(); });
+      var labelIn = document.createElement("input");
+      labelIn.type = "text"; labelIn.className = "ai-stg-cmd-label-input"; labelIn.value = cmd.label || ""; labelIn.placeholder = "Label\u2026";
+      labelIn.addEventListener("click", function(e) { e.stopPropagation(); });
+      var chevron = document.createElement("span"); chevron.className = "ai-stg-chevron"; chevron.textContent = "\u203A";
+      hdr.appendChild(emojiIn); hdr.appendChild(labelIn); hdr.appendChild(chevron);
+      var body = document.createElement("div"); body.className = "ai-stg-cmd-body";
+      var promptTa = mkTextarea("System prompt\u2026", cmd.prompt, 110);
+      var saveBtn = mkBtn("Save", "ai-stg-btn-block");
+      saveBtn.style.marginTop = "4px";
+      (function(cmdIdx) {
+        saveBtn.addEventListener("click", function(e) {
+          e.stopPropagation();
+          mobileCommands[cmdIdx] = { label: labelIn.value.trim() || cmd.label, emoji: emojiIn.value.trim() || cmd.emoji, prompt: promptTa.value };
+          save("preview_commands_v1", mobileCommands);
+          rebuildCmdButtons();
+          saveBtn.textContent = "\u2713 Saved";
+          setTimeout(function() { saveBtn.textContent = "Save"; }, 1600);
+        });
+      })(i);
+      body.appendChild(promptTa); body.appendChild(saveBtn);
+      var expanded = false;
+      hdr.addEventListener("click", function() {
+        expanded = !expanded;
+        body.classList.toggle("open", expanded);
+        chevron.classList.toggle("open", expanded);
+      });
+      card.appendChild(hdr); card.appendChild(body);
+      stgContentEl.appendChild(card);
+    });
+    var resetBtn = mkBtn("Reset to Built-in Defaults", "ai-stg-btn-danger ai-stg-btn-block");
+    resetBtn.style.marginTop = "18px";
+    resetBtn.addEventListener("click", function() {
+      if (!confirm("Reset all commands?")) return;
+      mobileCommands = COMMANDS_DEFAULT.map(function(c) { return Object.assign({}, c); });
+      save("preview_commands_v1", mobileCommands);
+      rebuildCmdButtons();
+      renderCommandsTab();
+    });
+    stgContentEl.appendChild(resetBtn);
   }
+
+  function renderImportTab() {
+    stgContentEl.appendChild(mkLabel("Import Config"));
+    stgContentEl.appendChild(mkHint("On your desktop: Options \u2192 RP Persona \u2192 \"Export Config for Mobile\". Paste the JSON below."));
+    var ta = mkTextarea("{\"version\":1,\"type\":\"config\",\u2026} \u2014 paste here", "", 150);
+    var applyBtn = mkBtn("\u2193 Apply Config", "ai-stg-btn-green ai-stg-btn-block");
+    applyBtn.style.marginTop = "8px";
+    applyBtn.addEventListener("click", function() {
+      var raw = ta.value.trim(); if (!raw) return;
+      var data;
+      try { data = JSON.parse(raw); } catch { alert("Invalid JSON"); return; }
+      if (!data || data.version !== 1 || data.type !== "config") { alert("Unrecognised format."); return; }
+      if (!confirm("Apply this config?")) return;
+      if (Array.isArray(data.commands) && data.commands.length) {
+        mobileCommands = data.commands;
+        save("preview_commands_v1", mobileCommands);
+        rebuildCmdButtons();
+      }
+      if (Array.isArray(data.personas)) {
+        while (data.personas.length < 10) data.personas.push({ label: "", name: "", prepend: "" });
+        mobilePersonas = data.personas.slice(0, 10);
+        save("preview_personas_v1", mobilePersonas);
+      }
+      if (typeof data.activePersonaIdx === "number") {
+        mobileActivePersonaIdx = data.activePersonaIdx;
+        save("preview_active_persona_v1", mobileActivePersonaIdx);
+      }
+      if (typeof data.globalStyle === "string") {
+        mobileGlobalStyle = data.globalStyle;
+        save("preview_global_style_v1", mobileGlobalStyle);
+      }
+      rebuildPersonaPills();
+      ta.value = "";
+      alert("Config applied!");
+      setSettingsTab("personas");
+    });
+    stgContentEl.appendChild(ta);
+    stgContentEl.appendChild(applyBtn);
+  }
+
+  var diceOverlay       = document.getElementById("ai-dice-overlay");
+  var diceResultNumEl   = document.getElementById("ai-dice-result-num");
+  var diceResultLabelEl = document.getElementById("ai-dice-result-label");
+  var diceResultBreakEl = document.getElementById("ai-dice-result-break");
+  var diceSelectedFaces = new Set([20]);
+  var diceLastResult    = null;
+
+  diceOverlay.querySelectorAll(".ai-dice-face-btn").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      var f = parseInt(btn.dataset.faces, 10);
+      if (btn.classList.contains("active")) {
+        if (diceSelectedFaces.size > 1) { diceSelectedFaces.delete(f); btn.classList.remove("active"); }
+      } else { diceSelectedFaces.add(f); btn.classList.add("active"); }
+    });
+  });
+
+  document.getElementById("ai-dice-roll-btn").addEventListener("click", function() {
+    var faces = Array.from(diceSelectedFaces).sort(function(a, b) { return a - b; });
+    var rolls = faces.map(function(f) { return Math.floor(Math.random() * f) + 1; });
+    var total = rolls.reduce(function(a, b) { return a + b; }, 0);
+    var natClass = "", natMsg = "";
+    if (faces.length === 1 && faces[0] === 20) {
+      if (rolls[0] === 20) { natClass = "nat20"; natMsg = "Natural 20! \uD83C\uDF1F"; }
+      else if (rolls[0] === 1) { natClass = "nat1"; natMsg = "Critical Fail \uD83D\uDC80"; }
+    } else if (faces.length === 1 && faces[0] === 6) {
+      if (rolls[0] === 6) natMsg = "Max Roll!";
+      else if (rolls[0] === 1) natMsg = "Min Roll.";
+    }
+    var breakdown = faces.length > 1 ? "(" + faces.map(function(f, i) { return "d" + f + "=" + rolls[i]; }).join("  ") + ")" : "";
+    var labelLine = natMsg ? natMsg : faces.length === 1 ? "d" + faces[0] : faces.map(function(f) { return "d" + f; }).join("+") + " = " + rolls.join("+");
+    diceLastResult = { total: total, faces: faces, rolls: rolls, natClass: natClass, natMsg: natMsg, breakdown: breakdown };
+    diceResultNumEl.textContent = total;
+    diceResultNumEl.className = natClass;
+    diceResultLabelEl.textContent = labelLine;
+    diceResultLabelEl.className = natClass === "nat20" ? "special20" : natClass === "nat1" ? "special1" : "";
+    diceResultBreakEl.textContent = breakdown;
+  });
+
+  document.getElementById("ai-dice-copy-btn").addEventListener("click", function() {
+    if (!diceLastResult) return;
+    var total = diceLastResult.total, faces = diceLastResult.faces, natMsg = diceLastResult.natMsg;
+    var faceStr = faces.map(function(f) { return "d" + f; }).join("+");
+    var text = natMsg ? ("\uD83C\uDFB2 " + faceStr + " \u2192 " + total + " \u2014 " + natMsg) : ("\uD83C\uDFB2 " + faceStr + " \u2192 " + total);
+    navigator.clipboard.writeText(text).then(function() {
+      var b = document.getElementById("ai-dice-copy-btn"); b.textContent = "\u2713 Copied!";
+      setTimeout(function() { b.textContent = "Copy"; }, 1500);
+    }).catch(function() {});
+  });
+
+  document.getElementById("ai-dice-dismiss-btn").addEventListener("click", closeDiceOverlay);
+  diceOverlay.addEventListener("click", function(e) { if (e.target === diceOverlay) closeDiceOverlay(); });
+
+  function openDiceOverlay()  { diceOverlay.classList.add("open"); }
+  function closeDiceOverlay() { diceOverlay.classList.remove("open"); }
+
+})();
 </script>
 </body>
 </html>

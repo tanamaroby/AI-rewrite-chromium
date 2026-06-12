@@ -594,7 +594,7 @@ saveFormatterBtn.addEventListener("click", () => {
     showFeedback(formatterSaveFeedback, "✓ Saved!", true);
   });
 });
-// ─── RP Persona (5 slots) ────────────────────────────────────────────────────
+// ─── RP Persona (10 slots) ───────────────────────────────────────────────────
 
 const rpPersonaSlotsEl = document.getElementById("rpPersonaSlots");
 const rpPersonaPillsEl = document.getElementById("rpPersonaPills");
@@ -602,7 +602,7 @@ const saveRpPersonasBtn = document.getElementById("saveRpPersonas");
 const rpPersonaSaveFeedback = document.getElementById("rpPersonaSaveFeedback");
 const rpActivePersonaStatus = document.getElementById("rpActivePersonaStatus");
 
-const DEFAULT_PERSONAS = Array.from({ length: 5 }, () => ({
+const DEFAULT_PERSONAS = Array.from({ length: 10 }, () => ({
   label: "",
   name: "",
   prepend: "",
@@ -691,8 +691,8 @@ chrome.storage.sync.get(
   (data) => {
     if (Array.isArray(data.rpPersonas) && data.rpPersonas.length > 0) {
       // New multi-persona storage
-      rpPersonasData = data.rpPersonas.slice(0, 5);
-      while (rpPersonasData.length < 5)
+      rpPersonasData = data.rpPersonas.slice(0, 10);
+      while (rpPersonasData.length < 10)
         rpPersonasData.push({ label: "", name: "", prepend: "" });
       rpActivePersonaIndex =
         typeof data.rpActivePersonaIndex === "number"
@@ -753,23 +753,36 @@ document
           prompt: cmd.prompt || "",
         }));
 
-        const personas = Array.isArray(data.rpPersonas) ? data.rpPersonas : [];
-        const activeIdx =
-          typeof data.rpActivePersonaIndex === "number"
-            ? data.rpActivePersonaIndex
-            : -1;
-        const activePersona =
-          activeIdx >= 0 && personas[activeIdx] ? personas[activeIdx] : null;
-
         const config = {
           version: 1,
           type: "config",
           commands: mobileCommands,
-          persona: {
-            enabled: activePersona !== null,
-            name: activePersona ? activePersona.name || "" : "",
-            prepend: activePersona ? activePersona.prepend || "" : "",
-          },
+          personas: (Array.isArray(data.rpPersonas) ? data.rpPersonas : [])
+            .slice(0, 10)
+            .concat(
+              Array.from(
+                {
+                  length: Math.max(
+                    0,
+                    10 -
+                      (Array.isArray(data.rpPersonas)
+                        ? data.rpPersonas.length
+                        : 0),
+                  ),
+                },
+                () => ({ label: "", name: "", prepend: "" }),
+              ),
+            )
+            .slice(0, 10)
+            .map((p) => ({
+              label: p.label || "",
+              name: p.name || "",
+              prepend: p.prepend || "",
+            })),
+          activePersonaIdx:
+            typeof data.rpActivePersonaIndex === "number"
+              ? data.rpActivePersonaIndex
+              : -1,
           globalStyle: data.rpGlobalStyle || "",
         };
 
@@ -780,6 +793,70 @@ document
       },
     );
   });
+
+// Export personas
+document.getElementById("export-personas-btn").addEventListener("click", () => {
+  const fb = document.getElementById("export-personas-fb");
+  const payload = {
+    version: 1,
+    type: "personas",
+    personas: rpPersonasData.map((p) => ({
+      label: p.label || "",
+      name: p.name || "",
+      prepend: p.prepend || "",
+    })),
+    activePersonaIdx: rpActivePersonaIndex,
+  };
+  navigator.clipboard
+    .writeText(JSON.stringify(payload, null, 2))
+    .then(() => showFeedback(fb, "\u2713 Copied!", true))
+    .catch(() => showFeedback(fb, "\u2717 Copy failed", false));
+});
+
+// Import personas
+document.getElementById("import-personas-btn").addEventListener("click", () => {
+  const fb = document.getElementById("import-personas-fb");
+  const area = document.getElementById("import-personas-area");
+  const raw = area.value.trim();
+  if (!raw) {
+    showFeedback(fb, "\u2717 Nothing to import", false);
+    return;
+  }
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    showFeedback(fb, "\u2717 Invalid JSON", false);
+    return;
+  }
+  if (
+    !data ||
+    data.version !== 1 ||
+    data.type !== "personas" ||
+    !Array.isArray(data.personas)
+  ) {
+    showFeedback(fb, "\u2717 Unrecognised format", false);
+    return;
+  }
+  const incoming = data.personas
+    .slice(0, 10)
+    .map((p) => Object.assign({ label: "", name: "", prepend: "" }, p));
+  while (incoming.length < 10)
+    incoming.push({ label: "", name: "", prepend: "" });
+  rpPersonasData = incoming;
+  rpActivePersonaIndex =
+    typeof data.activePersonaIdx === "number" ? data.activePersonaIdx : -1;
+  chrome.storage.sync.set(
+    { rpPersonas: rpPersonasData, rpActivePersonaIndex },
+    () => {
+      buildPersonaSlots();
+      updatePersonaPills();
+      updatePersonaStatus();
+      area.value = "";
+      showFeedback(fb, "\u2713 Imported!", true);
+    },
+  );
+});
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

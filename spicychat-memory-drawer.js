@@ -199,6 +199,22 @@
     }
     .ql-copy-btn:hover { background: rgba(108,99,255,0.1); border-color: rgba(108,99,255,0.4); color: #a78bfa; }
     .ql-copy-btn.inserted { color: #22c55e; border-color: rgba(34,197,94,0.35); }
+    .ql-sheet-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .ql-sheet-status {
+      min-height: 12px;
+      font-size: 9.5px;
+      letter-spacing: 0.02em;
+      color: #475569;
+      margin-left: auto;
+    }
+    .ql-sheet-status.ok { color: #22c55e; }
+    .ql-sheet-status.err { color: #f87171; }
 
     /* ── Body ── */
     #sc-np-body {
@@ -942,9 +958,13 @@
       <div id="sc-np-body">
         <div id="sc-np-quests-panel">
           <!-- Export All -->
-          <div style="display:flex;justify-content:flex-end;">
+          <div class="ql-sheet-actions">
+            <button id="sc-np-quest-sheet-export" class="ql-copy-btn">Export RPG Sheet</button>
+            <button id="sc-np-quest-sheet-import" class="ql-copy-btn">Import RPG Sheet</button>
             <button id="sc-np-export-all" class="ql-copy-btn">⎘ Insert All</button>
+            <span id="sc-np-quest-sheet-status" class="ql-sheet-status" aria-live="polite"></span>
           </div>
+          <input id="sc-np-quest-sheet-file" type="file" accept="application/json,.json" style="display:none" data-ai-rewriter-ignore="1" />
           <!-- Quest Log -->
           <div class="ql-section-header">
             <span class="ql-section-label">Quests</span>
@@ -1226,6 +1246,18 @@
     /* ── Element refs ── */
     const questsPanel = document.getElementById("sc-np-quests-panel");
     const questListEl = document.getElementById("sc-np-quest-list");
+    const questSheetExportBtn = document.getElementById(
+      "sc-np-quest-sheet-export",
+    );
+    const questSheetImportBtn = document.getElementById(
+      "sc-np-quest-sheet-import",
+    );
+    const questSheetFileInput = document.getElementById(
+      "sc-np-quest-sheet-file",
+    );
+    const questSheetStatusEl = document.getElementById(
+      "sc-np-quest-sheet-status",
+    );
     const diceCountInput = document.getElementById("sc-np-dice-count");
     const diceLabelEl = document.getElementById("sc-np-dice-label");
     const diceRollBtn = document.getElementById("sc-np-dice-roll");
@@ -1576,6 +1608,7 @@
     const QUEST_STATES = ["active", "done", "failed"];
     let quests = [];
     let questSaveTimer = null;
+    let questSheetStatusTimer = null;
 
     function newQuest() {
       return {
@@ -1598,6 +1631,417 @@
     function autoResizeTextarea(el) {
       el.style.height = "0";
       el.style.height = el.scrollHeight + "px";
+    }
+
+    function setQuestSheetStatus(msg, kind) {
+      if (!questSheetStatusEl) return;
+      clearTimeout(questSheetStatusTimer);
+      questSheetStatusEl.textContent = msg || "";
+      questSheetStatusEl.classList.remove("ok", "err");
+      if (kind === "ok") questSheetStatusEl.classList.add("ok");
+      if (kind === "err") questSheetStatusEl.classList.add("err");
+      if (!msg) return;
+      questSheetStatusTimer = setTimeout(() => {
+        questSheetStatusEl.textContent = "";
+        questSheetStatusEl.classList.remove("ok", "err");
+      }, 3200);
+    }
+
+    function normalizeId(rawId, idx) {
+      return typeof rawId === "number" && isFinite(rawId)
+        ? rawId
+        : Date.now() + idx + Math.random();
+    }
+
+    function normalizeImportedQuest(raw, idx) {
+      if (!raw || typeof raw !== "object") return null;
+      const title = typeof raw.title === "string" ? raw.title : "";
+      const notes = typeof raw.notes === "string" ? raw.notes : "";
+      const state = QUEST_STATES.includes(raw.state) ? raw.state : "active";
+      const updates = Array.isArray(raw.updates)
+        ? raw.updates.filter((u) => typeof u === "string")
+        : [];
+      return {
+        id:
+          typeof raw.id === "number" && isFinite(raw.id)
+            ? raw.id
+            : Date.now() + idx + Math.random(),
+        title,
+        notes,
+        state,
+        updates,
+      };
+    }
+
+    function normalizeImportedResource(raw, idx) {
+      if (!raw || typeof raw !== "object") return null;
+      const name = typeof raw.name === "string" ? raw.name : "";
+      const notes = typeof raw.notes === "string" ? raw.notes : "";
+      const parsedValue = parseInt(raw.value, 10);
+      const value = isFinite(parsedValue) ? parsedValue : 0;
+      return {
+        id: normalizeId(raw.id, idx),
+        name,
+        notes,
+        value,
+      };
+    }
+
+    function normalizeImportedAbility(raw, idx) {
+      if (!raw || typeof raw !== "object") return null;
+      const name = typeof raw.name === "string" ? raw.name : "";
+      const notes = typeof raw.notes === "string" ? raw.notes : "";
+      const parsedMax = parseInt(raw.max, 10);
+      const max = Math.max(1, isFinite(parsedMax) ? parsedMax : 1);
+      const parsedCurrent = parseInt(raw.current, 10);
+      const current = Math.max(
+        0,
+        Math.min(max, isFinite(parsedCurrent) ? parsedCurrent : max),
+      );
+      return {
+        id: normalizeId(raw.id, idx),
+        name,
+        notes,
+        current,
+        max,
+      };
+    }
+
+    function normalizeImportedPartyMember(raw, idx) {
+      if (!raw || typeof raw !== "object") return null;
+      const name = typeof raw.name === "string" ? raw.name : "";
+      const status = PARTY_STATUSES.includes(raw.status)
+        ? raw.status
+        : "active";
+      return {
+        id: normalizeId(raw.id, idx),
+        name,
+        status,
+      };
+    }
+
+    function normalizeImportedNpc(raw, idx) {
+      if (!raw || typeof raw !== "object") return null;
+      const name = typeof raw.name === "string" ? raw.name : "";
+      const note = typeof raw.note === "string" ? raw.note : "";
+      const disp = NPC_DISPS.includes(raw.disp) ? raw.disp : "neutral";
+      return {
+        id: normalizeId(raw.id, idx),
+        name,
+        note,
+        disp,
+      };
+    }
+
+    function normalizeImportedRumour(raw, idx) {
+      if (!raw || typeof raw !== "object") return null;
+      const text = typeof raw.text === "string" ? raw.text : "";
+      return {
+        id: normalizeId(raw.id, idx),
+        text,
+        done: raw.done === true,
+      };
+    }
+
+    function normalizeImportedDiceModifier(raw, idx) {
+      if (!raw || typeof raw !== "object") return null;
+      const name = typeof raw.name === "string" ? raw.name : "";
+      const notes = typeof raw.notes === "string" ? raw.notes : "";
+      const parsedValue = parseInt(raw.value, 10);
+      const value = isFinite(parsedValue) ? parsedValue : 0;
+      return {
+        id: normalizeId(raw.id, idx),
+        name,
+        notes,
+        value,
+        enabled: raw.enabled !== false,
+      };
+    }
+
+    function normalizeImportedArray(source, key, normalizer, label) {
+      if (!Array.isArray(source[key])) return [];
+      const normalized = source[key].map((item, idx) => normalizer(item, idx));
+      if (normalized.some((item) => !item)) {
+        throw new Error(`RPG sheet has invalid ${label} entries.`);
+      }
+      return normalized;
+    }
+
+    function parseQuestSheetJson(text) {
+      let parsed;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        throw new Error("Invalid JSON file.");
+      }
+
+      // Legacy quest-only sheet support.
+      if (
+        Array.isArray(parsed) ||
+        (parsed &&
+          typeof parsed === "object" &&
+          Array.isArray(parsed.quests) &&
+          !Array.isArray(parsed.resources))
+      ) {
+        const legacyQuests = Array.isArray(parsed) ? parsed : parsed.quests;
+        const questsOnly = legacyQuests
+          .map((q, idx) => normalizeImportedQuest(q, idx))
+          .filter(Boolean);
+        if (questsOnly.length !== legacyQuests.length) {
+          throw new Error("Quest sheet has invalid quest entries.");
+        }
+        return { legacyQuestOnly: true, quests: questsOnly };
+      }
+
+      if (!parsed || typeof parsed !== "object") {
+        throw new Error("RPG sheet must be a JSON object.");
+      }
+
+      return {
+        legacyQuestOnly: false,
+        quests: normalizeImportedArray(
+          parsed,
+          "quests",
+          normalizeImportedQuest,
+          "quest",
+        ),
+        resources: normalizeImportedArray(
+          parsed,
+          "resources",
+          normalizeImportedResource,
+          "resource",
+        ),
+        abilities: normalizeImportedArray(
+          parsed,
+          "abilities",
+          normalizeImportedAbility,
+          "ability",
+        ),
+        party: normalizeImportedArray(
+          parsed,
+          "party",
+          normalizeImportedPartyMember,
+          "party",
+        ),
+        npcs: normalizeImportedArray(
+          parsed,
+          "npcs",
+          normalizeImportedNpc,
+          "npc",
+        ),
+        rumours: normalizeImportedArray(
+          parsed,
+          "rumours",
+          normalizeImportedRumour,
+          "rumour",
+        ),
+        diceModifiers: normalizeImportedArray(
+          parsed,
+          "diceModifiers",
+          normalizeImportedDiceModifier,
+          "dice modifier",
+        ),
+      };
+    }
+
+    function getCleanQuests() {
+      return quests.map((q, idx) =>
+        normalizeImportedQuest(
+          {
+            id: q.id,
+            title: q.title,
+            notes: q.notes,
+            state: q.state,
+            updates: q.updates,
+          },
+          idx,
+        ),
+      );
+    }
+
+    function getCleanResources() {
+      return resources.map((r, idx) =>
+        normalizeImportedResource(
+          {
+            id: r.id,
+            name: r.name,
+            notes: r.notes,
+            value: r.value,
+          },
+          idx,
+        ),
+      );
+    }
+
+    function getCleanAbilities() {
+      return abilities.map((a, idx) =>
+        normalizeImportedAbility(
+          {
+            id: a.id,
+            name: a.name,
+            notes: a.notes,
+            current: a.current,
+            max: a.max,
+          },
+          idx,
+        ),
+      );
+    }
+
+    function getCleanParty() {
+      return party.map((m, idx) =>
+        normalizeImportedPartyMember(
+          {
+            id: m.id,
+            name: m.name,
+            status: m.status,
+          },
+          idx,
+        ),
+      );
+    }
+
+    function getCleanNpcs() {
+      return npcs.map((n, idx) =>
+        normalizeImportedNpc(
+          {
+            id: n.id,
+            name: n.name,
+            note: n.note,
+            disp: n.disp,
+          },
+          idx,
+        ),
+      );
+    }
+
+    function getCleanRumours() {
+      return rumours.map((r, idx) =>
+        normalizeImportedRumour(
+          {
+            id: r.id,
+            text: r.text,
+            done: r.done,
+          },
+          idx,
+        ),
+      );
+    }
+
+    function getCleanDiceModifiers() {
+      return diceModifiers.map((m, idx) =>
+        normalizeImportedDiceModifier(
+          {
+            id: m.id,
+            name: m.name,
+            notes: m.notes,
+            value: m.value,
+            enabled: m.enabled,
+          },
+          idx,
+        ),
+      );
+    }
+
+    function getQuestSheetPayload() {
+      const cleanedQuests = getCleanQuests();
+      const cleanedResources = getCleanResources();
+      const cleanedAbilities = getCleanAbilities();
+      const cleanedParty = getCleanParty();
+      const cleanedNpcs = getCleanNpcs();
+      const cleanedRumours = getCleanRumours();
+      const cleanedDiceMods = getCleanDiceModifiers();
+      return {
+        type: "sc-rpg-sheet",
+        version: 2,
+        exportedAt: new Date().toISOString(),
+        sourceChatId: chatId,
+        sectionCounts: {
+          quests: cleanedQuests.length,
+          resources: cleanedResources.length,
+          abilities: cleanedAbilities.length,
+          party: cleanedParty.length,
+          npcs: cleanedNpcs.length,
+          rumours: cleanedRumours.length,
+          diceModifiers: cleanedDiceMods.length,
+        },
+        quests: cleanedQuests,
+        resources: cleanedResources,
+        abilities: cleanedAbilities,
+        party: cleanedParty,
+        npcs: cleanedNpcs,
+        rumours: cleanedRumours,
+        diceModifiers: cleanedDiceMods,
+      };
+    }
+
+    function buildQuestSheetFileName() {
+      const date = new Date().toISOString().slice(0, 10);
+      const safeChatId = String(chatId || "chat")
+        .replace(/[^a-z0-9_-]+/gi, "-")
+        .slice(0, 40);
+      return `rpg-sheet-${safeChatId || "chat"}-${date}.json`;
+    }
+
+    function exportQuestSheetFile() {
+      const payload = getQuestSheetPayload();
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = buildQuestSheetFileName();
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+      setQuestSheetStatus("Exported full RPG sheet.", "ok");
+    }
+
+    async function importQuestSheetFile(file) {
+      if (!file) return;
+      const text = await file.text();
+      const imported = parseQuestSheetJson(text);
+      if (imported.legacyQuestOnly) {
+        quests = imported.quests;
+        saveQuests();
+        renderQuests();
+        addLog(`[Quest sheet imported: ${imported.quests.length} quest(s)]`);
+        setQuestSheetStatus(
+          `Imported legacy quest sheet (${imported.quests.length} quests).`,
+          "ok",
+        );
+        return;
+      }
+      quests = imported.quests;
+      resources = imported.resources;
+      abilities = imported.abilities;
+      party = imported.party;
+      npcs = imported.npcs;
+      rumours = imported.rumours;
+      diceModifiers = imported.diceModifiers;
+
+      saveQuests();
+      saveRes();
+      saveAbl();
+      saveParty();
+      saveNpcs();
+      saveRumours();
+      saveDiceMods();
+
+      renderQuests();
+      renderRes();
+      renderAbl();
+      renderParty();
+      renderNpcs();
+      renderRumours();
+      renderDiceMods();
+
+      addLog(
+        `[RPG sheet imported: ${quests.length} quests, ${resources.length} resources, ${abilities.length} abilities, ${party.length} party, ${npcs.length} NPCs, ${rumours.length} rumours, ${diceModifiers.length} modifiers]`,
+      );
+      setQuestSheetStatus("Imported full RPG sheet.", "ok");
     }
 
     function renderQuests() {
@@ -1891,6 +2335,36 @@
           }
         });
         renderQuests();
+      });
+    }
+
+    if (questSheetExportBtn) {
+      questSheetExportBtn.addEventListener("click", () => {
+        exportQuestSheetFile();
+        flashCopyBtnLabel(questSheetExportBtn, questSheetExportBtn.textContent);
+      });
+    }
+    if (questSheetImportBtn && questSheetFileInput) {
+      questSheetImportBtn.addEventListener("click", () => {
+        questSheetFileInput.value = "";
+        questSheetFileInput.click();
+      });
+      questSheetFileInput.addEventListener("change", async () => {
+        const file = questSheetFileInput.files && questSheetFileInput.files[0];
+        if (!file) return;
+        try {
+          await importQuestSheetFile(file);
+          flashCopyBtnLabel(
+            questSheetImportBtn,
+            questSheetImportBtn.textContent,
+          );
+        } catch (err) {
+          const msg =
+            err && typeof err.message === "string"
+              ? err.message
+              : "Import failed.";
+          setQuestSheetStatus(msg, "err");
+        }
       });
     }
 
