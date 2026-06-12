@@ -3575,7 +3575,7 @@
     });
 
     /* ── Persona save/load ── */
-    let drawerPersonas = Array.from({ length: 5 }, () => ({
+    let drawerPersonas = Array.from({ length: 10 }, () => ({
       label: "",
       name: "",
       prepend: "",
@@ -3660,8 +3660,8 @@
       ],
       (data) => {
         if (Array.isArray(data.rpPersonas) && data.rpPersonas.length > 0) {
-          drawerPersonas = data.rpPersonas.slice(0, 5);
-          while (drawerPersonas.length < 5)
+          drawerPersonas = data.rpPersonas.slice(0, 10);
+          while (drawerPersonas.length < 10)
             drawerPersonas.push({ label: "", name: "", prepend: "" });
           drawerActiveIdx =
             typeof data.rpActivePersonaIndex === "number"
