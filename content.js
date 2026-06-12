@@ -28,7 +28,7 @@
   let fmtEmDash = true;
   let fmtNoSpaceBeforePunct = true;
   let fmtSpaceAfterPunct = true;
-  let rpPersonas = Array.from({ length: 5 }, () => ({
+  let rpPersonas = Array.from({ length: 10 }, () => ({
     label: "",
     name: "",
     prepend: "",
@@ -106,8 +106,8 @@
         fmtPrependTrackerSummaryOnFormat =
           data.fmtPrependTrackerSummaryOnFormat === true;
         if (Array.isArray(data.rpPersonas) && data.rpPersonas.length > 0) {
-          rpPersonas = data.rpPersonas.slice(0, 5);
-          while (rpPersonas.length < 5)
+          rpPersonas = data.rpPersonas.slice(0, 10);
+          while (rpPersonas.length < 10)
             rpPersonas.push({ label: "", name: "", prepend: "" });
           rpActivePersonaIndex =
             typeof data.rpActivePersonaIndex === "number"
