@@ -1,19 +1,43 @@
 (function () {
   "use strict";
 
-  /* Only run on SpicyChat chat pages */
-  if (!/^\/chat\//.test(location.pathname)) return;
   /* PC only — skip on touch/mobile devices */
   if ("ontouchstart" in window || navigator.maxTouchPoints > 1) return;
 
-  chrome.storage.sync.get("spicychatNotesEnabled", (syncData) => {
-    if (syncData.spicychatNotesEnabled === false) return;
-    chrome.storage.local.get("sc_note_width_v1", (localData) => {
-      init(localData["sc_note_width_v1"]);
+  let currentTeardown = null;
+
+  function maybeInit() {
+    if (currentTeardown) {
+      currentTeardown();
+      currentTeardown = null;
+    }
+    /* Only run on SpicyChat chat pages */
+    if (!/^\/chat\//.test(location.pathname)) return;
+
+    chrome.storage.sync.get("spicychatNotesEnabled", (syncData) => {
+      if (syncData.spicychatNotesEnabled === false) return;
+      chrome.storage.local.get("sc_note_width_v1", (localData) => {
+        currentTeardown = init(localData["sc_note_width_v1"]);
+      });
     });
-  });
+  }
+
+  /* SPA navigation detection — watch for URL changes without a full page reload */
+  let _lastHref = location.href;
+  new MutationObserver(() => {
+    if (location.href !== _lastHref) {
+      _lastHref = location.href;
+      maybeInit();
+    }
+  }).observe(document, { subtree: true, childList: true });
+
+  maybeInit();
 
   function init(savedWidth) {
+    /* ── Abort controller — cleans up all document listeners on teardown ── */
+    const _ac = new AbortController();
+    const _sig = { signal: _ac.signal };
+
     /* ── Constants ── */
     const MIN_W = 260;
     const MAX_W = 780;
@@ -1000,6 +1024,7 @@
     .fmt-ex-arrow { color: #334155; font-size: 10px; flex-shrink: 0; line-height: 1.6; }
     .fmt-disabled-notice { background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2); border-radius: 7px; padding: 9px 12px; font-size: 11px; color: #f87171; text-align: center; }
     `;
+    style.id = "sc-np-style";
     document.head.appendChild(style);
 
     /* ── DOM ── */
@@ -3689,9 +3714,13 @@
       document.documentElement.classList.toggle("sc-np-open", val);
     }
 
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && isOpen) setOpen(false);
-    });
+    document.addEventListener(
+      "keydown",
+      (e) => {
+        if (e.key === "Escape" && isOpen) setOpen(false);
+      },
+      _sig,
+    );
 
     const btnClose = document.getElementById("sc-np-btn-close");
     tab.addEventListener("click", () => setOpen(!isOpen));
@@ -3893,11 +3922,19 @@
       rpLogOutputTextEl.textContent = detail.after || "—";
     }
 
-    document.addEventListener("sc-rp-rewrite-done", (e) => {
-      showRewriteState(e.detail);
-      showLogState(e.detail);
-    });
-    document.addEventListener("sc-rp-undo-done", () => clearRewriteState());
+    document.addEventListener(
+      "sc-rp-rewrite-done",
+      (e) => {
+        showRewriteState(e.detail);
+        showLogState(e.detail);
+      },
+      _sig,
+    );
+    document.addEventListener(
+      "sc-rp-undo-done",
+      () => clearRewriteState(),
+      _sig,
+    );
 
     rpUndoBtn.addEventListener("click", () => {
       rpUndoBtn.disabled = true;
@@ -3936,16 +3973,24 @@
     });
 
     /* ── Input counter ── */
-    document.addEventListener("sc-rp-input-stats", (e) => {
-      const { chars, words } = e.detail;
-      rpIcStats.textContent = `${chars.toLocaleString()} chars \u00b7 ${words.toLocaleString()} words`;
-      rpIcStats.classList.add("active");
-    });
+    document.addEventListener(
+      "sc-rp-input-stats",
+      (e) => {
+        const { chars, words } = e.detail;
+        rpIcStats.textContent = `${chars.toLocaleString()} chars \u00b7 ${words.toLocaleString()} words`;
+        rpIcStats.classList.add("active");
+      },
+      _sig,
+    );
 
-    document.addEventListener("sc-rp-input-blur", () => {
-      rpIcStats.textContent = "No input focused";
-      rpIcStats.classList.remove("active");
-    });
+    document.addEventListener(
+      "sc-rp-input-blur",
+      () => {
+        rpIcStats.textContent = "No input focused";
+        rpIcStats.classList.remove("active");
+      },
+      _sig,
+    );
 
     /* ── Snippets ── */
     function renderSnippetChips() {
@@ -4069,16 +4114,20 @@
       );
     });
 
-    document.addEventListener("sc-rp-oneshot-result", (e) => {
-      oneshotRunBtn.disabled = false;
-      if (e.detail.error) {
-        oneshotStatusEl.textContent = e.detail.error;
-        oneshotStatusEl.className = "rp-hint rp-status-err";
-      } else {
-        oneshotStatusEl.textContent = `\u2713 Done \u00b7 ${e.detail.model} \u00b7 ${e.detail.elapsed}s`;
-        oneshotStatusEl.className = "rp-hint rp-status-ok";
-      }
-    });
+    document.addEventListener(
+      "sc-rp-oneshot-result",
+      (e) => {
+        oneshotRunBtn.disabled = false;
+        if (e.detail.error) {
+          oneshotStatusEl.textContent = e.detail.error;
+          oneshotStatusEl.className = "rp-hint rp-status-err";
+        } else {
+          oneshotStatusEl.textContent = `\u2713 Done \u00b7 ${e.detail.model} \u00b7 ${e.detail.elapsed}s`;
+          oneshotStatusEl.className = "rp-hint rp-status-ok";
+        }
+      },
+      _sig,
+    );
 
     /* ── Drag-to-resize ── */
     let resizing = false;
@@ -4095,22 +4144,30 @@
       document.body.style.userSelect = "none";
     });
 
-    document.addEventListener("mousemove", (e) => {
-      if (!resizing) return;
-      const delta = resizeStartX - e.clientX;
-      const newW = Math.min(MAX_W, Math.max(MIN_W, resizeStartW + delta));
-      DRAWER_W = newW;
-      document.documentElement.style.setProperty("--sc-np-w", newW + "px");
-    });
+    document.addEventListener(
+      "mousemove",
+      (e) => {
+        if (!resizing) return;
+        const delta = resizeStartX - e.clientX;
+        const newW = Math.min(MAX_W, Math.max(MIN_W, resizeStartW + delta));
+        DRAWER_W = newW;
+        document.documentElement.style.setProperty("--sc-np-w", newW + "px");
+      },
+      _sig,
+    );
 
-    document.addEventListener("mouseup", () => {
-      if (!resizing) return;
-      resizing = false;
-      resizeHandle.classList.remove("sc-np-resizing");
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-      chrome.storage.local.set({ [WIDTH_KEY]: DRAWER_W });
-    });
+    document.addEventListener(
+      "mouseup",
+      () => {
+        if (!resizing) return;
+        resizing = false;
+        resizeHandle.classList.remove("sc-np-resizing");
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        chrome.storage.local.set({ [WIDTH_KEY]: DRAWER_W });
+      },
+      _sig,
+    );
 
     /* ── Formatter reference panel ── */
     const FMT_KEYS_TO_WATCH = [
@@ -4620,5 +4677,14 @@
     loadNpcs();
     loadRumours();
     setOpen(true);
+
+    return function teardown() {
+      _ac.abort();
+      document.getElementById("sc-np")?.remove();
+      document.getElementById("sc-np-tab")?.remove();
+      document.getElementById("sc-np-resize")?.remove();
+      document.getElementById("sc-np-style")?.remove();
+      document.documentElement.classList.remove("sc-np-open");
+    };
   }
 })();
