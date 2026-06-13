@@ -6,6 +6,25 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.0.0] - 2026-06-14
+
+### Changed (breaking)
+- **Removed all `//` keyword triggers.** AI rewrites and the formatter are no longer triggered by typing keywords. Rewrites now run via click in the SpicyChat drawer or the `Ctrl+N` shortcut; the formatter runs via `Ctrl+M` (and `Ctrl+Shift+M` to skip the RPG tracker summary).
+- **AI rewriting is now SpicyChat-only.** The local text formatter still works in any textbox on any page.
+
+### Added
+- **Rewrites presets** — five saveable rewrite presets (name + prompt), managed in the SpicyChat side drawer → RP Tools. Activate one at a time; `Ctrl+N` runs the active preset.
+- **Scene Context** (per-chat) — Location, Clothes, Status, and Dialogue Style fields injected into every Rewrite on SpicyChat.
+- **{{user}} Personality** — folded into each Persona slot; describes who `{{user}}` is and is injected before every Rewrite.
+- Popup now lists the saved Rewrites and highlights the active one.
+
+### Removed
+- Keyword commands system (`commands[]`, the Keywords options tab, and the popup keyword chips).
+- One-Shot Rewrite, Global Style Rules, the floating format button, and the "Inject Tracker Summary on Format" toggle (tracker summary now always prepends on `Ctrl+M`).
+- Legacy `commands` storage is cleaned up automatically on update.
+
+---
+
 ## [1.0.0] - 2026-05-05
 
 ### Added

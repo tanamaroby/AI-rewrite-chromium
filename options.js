@@ -1,14 +1,5 @@
 // options.js
 
-const DEFAULT_COMMANDS = [
-  {
-    keyword: "//re",
-    label: "Rewrite",
-    prompt:
-      "Rewrite the text. Improve clarity, flow, and word choice—keep it simple and natural. Preserve all meaning, tone, and character voices. Do not add plot, characters, or events. Return only the rewritten text.",
-  },
-];
-
 // ─── Sidebar storage meter ────────────────────────────────────────────────────
 
 (function updateStorageMeter() {
@@ -161,123 +152,6 @@ saveModelBtn.addEventListener("click", () => {
   });
 });
 
-// ─── Keywords ───────────────────────────────────────────────────────────────
-
-const commandsContainer = document.getElementById("commandsContainer");
-const addCommandBtn = document.getElementById("addCommand");
-const saveCommandsBtn = document.getElementById("saveCommands");
-const cmdSaveFeedback = document.getElementById("cmdSaveFeedback");
-
-let commands = [];
-
-chrome.storage.sync.get("commands", (data) => {
-  commands =
-    data.commands && data.commands.length
-      ? data.commands
-      : [...DEFAULT_COMMANDS];
-  renderCommands();
-});
-
-function renderCommands() {
-  commandsContainer.innerHTML = "";
-  commands.forEach((cmd, i) => {
-    commandsContainer.appendChild(createCommandRow(cmd, i));
-  });
-}
-
-function createCommandRow(cmd, index) {
-  const row = document.createElement("div");
-  row.className = "command-row";
-  row.dataset.index = index;
-
-  row.innerHTML = `
-    <div class="cmd-col">
-      <span class="cmd-col-label">Keyword</span>
-      <input
-        type="text"
-        class="cmd-input cmd-keyword-input"
-        value="${escHtml(cmd.keyword)}"
-        placeholder="//kw"
-        spellcheck="false"
-      />
-      <span class="cmd-col-label" style="margin-top:8px;">Label</span>
-      <input
-        type="text"
-        class="cmd-input cmd-label-input"
-        value="${escHtml(cmd.label || "")}"
-        placeholder="Label"
-        spellcheck="false"
-      />
-    </div>
-    <div class="cmd-col">
-      <span class="cmd-col-label">Rewrite Prompt</span>
-      <textarea
-        class="cmd-prompt-input"
-        placeholder="Instruction sent to AI. The text to rewrite will be appended as the user message."
-        spellcheck="false"
-      >${escHtml(cmd.prompt)}</textarea>
-    </div>
-    <button class="cmd-delete" title="Delete keyword" data-index="${index}">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="3 6 5 6 21 6"/>
-        <path d="M19 6l-1 14H6L5 6"/>
-        <path d="M10 11v6"/>
-        <path d="M14 11v6"/>
-        <path d="M9 6V4h6v2"/>
-      </svg>
-    </button>
-  `;
-
-  row.querySelector(".cmd-delete").addEventListener("click", () => {
-    commands.splice(index, 1);
-    renderCommands();
-  });
-
-  return row;
-}
-
-addCommandBtn.addEventListener("click", () => {
-  commands.push({ keyword: "//", label: "", prompt: "" });
-  renderCommands();
-  // Focus the new keyword input
-  const rows = commandsContainer.querySelectorAll(".command-row");
-  const last = rows[rows.length - 1];
-  last?.querySelector(".cmd-keyword-input")?.focus();
-  last?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-});
-
-saveCommandsBtn.addEventListener("click", () => {
-  // Collect values from DOM
-  const rows = commandsContainer.querySelectorAll(".command-row");
-  const updated = [];
-  let hasError = false;
-
-  rows.forEach((row) => {
-    const keyword = row.querySelector(".cmd-keyword-input").value.trim();
-    const label = row.querySelector(".cmd-label-input").value.trim();
-    const prompt = row.querySelector(".cmd-prompt-input").value.trim();
-
-    if (!keyword.startsWith("//")) {
-      row.querySelector(".cmd-keyword-input").style.borderColor =
-        "var(--error)";
-      hasError = true;
-    } else {
-      row.querySelector(".cmd-keyword-input").style.borderColor = "";
-    }
-
-    updated.push({ keyword, label: label || keyword, prompt });
-  });
-
-  if (hasError) {
-    showFeedback(cmdSaveFeedback, "Keywords must start with //", false);
-    return;
-  }
-
-  commands = updated;
-  chrome.storage.sync.set({ commands }, () => {
-    showFeedback(cmdSaveFeedback, "✓ Saved!", true);
-  });
-});
 // ─── SpicyChat Notes ───────────────────────────────────────────────────────────────
 
 const spicychatNotesToggle = document.getElementById("spicychatNotesToggle");
@@ -494,12 +368,8 @@ scRpgImportBtn.addEventListener("click", () => {
 // ─── Formatter ─────────────────────────────────────────────────────────────────────
 
 const formatterToggle = document.getElementById("formatterToggle");
-const formatterKeywordInput = document.getElementById("formatterKeywordInput");
 const autoFormatAfterRewriteToggle = document.getElementById(
   "autoFormatAfterRewriteToggle",
-);
-const fmtPrependTrackerSummaryToggle = document.getElementById(
-  "fmtPrependTrackerSummaryToggle",
 );
 const fmtExtraDelimitersInput = document.getElementById(
   "fmtExtraDelimitersInput",
@@ -532,10 +402,9 @@ const FMT_TOGGLES = [
 ];
 
 function syncAutoFormatRowState() {
-  const rows = [
-    autoFormatAfterRewriteToggle.closest(".toggle-row"),
-    document.getElementById("fmtPrependTrackerRow"),
-  ].filter(Boolean);
+  const rows = [autoFormatAfterRewriteToggle.closest(".toggle-row")].filter(
+    Boolean,
+  );
   if (formatterToggle.checked) {
     rows.forEach((row) => row.classList.remove("disabled"));
   } else {
@@ -546,9 +415,7 @@ function syncAutoFormatRowState() {
 chrome.storage.sync.get(
   [
     "formatterEnabled",
-    "formatterKeyword",
     "autoFormatAfterRewrite",
-    "fmtPrependTrackerSummaryOnFormat",
     "fmtExtraDelimiters",
     "fmtShortcut",
     "fmtNoTrackerShortcut",
@@ -556,11 +423,8 @@ chrome.storage.sync.get(
   ],
   (data) => {
     formatterToggle.checked = data.formatterEnabled !== false;
-    formatterKeywordInput.value = data.formatterKeyword || "//format";
     autoFormatAfterRewriteToggle.checked =
       data.autoFormatAfterRewrite !== false;
-    fmtPrependTrackerSummaryToggle.checked =
-      data.fmtPrependTrackerSummaryOnFormat === true;
     fmtExtraDelimitersInput.value = data.fmtExtraDelimiters || "";
     fmtShortcutInput.value = (data.fmtShortcut || "m").toUpperCase();
     fmtNoTrackerShortcutInput.value = (
@@ -593,18 +457,9 @@ bindShortcutInput(fmtShortcutInput);
 bindShortcutInput(fmtNoTrackerShortcutInput);
 
 saveFormatterBtn.addEventListener("click", () => {
-  const kw = formatterKeywordInput.value.trim();
-  if (kw && !kw.startsWith("//")) {
-    formatterKeywordInput.style.borderColor = "var(--error)";
-    showFeedback(formatterSaveFeedback, "Keyword must start with //", false);
-    return;
-  }
-  formatterKeywordInput.style.borderColor = "";
   const toSave = {
     formatterEnabled: formatterToggle.checked,
-    formatterKeyword: kw || "//format",
     autoFormatAfterRewrite: autoFormatAfterRewriteToggle.checked,
-    fmtPrependTrackerSummaryOnFormat: fmtPrependTrackerSummaryToggle.checked,
     fmtExtraDelimiters: fmtExtraDelimitersInput.value.trim(),
     fmtShortcut: fmtShortcutInput.value.trim().slice(0, 1).toLowerCase() || "m",
     fmtNoTrackerShortcut:
@@ -629,7 +484,7 @@ const rpActivePersonaStatus = document.getElementById("rpActivePersonaStatus");
 const DEFAULT_PERSONAS = Array.from({ length: 10 }, () => ({
   label: "",
   name: "",
-  prepend: "",
+  personality: "",
 }));
 
 let rpPersonasData = DEFAULT_PERSONAS.map((p) => ({ ...p }));
@@ -652,12 +507,12 @@ function buildPersonaSlots() {
       <div class="form-group" style="margin: 0 0 8px;">
         <label class="form-label" style="font-size:11.5px;">Persona Name</label>
         <input type="text" class="form-input" style="padding: 6px 10px;" placeholder="e.g. Aria" value="${escHtml(persona.name)}" data-field="name" spellcheck="false" />
-        <p class="form-hint">Replaces <code>{{user}}</code> in the prepend text.</p>
+        <p class="form-hint">Replaces <code>{{user}}</code> in the personality text.</p>
       </div>
       <div class="form-group" style="margin: 0;">
-        <label class="form-label" style="font-size:11.5px;">Persona Prepend Text</label>
-        <textarea class="form-input" rows="4" style="resize:vertical;font-family:ui-monospace,monospace;font-size:11.5px;" placeholder="e.g. You are writing a collaborative story. The human character is named {{user}}. Stay in character." data-field="prepend">${escHtml(persona.prepend)}</textarea>
-        <p class="form-hint">Injected before every rewrite prompt on SpicyChat only.</p>
+        <label class="form-label" style="font-size:11.5px;">{{user}} Personality</label>
+        <textarea class="form-input" rows="4" style="resize:vertical;font-family:ui-monospace,monospace;font-size:11.5px;" placeholder="e.g. {{user}} is witty, guarded, and slow to trust. Speaks in short, dry sentences." data-field="personality">${escHtml(persona.personality)}</textarea>
+        <p class="form-hint">Describes who <code>{{user}}</code> is. Injected before every Rewrite on SpicyChat only.</p>
       </div>`;
     rpPersonaSlotsEl.appendChild(card);
 
@@ -715,9 +570,13 @@ chrome.storage.sync.get(
   (data) => {
     if (Array.isArray(data.rpPersonas) && data.rpPersonas.length > 0) {
       // New multi-persona storage
-      rpPersonasData = data.rpPersonas.slice(0, 10);
+      rpPersonasData = data.rpPersonas.slice(0, 10).map((p) => ({
+        label: p.label || "",
+        name: p.name || "",
+        personality: p.personality || p.prepend || "",
+      }));
       while (rpPersonasData.length < 10)
-        rpPersonasData.push({ label: "", name: "", prepend: "" });
+        rpPersonasData.push({ label: "", name: "", personality: "" });
       rpActivePersonaIndex =
         typeof data.rpActivePersonaIndex === "number"
           ? data.rpActivePersonaIndex
@@ -727,7 +586,7 @@ chrome.storage.sync.get(
       rpPersonasData[0] = {
         label: data.rpPersonaName || "Persona 1",
         name: data.rpPersonaName || "",
-        prepend: data.rpPersonaPrepend || "",
+        personality: data.rpPersonaPrepend || "",
       };
       rpActivePersonaIndex = data.rpPersonaEnabled === true ? 0 : -1;
     }
@@ -765,49 +624,41 @@ document
   .addEventListener("click", () => {
     const fb = document.getElementById("export-mobile-config-fb");
     chrome.storage.sync.get(
-      ["commands", "rpPersonas", "rpActivePersonaIndex", "rpGlobalStyle"],
+      [
+        "rpPersonas",
+        "rpActivePersonaIndex",
+        "rpRewrites",
+        "rpActiveRewriteIndex",
+      ],
       (data) => {
-        const rawCmds =
-          Array.isArray(data.commands) && data.commands.length
-            ? data.commands
-            : DEFAULT_COMMANDS;
-        const mobileCommands = rawCmds.map((cmd) => ({
-          label: cmd.label || "",
-          emoji: cmd.emoji || "✏️",
-          prompt: cmd.prompt || "",
-        }));
+        const personas = (Array.isArray(data.rpPersonas) ? data.rpPersonas : [])
+          .slice(0, 10)
+          .map((p) => ({
+            label: p.label || "",
+            name: p.name || "",
+            personality: p.personality || p.prepend || "",
+          }));
+        while (personas.length < 10)
+          personas.push({ label: "", name: "", personality: "" });
+
+        const rewrites = (Array.isArray(data.rpRewrites) ? data.rpRewrites : [])
+          .slice(0, 5)
+          .map((r) => ({ name: r.name || "", prompt: r.prompt || "" }));
+        while (rewrites.length < 5) rewrites.push({ name: "", prompt: "" });
 
         const config = {
           version: 1,
           type: "config",
-          commands: mobileCommands,
-          personas: (Array.isArray(data.rpPersonas) ? data.rpPersonas : [])
-            .slice(0, 10)
-            .concat(
-              Array.from(
-                {
-                  length: Math.max(
-                    0,
-                    10 -
-                      (Array.isArray(data.rpPersonas)
-                        ? data.rpPersonas.length
-                        : 0),
-                  ),
-                },
-                () => ({ label: "", name: "", prepend: "" }),
-              ),
-            )
-            .slice(0, 10)
-            .map((p) => ({
-              label: p.label || "",
-              name: p.name || "",
-              prepend: p.prepend || "",
-            })),
+          personas,
           activePersonaIdx:
             typeof data.rpActivePersonaIndex === "number"
               ? data.rpActivePersonaIndex
               : -1,
-          globalStyle: data.rpGlobalStyle || "",
+          rewrites,
+          activeRewriteIdx:
+            typeof data.rpActiveRewriteIndex === "number"
+              ? data.rpActiveRewriteIndex
+              : -1,
         };
 
         navigator.clipboard
@@ -827,7 +678,7 @@ document.getElementById("export-personas-btn").addEventListener("click", () => {
     personas: rpPersonasData.map((p) => ({
       label: p.label || "",
       name: p.name || "",
-      prepend: p.prepend || "",
+      personality: p.personality || "",
     })),
     activePersonaIdx: rpActivePersonaIndex,
   };
@@ -864,9 +715,20 @@ document.getElementById("import-personas-btn").addEventListener("click", () => {
   }
   const incoming = data.personas
     .slice(0, 10)
-    .map((p) => Object.assign({ label: "", name: "", prepend: "" }, p));
+    .map((p) =>
+      Object.assign(
+        { label: "", name: "", personality: "" },
+        p,
+        p && p.prepend && !p.personality ? { personality: p.prepend } : {},
+      ),
+    )
+    .map((p) => ({
+      label: p.label || "",
+      name: p.name || "",
+      personality: p.personality || "",
+    }));
   while (incoming.length < 10)
-    incoming.push({ label: "", name: "", prepend: "" });
+    incoming.push({ label: "", name: "", personality: "" });
   rpPersonasData = incoming;
   rpActivePersonaIndex =
     typeof data.activePersonaIdx === "number" ? data.activePersonaIdx : -1;

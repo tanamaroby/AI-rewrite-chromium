@@ -102,66 +102,6 @@
     #sc-np-tab:hover { background: #271f4a; }
     html.sc-np-open #sc-np-tab { right: var(--sc-np-w, ${DEFAULT_W}px); }
 
-    /* ── Inline formatter prepend toggle ── */
-    #sc-np-prepend-fmt-toggle {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      width: 100%;
-      box-sizing: border-box;
-      padding: 7px 10px;
-      border-radius: 7px;
-      border: 1px solid rgba(108,99,255,0.22);
-      background: rgba(108,99,255,0.06);
-      cursor: pointer;
-      user-select: none;
-      transition: background 0.15s, border-color 0.15s;
-      margin-top: 6px;
-      margin-bottom: 2px;
-    }
-    #sc-np-prepend-fmt-toggle:hover {
-      background: rgba(108,99,255,0.12);
-      border-color: rgba(108,99,255,0.38);
-    }
-    #sc-np-prepend-fmt-toggle input { position: absolute; opacity: 0; pointer-events: none; }
-    .sc-np-prepend-track {
-      width: 26px;
-      height: 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(108,99,255,0.35);
-      background: rgba(0,0,0,0.35);
-      position: relative;
-      flex-shrink: 0;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    .sc-np-prepend-track::after {
-      content: '';
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #64748b;
-      position: absolute;
-      top: 1px;
-      left: 1px;
-      transition: transform 0.2s, background 0.2s;
-    }
-    #sc-np-prepend-fmt-toggle input:checked + .sc-np-prepend-track {
-      background: rgba(108,99,255,0.35);
-      border-color: rgba(108,99,255,0.6);
-    }
-    #sc-np-prepend-fmt-toggle input:checked + .sc-np-prepend-track::after {
-      transform: translateX(12px);
-      background: #a78bfa;
-    }
-    .sc-np-prepend-label {
-      font-size: 10.5px;
-      line-height: 1.2;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-      color: #c4b5fd;
-      white-space: normal;
-    }
-
     /* ── Resize handle (fixed, above everything) ── */
     #sc-np-resize {
       position: fixed;
@@ -1762,11 +1702,6 @@
             <button id="sc-np-export-all" class="ql-copy-btn">⎘ Insert All</button>
             <span id="sc-np-quest-sheet-status" class="ql-sheet-status" aria-live="polite"></span>
           </div>
-          <label id="sc-np-prepend-fmt-toggle" title="Inject Tracker Summary on Format">
-            <input type="checkbox" id="sc-np-prepend-fmt-toggle-input" data-ai-rewriter-ignore="1" />
-            <span class="sc-np-prepend-track"></span>
-            <span class="sc-np-prepend-label">Inject Tracker Summary on Format</span>
-          </label>
           <input id="sc-np-quest-sheet-file" type="file" accept="application/json,.json" style="display:none" data-ai-rewriter-ignore="1" />
           <!-- Quest Log -->
           <div class="ql-section-header">
@@ -1926,30 +1861,59 @@
               </div>
             </div>
           </div>
-          <div class="rp-section-label">One-Shot Rewrite</div>
-          <div class="rp-card">
-            <div class="rp-hint" style="margin-bottom:6px;">Custom prompt — runs on the focused chat input. Persona prepend applies if enabled. Shortcut: Ctrl+N.</div>
-            <textarea id="sc-rp-oneshot-prompt" class="rp-input rp-textarea" style="min-height:60px;" placeholder="e.g. Make this more poetic and melancholy." data-ai-rewriter-ignore="1"></textarea>
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <button id="sc-rp-oneshot-run" class="rp-action-btn">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                Run
-              </button>
-              <span id="sc-rp-oneshot-status" class="rp-hint"></span>
+          <div class="rp-section-label">Rewrites</div>
+          <div class="rp-card" style="padding-bottom:10px;">
+            <div class="rp-hint" style="margin-bottom:8px;">Five saved rewrite presets. Tap a slot to make it active — Ctrl+N (or Run) applies the active preset to the focused chat input. Persona &amp; Scene Context are injected automatically.</div>
+            <div id="sc-rp-rewrite-pills" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;"></div>
+            <div id="sc-rp-rewrite-editor" style="display:none;">
+              <div style="margin-bottom:6px;">
+                <div class="rp-hint" style="margin-bottom:4px;">Preset name</div>
+                <input type="text" id="sc-rp-rewrite-name" class="rp-input" placeholder="e.g. Polish prose" data-ai-rewriter-ignore="1" />
+              </div>
+              <div style="margin-bottom:8px;">
+                <div class="rp-hint" style="margin-bottom:4px;">Instruction sent to the AI</div>
+                <textarea id="sc-rp-rewrite-prompt" class="rp-input rp-textarea" style="min-height:72px;" placeholder="e.g. Rewrite for clarity and natural flow without changing the meaning or adding new events." data-ai-rewriter-ignore="1"></textarea>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <button id="sc-rp-rewrite-run" class="rp-action-btn">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Run active
+                </button>
+                <span id="sc-rp-rewrite-status" class="rp-hint"></span>
+              </div>
+            </div>
+            <div class="rp-autosave" id="sc-rp-rewrite-autosave">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Saved
             </div>
           </div>
-          <div class="rp-section-label">Global Style Rules</div>
+          <div class="rp-section-label">Scene Context</div>
           <div class="rp-card">
-            <div class="rp-hint" style="margin-bottom:6px;">Applied to <em>every</em> rewrite on SpicyChat — defines your universal writing style and constraints.</div>
-            <textarea id="sc-rp-global-style" class="rp-input rp-textarea" style="min-height:88px;" data-ai-rewriter-ignore="1" placeholder="e.g. Rewrite text for clarity, flow, and word choice—simple and natural, not poetic. Speech distortions apply only to spoken dialogue (in quotes). Don&#39;t add plot, characters, events, paragraphs, or sentences. Max 3 sentences per paragraph."></textarea>
-            <div class="rp-autosave" id="sc-rp-gs-autosave">
+            <div class="rp-hint" style="margin-bottom:8px;">Saved per chat. Woven into every rewrite to keep details consistent.</div>
+            <div style="margin-bottom:6px;">
+              <div class="rp-hint" style="margin-bottom:4px;">Location</div>
+              <input type="text" id="sc-rp-ctx-location" class="rp-input" placeholder="e.g. A rain-soaked alley in the old quarter" data-ai-rewriter-ignore="1" />
+            </div>
+            <div style="margin-bottom:6px;">
+              <div class="rp-hint" style="margin-bottom:4px;">Clothes / appearance</div>
+              <input type="text" id="sc-rp-ctx-clothes" class="rp-input" placeholder="e.g. A torn leather jacket, soaked through" data-ai-rewriter-ignore="1" />
+            </div>
+            <div style="margin-bottom:6px;">
+              <div class="rp-hint" style="margin-bottom:4px;">Status / condition</div>
+              <input type="text" id="sc-rp-ctx-status" class="rp-input" placeholder="e.g. Exhausted, nursing a bruised rib" data-ai-rewriter-ignore="1" />
+            </div>
+            <div>
+              <div class="rp-hint" style="margin-bottom:4px;">Dialogue style</div>
+              <textarea id="sc-rp-ctx-dialogue" class="rp-input rp-textarea" style="min-height:56px;" placeholder="e.g. Clipped, sardonic, rarely uses contractions" data-ai-rewriter-ignore="1"></textarea>
+            </div>
+            <div class="rp-autosave" id="sc-rp-ctx-autosave">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
               Saved
             </div>
           </div>
           <div class="rp-section-label">Persona</div>
           <div class="rp-card" style="padding-bottom:10px;">
-            <div class="rp-hint" style="margin-bottom:8px;">Tap a slot to activate it — tap again to deactivate. Active persona is injected before every rewrite.</div>
+            <div class="rp-hint" style="margin-bottom:8px;">Tap a slot to activate it — tap again to deactivate. The active persona's name &amp; personality are injected into every rewrite.</div>
             <!-- Persona slot pills -->
             <div id="sc-rp-persona-pills" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;"></div>
             <!-- Active persona editor -->
@@ -1963,8 +1927,8 @@
                 <input type="text" id="sc-rp-persona-name" class="rp-input" placeholder="Your persona name…" data-ai-rewriter-ignore="1" />
               </div>
               <div>
-                <div class="rp-hint" style="margin-bottom:4px;">Injected before every rewrite prompt</div>
-                <textarea id="sc-rp-persona-prepend" class="rp-input rp-textarea" placeholder="e.g. You are writing a collaborative story. The human character is named {{user}}. Stay in character." data-ai-rewriter-ignore="1"></textarea>
+                <div class="rp-hint" style="margin-bottom:4px;">{{user}} personality &mdash; how they think, speak and behave</div>
+                <textarea id="sc-rp-persona-personality" class="rp-input rp-textarea" placeholder="e.g. {{user}} is dry-witted and guarded, speaks in short clipped sentences, and rarely shows fear." data-ai-rewriter-ignore="1"></textarea>
               </div>
             </div>
             <div class="rp-autosave" id="sc-rp-autosave">
@@ -2066,25 +2030,6 @@
     document.documentElement.appendChild(drawer);
     document.documentElement.appendChild(tab);
     document.documentElement.appendChild(resizeHandle);
-
-    const FMT_PREPEND_KEY = "fmtPrependTrackerSummaryOnFormat";
-    const prependFmtToggleInput = document.getElementById(
-      "sc-np-prepend-fmt-toggle-input",
-    );
-
-    function loadPrependFmtToggle() {
-      chrome.storage.sync.get(FMT_PREPEND_KEY, (d) => {
-        prependFmtToggleInput.checked = d[FMT_PREPEND_KEY] === true;
-      });
-    }
-
-    prependFmtToggleInput.addEventListener("change", () => {
-      chrome.storage.sync.set({
-        [FMT_PREPEND_KEY]: prependFmtToggleInput.checked,
-      });
-    });
-
-    loadPrependFmtToggle();
 
     /* ── Element refs ── */
     const questsPanel = document.getElementById("sc-np-quests-panel");
@@ -2562,7 +2507,9 @@
     const rpPersonaEditorEl = document.getElementById("sc-rp-persona-editor");
     const rpPersonaLabelInput = document.getElementById("sc-rp-persona-label");
     const rpPersonaNameInput = document.getElementById("sc-rp-persona-name");
-    const rpPersonaPrependTa = document.getElementById("sc-rp-persona-prepend");
+    const rpPersonaPersonalityTa = document.getElementById(
+      "sc-rp-persona-personality",
+    );
     const rpAutosaveEl = document.getElementById("sc-rp-autosave");
     const rpEmptyEl = document.getElementById("sc-rp-empty");
     const rpRewriteInfo = document.getElementById("sc-rp-rewrite-info");
@@ -2579,11 +2526,18 @@
     const snipEditBtn = document.getElementById("sc-rp-snip-edit-btn");
     const snipSaveBtn = document.getElementById("sc-rp-snip-save-btn");
     const snipSavedEl = document.getElementById("sc-rp-snip-saved");
-    const oneshotPromptTa = document.getElementById("sc-rp-oneshot-prompt");
-    const oneshotRunBtn = document.getElementById("sc-rp-oneshot-run");
-    const oneshotStatusEl = document.getElementById("sc-rp-oneshot-status");
-    const rpGlobalStyleTa = document.getElementById("sc-rp-global-style");
-    const rpGsAutosaveEl = document.getElementById("sc-rp-gs-autosave");
+    const rewritePillsEl = document.getElementById("sc-rp-rewrite-pills");
+    const rewriteEditorEl = document.getElementById("sc-rp-rewrite-editor");
+    const rewriteNameInput = document.getElementById("sc-rp-rewrite-name");
+    const rewritePromptTa = document.getElementById("sc-rp-rewrite-prompt");
+    const rewriteRunBtn = document.getElementById("sc-rp-rewrite-run");
+    const rewriteStatusEl = document.getElementById("sc-rp-rewrite-status");
+    const rewriteAutosaveEl = document.getElementById("sc-rp-rewrite-autosave");
+    const ctxLocationInput = document.getElementById("sc-rp-ctx-location");
+    const ctxClothesInput = document.getElementById("sc-rp-ctx-clothes");
+    const ctxStatusInput = document.getElementById("sc-rp-ctx-status");
+    const ctxDialogueTa = document.getElementById("sc-rp-ctx-dialogue");
+    const ctxAutosaveEl = document.getElementById("sc-rp-ctx-autosave");
     const rpLogEmptyEl = document.getElementById("sc-rp-log-empty");
     const rpLogInfo = document.getElementById("sc-rp-log-info");
     const rpLogModelEl = document.getElementById("sc-rp-log-model");
@@ -2623,7 +2577,7 @@
     let snipEditMode = false;
 
     /* Storage keys */
-    const ONESHOT_PROMPT_KEY = "rpOneShotPrompt";
+    const REWRITE_CTX_KEY = "sc_rpctx_v1_" + chatId;
     const QUEST_KEY = "sc_quests_v1_" + chatId;
 
     /* ── CSS variable init ── */
@@ -4727,7 +4681,7 @@
     let drawerPersonas = Array.from({ length: 10 }, () => ({
       label: "",
       name: "",
-      prepend: "",
+      personality: "",
     }));
     let drawerActiveIdx = -1;
 
@@ -4760,7 +4714,7 @@
         const p = drawerPersonas[drawerActiveIdx];
         rpPersonaLabelInput.value = p.label || "";
         rpPersonaNameInput.value = p.name || "";
-        rpPersonaPrependTa.value = p.prepend || "";
+        rpPersonaPersonalityTa.value = p.personality || "";
       }
     }
 
@@ -4769,7 +4723,7 @@
         drawerPersonas[drawerActiveIdx] = {
           label: rpPersonaLabelInput.value,
           name: rpPersonaNameInput.value,
-          prepend: rpPersonaPrependTa.value,
+          personality: rpPersonaPersonalityTa.value,
         };
         // Refresh pill label live
         buildDrawerPersonaPills();
@@ -4797,7 +4751,7 @@
 
     rpPersonaLabelInput.addEventListener("input", schedulePersonaSave);
     rpPersonaNameInput.addEventListener("input", schedulePersonaSave);
-    rpPersonaPrependTa.addEventListener("input", schedulePersonaSave);
+    rpPersonaPersonalityTa.addEventListener("input", schedulePersonaSave);
 
     chrome.storage.sync.get(
       [
@@ -4809,9 +4763,13 @@
       ],
       (data) => {
         if (Array.isArray(data.rpPersonas) && data.rpPersonas.length > 0) {
-          drawerPersonas = data.rpPersonas.slice(0, 10);
+          drawerPersonas = data.rpPersonas.slice(0, 10).map((p) => ({
+            label: p.label || "",
+            name: p.name || "",
+            personality: p.personality || p.prepend || "",
+          }));
           while (drawerPersonas.length < 10)
-            drawerPersonas.push({ label: "", name: "", prepend: "" });
+            drawerPersonas.push({ label: "", name: "", personality: "" });
           drawerActiveIdx =
             typeof data.rpActivePersonaIndex === "number"
               ? data.rpActivePersonaIndex
@@ -4821,7 +4779,7 @@
           drawerPersonas[0] = {
             label: data.rpPersonaName || "Persona 1",
             name: data.rpPersonaName || "",
-            prepend: data.rpPersonaPrepend || "",
+            personality: data.rpPersonaPrepend || "",
           };
           drawerActiveIdx = data.rpPersonaEnabled === true ? 0 : -1;
         }
@@ -4930,27 +4888,42 @@
       }
     });
 
-    /* ── Global Style Rules ── */
-    let rpGsSaveTimer = null;
-    let rpGsAutosaveTimer = null;
+    /* ── Scene Context (per chat) ── */
+    let ctxSaveTimer = null;
+    let ctxAutosaveTimer = null;
 
-    function saveGlobalStyle() {
-      chrome.storage.sync.set({ rpGlobalStyle: rpGlobalStyleTa.value });
-      rpGsAutosaveEl.classList.add("visible");
-      clearTimeout(rpGsAutosaveTimer);
-      rpGsAutosaveTimer = setTimeout(
-        () => rpGsAutosaveEl.classList.remove("visible"),
+    function saveSceneContext() {
+      chrome.storage.local.set({
+        [REWRITE_CTX_KEY]: {
+          location: ctxLocationInput.value,
+          clothes: ctxClothesInput.value,
+          status: ctxStatusInput.value,
+          dialogueStyle: ctxDialogueTa.value,
+        },
+      });
+      ctxAutosaveEl.classList.add("visible");
+      clearTimeout(ctxAutosaveTimer);
+      ctxAutosaveTimer = setTimeout(
+        () => ctxAutosaveEl.classList.remove("visible"),
         1800,
       );
     }
 
-    rpGlobalStyleTa.addEventListener("input", () => {
-      clearTimeout(rpGsSaveTimer);
-      rpGsSaveTimer = setTimeout(saveGlobalStyle, 600);
-    });
+    function scheduleSceneContextSave() {
+      clearTimeout(ctxSaveTimer);
+      ctxSaveTimer = setTimeout(saveSceneContext, 500);
+    }
 
-    chrome.storage.sync.get("rpGlobalStyle", (data) => {
-      rpGlobalStyleTa.value = data.rpGlobalStyle || "";
+    [ctxLocationInput, ctxClothesInput, ctxStatusInput, ctxDialogueTa].forEach(
+      (el) => el.addEventListener("input", scheduleSceneContextSave),
+    );
+
+    chrome.storage.local.get(REWRITE_CTX_KEY, (data) => {
+      const c = data[REWRITE_CTX_KEY] || {};
+      ctxLocationInput.value = c.location || "";
+      ctxClothesInput.value = c.clothes || "";
+      ctxStatusInput.value = c.status || "";
+      ctxDialogueTa.value = c.dialogueStyle || "";
     });
 
     /* ── Input counter ── */
@@ -5069,65 +5042,150 @@
       );
     });
 
-    chrome.storage.sync.get(["rpSnippets", ONESHOT_PROMPT_KEY], (data) => {
+    chrome.storage.sync.get("rpSnippets", (data) => {
       if (Array.isArray(data.rpSnippets)) {
         data.rpSnippets.forEach((s, i) => {
           if (i < MAX_SNIPPETS)
             rpSnippets[i] = { label: s.label || "", text: s.text || "" };
         });
       }
-      if (typeof data[ONESHOT_PROMPT_KEY] === "string") {
-        oneshotPromptTa.value = data[ONESHOT_PROMPT_KEY];
-      }
       renderSnippetChips();
     });
 
-    /* ── One-shot ── */
-    let oneshotPromptSaveTimer = null;
+    /* ── Rewrites (presets) ── */
+    let drawerRewrites = Array.from({ length: 5 }, () => ({
+      name: "",
+      prompt: "",
+    }));
+    let rewriteActiveIdx = -1;
+    let rewriteSaveTimer = null;
+    let rewriteAutosaveTimer = null;
 
-    oneshotPromptTa.addEventListener("input", () => {
-      clearTimeout(oneshotPromptSaveTimer);
-      const value = oneshotPromptTa.value;
-      oneshotPromptSaveTimer = setTimeout(() => {
-        chrome.storage.sync.set({ [ONESHOT_PROMPT_KEY]: value });
-      }, 220);
-    });
+    function buildRewritePills() {
+      rewritePillsEl.innerHTML = "";
+      drawerRewrites.forEach((r, idx) => {
+        const btn = document.createElement("button");
+        btn.className =
+          "sc-persona-pill" + (idx === rewriteActiveIdx ? " active" : "");
+        btn.dataset.idx = idx;
+        const label = (r.name || "").trim() || String(idx + 1);
+        btn.textContent =
+          label.length > 9 ? label.slice(0, 8) + "\u2026" : label;
+        btn.addEventListener("click", () => {
+          clearTimeout(rewriteSaveTimer);
+          if (rewriteActiveIdx >= 0) {
+            drawerRewrites[rewriteActiveIdx] = {
+              name: rewriteNameInput.value,
+              prompt: rewritePromptTa.value,
+            };
+          }
+          rewriteActiveIdx = rewriteActiveIdx === idx ? -1 : idx;
+          buildRewritePills();
+          showRewriteEditor();
+          chrome.storage.sync.set({
+            rpRewrites: drawerRewrites,
+            rpActiveRewriteIndex: rewriteActiveIdx,
+          });
+        });
+        rewritePillsEl.appendChild(btn);
+      });
+    }
 
-    oneshotPromptTa.addEventListener("blur", () => {
-      clearTimeout(oneshotPromptSaveTimer);
-      chrome.storage.sync.set({ [ONESHOT_PROMPT_KEY]: oneshotPromptTa.value });
-    });
+    function showRewriteEditor() {
+      if (rewriteActiveIdx < 0) {
+        rewriteEditorEl.style.display = "none";
+      } else {
+        rewriteEditorEl.style.display = "";
+        const r = drawerRewrites[rewriteActiveIdx];
+        rewriteNameInput.value = r.name || "";
+        rewritePromptTa.value = r.prompt || "";
+        rewriteStatusEl.textContent = "";
+        rewriteStatusEl.className = "rp-hint";
+      }
+    }
 
-    oneshotRunBtn.addEventListener("click", () => {
-      const prompt = oneshotPromptTa.value.trim();
-      if (!prompt) {
-        oneshotStatusEl.textContent = "Enter a prompt first.";
-        oneshotStatusEl.className = "rp-hint rp-status-err";
+    function saveRewrites() {
+      if (rewriteActiveIdx >= 0) {
+        drawerRewrites[rewriteActiveIdx] = {
+          name: rewriteNameInput.value,
+          prompt: rewritePromptTa.value,
+        };
+        buildRewritePills();
+      }
+      chrome.storage.sync.set({
+        rpRewrites: drawerRewrites,
+        rpActiveRewriteIndex: rewriteActiveIdx,
+      });
+      rewriteAutosaveEl.classList.add("visible");
+      clearTimeout(rewriteAutosaveTimer);
+      rewriteAutosaveTimer = setTimeout(
+        () => rewriteAutosaveEl.classList.remove("visible"),
+        1800,
+      );
+    }
+
+    function scheduleRewriteSave() {
+      clearTimeout(rewriteSaveTimer);
+      rewriteSaveTimer = setTimeout(saveRewrites, 600);
+    }
+
+    rewriteNameInput.addEventListener("input", scheduleRewriteSave);
+    rewritePromptTa.addEventListener("input", scheduleRewriteSave);
+
+    rewriteRunBtn.addEventListener("click", () => {
+      if (rewriteActiveIdx < 0) {
+        rewriteStatusEl.textContent = "Select a preset slot first.";
+        rewriteStatusEl.className = "rp-hint rp-status-err";
         return;
       }
-      oneshotRunBtn.disabled = true;
-      oneshotStatusEl.textContent = "Running\u2026";
-      oneshotStatusEl.className = "rp-hint";
-      chrome.storage.sync.set({ [ONESHOT_PROMPT_KEY]: oneshotPromptTa.value });
+      if (!rewritePromptTa.value.trim()) {
+        rewriteStatusEl.textContent = "Enter an instruction first.";
+        rewriteStatusEl.className = "rp-hint rp-status-err";
+        return;
+      }
+      clearTimeout(rewriteSaveTimer);
+      saveRewrites();
+      rewriteRunBtn.disabled = true;
+      rewriteStatusEl.textContent = "Running\u2026";
+      rewriteStatusEl.className = "rp-hint";
       document.dispatchEvent(
-        new CustomEvent("sc-rp-run-oneshot", { detail: { prompt } }),
+        new CustomEvent("sc-rp-run-rewrite", {
+          detail: { index: rewriteActiveIdx },
+        }),
       );
     });
 
     document.addEventListener(
-      "sc-rp-oneshot-result",
+      "sc-rp-rewrite-result",
       (e) => {
-        oneshotRunBtn.disabled = false;
+        rewriteRunBtn.disabled = false;
         if (e.detail.error) {
-          oneshotStatusEl.textContent = e.detail.error;
-          oneshotStatusEl.className = "rp-hint rp-status-err";
+          rewriteStatusEl.textContent = e.detail.error;
+          rewriteStatusEl.className = "rp-hint rp-status-err";
         } else {
-          oneshotStatusEl.textContent = `\u2713 Done \u00b7 ${e.detail.model} \u00b7 ${e.detail.elapsed}s`;
-          oneshotStatusEl.className = "rp-hint rp-status-ok";
+          rewriteStatusEl.textContent = `\u2713 Done \u00b7 ${e.detail.model} \u00b7 ${e.detail.elapsed}s`;
+          rewriteStatusEl.className = "rp-hint rp-status-ok";
         }
       },
       _sig,
     );
+
+    chrome.storage.sync.get(["rpRewrites", "rpActiveRewriteIndex"], (data) => {
+      if (Array.isArray(data.rpRewrites) && data.rpRewrites.length > 0) {
+        drawerRewrites = data.rpRewrites.slice(0, 5).map((r) => ({
+          name: r.name || "",
+          prompt: r.prompt || "",
+        }));
+        while (drawerRewrites.length < 5)
+          drawerRewrites.push({ name: "", prompt: "" });
+      }
+      rewriteActiveIdx =
+        typeof data.rpActiveRewriteIndex === "number"
+          ? data.rpActiveRewriteIndex
+          : -1;
+      buildRewritePills();
+      showRewriteEditor();
+    });
 
     /* ── Drag-to-resize ── */
     let resizing = false;
@@ -5172,7 +5230,6 @@
     /* ── Formatter reference panel ── */
     const FMT_KEYS_TO_WATCH = [
       "formatterEnabled",
-      "formatterKeyword",
       "fmtShortcut",
       "fmtNoTrackerShortcut",
       "autoFormatAfterRewrite",
@@ -5194,7 +5251,6 @@
       "fmtEmDash",
       "fmtNoSpaceBeforePunct",
       "fmtSpaceAfterPunct",
-      "fmtPrependTrackerSummaryOnFormat",
     ];
 
     const FMT_GROUPS = [
@@ -5333,12 +5389,10 @@
     function renderFormatterPanel(d) {
       fmtPanel.innerHTML = "";
       const enabled = d.formatterEnabled !== false;
-      const keyword = d.formatterKeyword || "//format";
       const shortcut = "Ctrl+" + (d.fmtShortcut || "m").toUpperCase();
       const noTrackerShortcut =
         "Ctrl+Shift+" + (d.fmtNoTrackerShortcut || "m").toUpperCase();
       const autoFmt = d.autoFormatAfterRewrite !== false;
-      const prependSummary = d.fmtPrependTrackerSummaryOnFormat === true;
 
       // ── Header card ──
       const hCard = document.createElement("div");
@@ -5350,15 +5404,13 @@
           <span class="fmt-master-badge ${enabled ? "on" : "off"}">${enabled ? "ENABLED" : "DISABLED"}</span>
         </div>
         <div class="fmt-meta-row">
-          <span>keyword</span><span class="fmt-meta-chip">${escH(keyword)}</span>
-          <span style="margin-left:4px;">shortcut</span><span class="fmt-meta-chip">${escH(shortcut)}</span>
-          <span style="margin-left:4px;">no tracker shortcut</span><span class="fmt-meta-chip">${escH(noTrackerShortcut)}</span>
+          <span>shortcut</span><span class="fmt-meta-chip">${escH(shortcut)}</span>
+          <span style="margin-left:4px;">no-tracker shortcut</span><span class="fmt-meta-chip">${escH(noTrackerShortcut)}</span>
           <span style="margin-left:4px;">auto after rewrite</span>
           <span class="fmt-master-badge ${autoFmt ? "on" : "off"}" style="font-size:9.5px;">${autoFmt ? "ON" : "OFF"}</span>
-          <span style="margin-left:4px;">inject tracker summary on format</span>
-          <span class="fmt-master-badge ${prependSummary ? "on" : "off"}" style="font-size:9.5px;">${prependSummary ? "ON" : "OFF"}</span>
         </div>
         <div style="font-size:10px;color:#334155;font-style:italic;margin-top:2px;">
+          ${escH(shortcut)} formats and prepends a tracker summary; ${escH(noTrackerShortcut)} formats without it.
           Text outside quotes &amp; [brackets] is wrapped in
           <span style="color:#6c63ff;font-family:ui-monospace,monospace;">*asterisks*</span> automatically.
         </div>`;
@@ -5477,12 +5529,8 @@
 
     // Live-reload when settings change while Formatter tab is active
     chrome.storage.onChanged.addListener((changes, area) => {
-      if (area === "sync" && FMT_PREPEND_KEY in changes) {
-        prependFmtToggleInput.checked =
-          changes[FMT_PREPEND_KEY].newValue === true;
-      }
-      if (activeTab === "fmt" && FMT_KEYS_TO_WATCH.some((k) => k in changes)) {
-        loadFormatterPanel();
+      if (area === "sync" && FMT_KEYS_TO_WATCH.some((k) => k in changes)) {
+        if (activeTab === "fmt") loadFormatterPanel();
       }
     });
 

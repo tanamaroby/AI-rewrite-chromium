@@ -4,11 +4,9 @@
 (function () {
   "use strict";
 
-  let commands = [];
   let apiKey = "";
   let model = "";
   let formatterEnabled = true;
-  let formatterKeyword = "//format";
   let autoFormatAfterRewrite = true;
   let fmtStripAsterisks = true;
   let fmtNormaliseQuotes = true;
@@ -31,28 +29,25 @@
   let rpPersonas = Array.from({ length: 10 }, () => ({
     label: "",
     name: "",
-    prepend: "",
+    personality: "",
   }));
   let rpActivePersonaIndex = -1;
-  let rpGlobalStyle = "";
+  let rpRewrites = Array.from({ length: 5 }, () => ({ name: "", prompt: "" }));
+  let rpActiveRewriteIndex = -1;
   let lastRewrite = null; // { el, before, after, label, ts }
   let lastFocusedEl = null; // last focused SpicyChat input
   let fmtShortcut = "m"; // keyboard shortcut key for format (Ctrl+key)
   let fmtNoTrackerShortcut = "m"; // keyboard shortcut key for no-tracker format (Ctrl+Shift+key)
-  let rpOneShotPrompt = ""; // saved one-shot prompt from RP drawer
-  let fmtPrependTrackerSummaryOnFormat = false;
   const isSpicyChat = location.hostname.includes("spicychat.ai");
-  const ONESHOT_SHORTCUT_KEY = "n";
+  const REWRITE_SHORTCUT_KEY = "n";
 
   // Load settings from storage
   function loadSettings() {
     chrome.storage.sync.get(
       [
-        "commands",
         "apiKey",
         "model",
         "formatterEnabled",
-        "formatterKeyword",
         "autoFormatAfterRewrite",
         "fmtStripAsterisks",
         "fmtNormaliseQuotes",
@@ -72,23 +67,20 @@
         "fmtEmDash",
         "fmtNoSpaceBeforePunct",
         "fmtSpaceAfterPunct",
-        "fmtPrependTrackerSummaryOnFormat",
         "rpPersonas",
         "rpActivePersonaIndex",
         "rpPersonaEnabled",
         "rpPersonaName",
         "rpPersonaPrepend",
-        "rpGlobalStyle",
+        "rpRewrites",
+        "rpActiveRewriteIndex",
         "fmtShortcut",
         "fmtNoTrackerShortcut",
-        "rpOneShotPrompt",
       ],
       (data) => {
-        commands = data.commands || [];
         apiKey = data.apiKey || "";
         model = data.model || "openrouter/free";
         formatterEnabled = data.formatterEnabled !== false;
-        formatterKeyword = data.formatterKeyword || "//format";
         autoFormatAfterRewrite = data.autoFormatAfterRewrite !== false;
         fmtStripAsterisks = data.fmtStripAsterisks !== false;
         fmtNormaliseQuotes = data.fmtNormaliseQuotes !== false;
@@ -108,12 +100,14 @@
         fmtEmDash = data.fmtEmDash !== false;
         fmtNoSpaceBeforePunct = data.fmtNoSpaceBeforePunct !== false;
         fmtSpaceAfterPunct = data.fmtSpaceAfterPunct !== false;
-        fmtPrependTrackerSummaryOnFormat =
-          data.fmtPrependTrackerSummaryOnFormat === true;
         if (Array.isArray(data.rpPersonas) && data.rpPersonas.length > 0) {
-          rpPersonas = data.rpPersonas.slice(0, 10);
+          rpPersonas = data.rpPersonas.slice(0, 10).map((p) => ({
+            label: p.label || "",
+            name: p.name || "",
+            personality: p.personality || p.prepend || "",
+          }));
           while (rpPersonas.length < 10)
-            rpPersonas.push({ label: "", name: "", prepend: "" });
+            rpPersonas.push({ label: "", name: "", personality: "" });
           rpActivePersonaIndex =
             typeof data.rpActivePersonaIndex === "number"
               ? data.rpActivePersonaIndex
@@ -123,15 +117,24 @@
           rpPersonas[0] = {
             label: data.rpPersonaName || "Persona 1",
             name: data.rpPersonaName || "",
-            prepend: data.rpPersonaPrepend || "",
+            personality: data.rpPersonaPrepend || "",
           };
           rpActivePersonaIndex = data.rpPersonaEnabled === true ? 0 : -1;
         }
-        rpGlobalStyle = data.rpGlobalStyle || "";
+        if (Array.isArray(data.rpRewrites) && data.rpRewrites.length > 0) {
+          rpRewrites = data.rpRewrites.slice(0, 5).map((r) => ({
+            name: r.name || "",
+            prompt: r.prompt || "",
+          }));
+          while (rpRewrites.length < 5)
+            rpRewrites.push({ name: "", prompt: "" });
+        }
+        rpActiveRewriteIndex =
+          typeof data.rpActiveRewriteIndex === "number"
+            ? data.rpActiveRewriteIndex
+            : -1;
         fmtShortcut = data.fmtShortcut || "m";
         fmtNoTrackerShortcut = data.fmtNoTrackerShortcut || "m";
-        rpOneShotPrompt =
-          typeof data.rpOneShotPrompt === "string" ? data.rpOneShotPrompt : "";
       },
     );
   }
@@ -201,29 +204,7 @@
     }, 3500);
   }
 
-  // ─── Text extraction & replacement ─────────────────────────────────────────
-
-  function getTextAndKeyword(el) {
-    let fullText = "";
-    if (el.isContentEditable) {
-      fullText = el.innerText || el.textContent || "";
-    } else {
-      fullText = el.value || "";
-    }
-
-    for (const cmd of commands) {
-      const kw = cmd.keyword;
-      const idx = fullText.indexOf(kw);
-      if (idx !== -1) {
-        // Text before the keyword is the content to rewrite
-        const textToRewrite = fullText.slice(0, idx).trimEnd();
-        if (textToRewrite.length > 0) {
-          return { textToRewrite, keyword: kw, cmd, fullText };
-        }
-      }
-    }
-    return null;
-  }
+  // ─── Text replacement ──────────────────────────────────────────────────────
 
   function replaceText(el, newText) {
     if (el.isContentEditable) {
@@ -264,7 +245,7 @@
   }
 
   function buildTrackerSummaryForFormat(done) {
-    if (!isSpicyChat || !fmtPrependTrackerSummaryOnFormat) {
+    if (!isSpicyChat) {
       done("");
       return;
     }
@@ -442,11 +423,8 @@
     return ch.replace(/[\\^\]]/g, "\\$&");
   }
 
-  // ─── Format button & overlay ─────────────────────────────────────────────────
+  // ─── Format overlay ──────────────────────────────────────────────────────────
 
-  let formatBtn = null;
-  let formatBtnTarget = null;
-  let formatBtnBlurTimer = null;
   let formatOverlay = null;
 
   function createFormatOverlay(targetEl) {
@@ -517,194 +495,66 @@
     }, 250);
   }
 
-  function getFormatterMatch(el) {
-    if (!formatterEnabled) return null;
-    const kw = formatterKeyword;
-    if (!kw) return null;
-    const fullText = el.isContentEditable
-      ? el.innerText || el.textContent || ""
-      : el.value || "";
-    const idx = fullText.indexOf(kw);
-    if (idx !== -1) {
-      const textToFormat = fullText.slice(0, idx).trimEnd();
-      if (textToFormat.length > 0) return { textToFormat };
-    }
-    return null;
-  }
+  // ─── Rewrite prompt builder ──────────────────────────────────────────────
 
-  function positionFormatButton(btn, el) {
-    const rect = el.getBoundingClientRect();
-    const btnW = 26;
-    const btnH = 26;
-    const gap = 5;
-    // Try to sit above the element; if too close to the top (e.g. behind a fixed header), sit inside
-    let top = rect.top - btnH - gap;
-    if (top < 62) top = rect.top + gap;
-    top = Math.min(top, window.innerHeight - btnH - 8);
-    // Right-align to element, clamped to viewport edges
-    let left = rect.right - btnW - gap;
-    left = Math.max(4, Math.min(left, window.innerWidth - btnW - 4));
-    Object.assign(btn.style, {
-      top: `${top}px`,
-      left: `${left}px`,
+  function getSceneContext() {
+    return new Promise((resolve) => {
+      const chatId = getSpicyChatChatId();
+      if (!chatId) {
+        resolve({});
+        return;
+      }
+      chrome.storage.local.get("sc_rpctx_v1_" + chatId, (d) => {
+        const c = d["sc_rpctx_v1_" + chatId];
+        resolve(c && typeof c === "object" ? c : {});
+      });
     });
   }
 
-  function showFormatButton(el) {
-    if (!formatterEnabled) return;
-    clearTimeout(formatBtnBlurTimer);
-    if (formatBtn && formatBtnTarget === el) return;
-    removeFormatButton(true);
-
-    const btn = document.createElement("button");
-    btn.className = "ai-formatter-btn";
-    btn.title = "Format text";
-    btn.setAttribute("aria-label", "Format text");
-    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>`;
-    Object.assign(btn.style, {
-      position: "fixed",
-      zIndex: "2147483646",
-    });
-    positionFormatButton(btn, el);
-    document.body.appendChild(btn);
-    formatBtn = btn;
-    formatBtnTarget = el;
-
-    btn.addEventListener("pointerdown", (e) => {
-      e.preventDefault();
-      clearTimeout(formatBtnBlurTimer);
-    });
-    btn.addEventListener("click", () => {
-      handleFormat(el);
-    });
-  }
-
-  function removeFormatButton(instant) {
-    clearTimeout(formatBtnBlurTimer);
-    if (!formatBtn) return;
-    if (instant) {
-      formatBtn.remove();
-      formatBtn = null;
-      formatBtnTarget = null;
-    } else {
-      formatBtnBlurTimer = setTimeout(() => {
-        if (formatBtn) {
-          formatBtn.remove();
-          formatBtn = null;
-          formatBtnTarget = null;
-        }
-      }, 200);
-    }
-  }
-
-  // ─── Persona prompt builder ────────────────────────────────────────────────
-
-  function buildPrompt(basePrompt) {
-    if (!isSpicyChat) return basePrompt;
+  async function buildRewritePrompt(presetPrompt) {
     const parts = [];
-
-    // 1. Persona context (who is writing — always 1st person)
-    const activePersona =
+    const persona =
       rpActivePersonaIndex >= 0 && rpActivePersonaIndex < rpPersonas.length
         ? rpPersonas[rpActivePersonaIndex]
         : null;
-    if (
-      activePersona &&
-      activePersona.prepend &&
-      activePersona.prepend.trim()
-    ) {
-      const name = activePersona.name || "the user";
-      const resolved = activePersona.prepend.replace(/\{\{user\}\}/gi, name);
-      parts.push(
-        `[Character context: The text you are rewriting is written in first-person by ${name}. ` +
-          `You are rewriting their words — stay in their voice and perspective throughout. ` +
-          `${name}'s persona:\n${resolved.trim()}]`,
-      );
-    }
+    const name = (persona && persona.name && persona.name.trim()) || "the user";
 
-    // 2. Global style rules (how to write)
-    if (rpGlobalStyle.trim()) {
-      parts.push(rpGlobalStyle.trim());
-    }
-
-    // 3. Specific command prompt
-    parts.push(basePrompt);
-
-    return parts.join("\n\n");
-  }
-
-  // ─── Main rewrite handler ──────────────────────────────────────────────────
-
-  async function handleRewrite(el, match) {
-    createOverlay(el);
-    const startTime = Date.now();
-
-    try {
-      const result = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage(
-          {
-            type: "REWRITE_TEXT",
-            text: match.textToRewrite,
-            prompt: buildPrompt(match.cmd.prompt),
-            apiKey,
-            model,
-          },
-          (response) => {
-            if (chrome.runtime.lastError) {
-              reject(new Error(chrome.runtime.lastError.message));
-            } else if (response.success) {
-              resolve(response);
-            } else {
-              reject(new Error(response.error));
-            }
-          },
-        );
-      });
-
-      const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1);
-      let finalText = result.text;
-      let wasFormatted = false;
-      if (autoFormatAfterRewrite && formatterEnabled) {
-        finalText = formatText(result.text);
-        wasFormatted = true;
+    if (persona && (persona.name?.trim() || persona.personality?.trim())) {
+      let block =
+        `[Roleplay context — the text you are rewriting is written in first person by ${name}. ` +
+        `Preserve their voice, intent and point of view; never break character or narrate for other characters.`;
+      if (persona.personality && persona.personality.trim()) {
+        const resolved = persona.personality
+          .replace(/\{\{user\}\}/gi, name)
+          .trim();
+        block += ` ${name}'s personality: ${resolved}`;
       }
-      replaceText(el, finalText);
-      lastRewrite = {
-        el,
-        before: match.textToRewrite,
-        after: finalText,
-        label: match.cmd.label || match.keyword,
-        ts: Date.now(),
-      };
-      const rewriteDetail = {
-        before: match.textToRewrite,
-        after: finalText,
-        label: match.cmd.label || match.keyword,
-        ts: lastRewrite.ts,
-        model: result.model || model,
-        usage: result.usage || null,
-        elapsed: parseFloat(elapsedSec),
-        promptText: buildPrompt(match.cmd.prompt),
-        reasoning: result.reasoning || null,
-      };
-      chrome.storage.local.set({ sc_last_rewrite: rewriteDetail });
-      document.dispatchEvent(
-        new CustomEvent("sc-rp-rewrite-done", { detail: rewriteDetail }),
-      );
-      const modelShort = (result.model || model || "unknown").split("/").pop();
-      const formattedSuffix = wasFormatted ? " + formatted" : "";
-      showToast(
-        `✓ ${match.cmd.label || match.keyword}${formattedSuffix} · ${modelShort} · ${elapsedSec}s`,
-      );
-    } catch (err) {
-      const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1);
-      // Restore original text without keyword on error
-      replaceText(el, match.textToRewrite);
-      showToast(`✗ Failed after ${elapsedSec}s — ${err.message}`, true);
-      console.error("[AI Rewriter]", err);
-    } finally {
-      removeOverlay(el);
+      block += `]`;
+      parts.push(block);
     }
+
+    const ctx = await getSceneContext();
+    const scene = [];
+    if (ctx.location && ctx.location.trim())
+      scene.push(`Location: ${ctx.location.trim()}`);
+    if (ctx.clothes && ctx.clothes.trim())
+      scene.push(`${name}'s clothing / appearance: ${ctx.clothes.trim()}`);
+    if (ctx.status && ctx.status.trim())
+      scene.push(`${name}'s current status / condition: ${ctx.status.trim()}`);
+    if (scene.length) {
+      parts.push(
+        `[Scene details — keep these consistent and never contradict them, but only surface a detail when it is naturally relevant to the text:\n${scene.join("\n")}]`,
+      );
+    }
+
+    if (ctx.dialogueStyle && ctx.dialogueStyle.trim()) {
+      parts.push(
+        `[Spoken dialogue only (text inside quotation marks) must follow this voice and style: ${ctx.dialogueStyle.trim()}. Do not apply it to narration or actions.]`,
+      );
+    }
+
+    parts.push(presetPrompt);
+    return parts.join("\n\n");
   }
 
   // ─── Input stats for RP Tools (SpicyChat) ────────────────────────────────
@@ -722,34 +572,10 @@
 
   // ─── Event listeners ────────────────────────────────────────────────────────
 
-  // Debounce to avoid triggering on every keystroke
-  const pending = new WeakMap();
-
   function onInput(e) {
     const el = e.target;
     if (!isEditableElement(el)) return;
     if (isSpicyChat) dispatchInputStats(el);
-
-    // Clear any existing pending check for this element
-    if (pending.has(el)) {
-      clearTimeout(pending.get(el));
-    }
-
-    // Small delay so the keyword is fully typed
-    const timer = setTimeout(() => {
-      pending.delete(el);
-      const match = getTextAndKeyword(el);
-      if (match) {
-        handleRewrite(el, match);
-        return;
-      }
-      const fmatch = getFormatterMatch(el);
-      if (fmatch) {
-        handleFormat(el, fmatch.textToFormat);
-      }
-    }, 300);
-
-    pending.set(el, timer);
   }
 
   function isEditableElement(el) {
@@ -767,17 +593,14 @@
 
   document.addEventListener("input", onInput, true);
 
-  // ─── Format button focus tracking ───────────────────────────────────────────
+  // ─── Focused-input tracking (SpicyChat) ────────────────────────────────────
 
   document.addEventListener(
     "focusin",
     (e) => {
-      if (isEditableElement(e.target)) {
-        showFormatButton(e.target);
-        if (isSpicyChat) {
-          lastFocusedEl = e.target;
-          dispatchInputStats(e.target);
-        }
+      if (isEditableElement(e.target) && isSpicyChat) {
+        lastFocusedEl = e.target;
+        dispatchInputStats(e.target);
       }
     },
     true,
@@ -786,7 +609,6 @@
   document.addEventListener(
     "focusout",
     (e) => {
-      removeFormatButton(false);
       if (isSpicyChat && isEditableElement(e.target)) {
         setTimeout(() => {
           const active = document.activeElement;
@@ -801,26 +623,6 @@
       }
     },
     true,
-  );
-
-  document.addEventListener(
-    "scroll",
-    () => {
-      if (formatBtn && formatBtnTarget) {
-        positionFormatButton(formatBtn, formatBtnTarget);
-      }
-    },
-    { passive: true, capture: true },
-  );
-
-  window.addEventListener(
-    "resize",
-    () => {
-      if (formatBtn && formatBtnTarget) {
-        positionFormatButton(formatBtn, formatBtnTarget);
-      }
-    },
-    { passive: true },
   );
 
   function matchShortcut(e, key, requireShift) {
@@ -839,31 +641,29 @@
     if (matchShortcut(e, fmtShortcut, false)) return "format";
     if (
       isSpicyChat &&
-      matchShortcut(e, ONESHOT_SHORTCUT_KEY, false) &&
-      (!fmtShortcut || fmtShortcut.toLowerCase() !== ONESHOT_SHORTCUT_KEY)
+      matchShortcut(e, REWRITE_SHORTCUT_KEY, false) &&
+      (!fmtShortcut || fmtShortcut.toLowerCase() !== REWRITE_SHORTCUT_KEY)
     ) {
-      return "oneShot";
+      return "rewrite";
     }
     return null;
   }
 
-  async function runOneShotRewrite(rawPrompt) {
+  async function runRewrite(index) {
     if (!isSpicyChat) return;
-    const prompt = (rawPrompt || "").trim();
-    if (!prompt) {
+    const preset = rpRewrites[index];
+    if (!preset || !preset.prompt || !preset.prompt.trim()) {
       document.dispatchEvent(
-        new CustomEvent("sc-rp-oneshot-result", {
-          detail: {
-            error: "Set a One-Shot prompt in RP Tools first.",
-          },
+        new CustomEvent("sc-rp-rewrite-result", {
+          detail: { error: "This Rewrite has no prompt yet." },
         }),
       );
-      showToast("One-Shot needs a saved prompt in RP Tools.", true);
+      showToast("Add a prompt to this Rewrite first.", true);
       return;
     }
     if (!lastFocusedEl || !document.contains(lastFocusedEl)) {
       document.dispatchEvent(
-        new CustomEvent("sc-rp-oneshot-result", {
+        new CustomEvent("sc-rp-rewrite-result", {
           detail: {
             error: "No input focused — click inside the chat box first.",
           },
@@ -878,16 +678,17 @@
     const trimmed = rawText.trim();
     if (!trimmed) {
       document.dispatchEvent(
-        new CustomEvent("sc-rp-oneshot-result", {
+        new CustomEvent("sc-rp-rewrite-result", {
           detail: { error: "Input is empty." },
         }),
       );
       return;
     }
+    const label = (preset.name && preset.name.trim()) || "Rewrite";
     createOverlay(el);
     const startTime = Date.now();
     try {
-      const builtPrompt = buildPrompt(prompt);
+      const builtPrompt = await buildRewritePrompt(preset.prompt);
       const result = await new Promise((resolve, reject) => {
         chrome.runtime.sendMessage(
           {
@@ -916,7 +717,7 @@
       const rewriteDetail = {
         before: trimmed,
         after: finalText,
-        label: "One-Shot",
+        label,
         ts: Date.now(),
         model: result.model || model,
         usage: result.usage || null,
@@ -931,25 +732,25 @@
       );
       const modelShort = (result.model || model || "unknown").split("/").pop();
       document.dispatchEvent(
-        new CustomEvent("sc-rp-oneshot-result", {
-          detail: { ok: true, elapsed: elapsedSec, model: modelShort },
+        new CustomEvent("sc-rp-rewrite-result", {
+          detail: { ok: true, elapsed: elapsedSec, model: modelShort, label },
         }),
       );
-      showToast(`✓ One-Shot · ${modelShort} · ${elapsedSec}s`);
+      showToast(`✓ ${label} · ${modelShort} · ${elapsedSec}s`);
     } catch (err) {
       replaceText(el, trimmed);
       document.dispatchEvent(
-        new CustomEvent("sc-rp-oneshot-result", {
+        new CustomEvent("sc-rp-rewrite-result", {
           detail: { error: err.message },
         }),
       );
-      showToast(`✗ One-Shot — ${err.message}`, true);
+      showToast(`✗ ${label} — ${err.message}`, true);
     } finally {
       removeOverlay(el);
     }
   }
 
-  // ─── Keyboard shortcuts (format + one-shot) ───────────────────────────────────
+  // ─── Keyboard shortcuts (format + rewrite) ────────────────────────────────────
 
   document.addEventListener(
     "keydown",
@@ -968,9 +769,13 @@
         handleFormat(document.activeElement);
         return;
       }
-      if (action === "oneShot") {
+      if (action === "rewrite") {
         if (e.repeat) return;
-        runOneShotRewrite(rpOneShotPrompt);
+        if (rpActiveRewriteIndex < 0) {
+          showToast("Pick an active Rewrite in RP Tools first.", true);
+          return;
+        }
+        runRewrite(rpActiveRewriteIndex);
       }
     },
     true,
@@ -1029,9 +834,17 @@
     if (!silent) showToast("✓ Snippet inserted");
   });
 
-  // ─── One-shot rewrite (triggered by RP Tools drawer) ────────────────────────
+  // ─── Rewrite (triggered by RP Tools drawer) ─────────────────────────────────
 
-  document.addEventListener("sc-rp-run-oneshot", async (e) => {
-    await runOneShotRewrite(e?.detail?.prompt || rpOneShotPrompt);
+  document.addEventListener("sc-rp-run-rewrite", async (e) => {
+    const idx =
+      typeof e?.detail?.index === "number"
+        ? e.detail.index
+        : rpActiveRewriteIndex;
+    if (idx < 0 || idx >= rpRewrites.length) {
+      showToast("Pick an active Rewrite first.", true);
+      return;
+    }
+    await runRewrite(idx);
   });
 })();

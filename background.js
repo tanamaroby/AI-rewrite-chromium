@@ -1,25 +1,17 @@
 // background.js — Service Worker
 // Handles AI API calls to keep API keys secure and avoid CORS issues
 
-const DEFAULT_COMMANDS = [
-  {
-    keyword: "//re",
-    label: "Rewrite",
-    prompt:
-      "Rewrite the text. Improve clarity, flow, and word choice—keep it simple and natural. Preserve all meaning, tone, and character voices. Do not add plot, characters, or events. Return only the rewritten text.",
-  },
-];
-
-// Initialize default commands on install
+// Initialize defaults on install
 chrome.runtime.onInstalled.addListener(async () => {
-  const data = await chrome.storage.sync.get(["commands", "apiKey", "model"]);
-  if (!data.commands) {
-    await chrome.storage.sync.set({ commands: DEFAULT_COMMANDS });
-  }
+  const data = await chrome.storage.sync.get(["model", "commands"]);
   if (!data.model) {
     await chrome.storage.sync.set({
       model: "openrouter/free",
     });
+  }
+  // Clean up legacy keyword commands (Rewrites replaced them)
+  if (data.commands !== undefined) {
+    await chrome.storage.sync.remove("commands");
   }
 });
 

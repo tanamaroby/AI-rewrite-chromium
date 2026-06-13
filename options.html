@@ -27,10 +27,6 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           API Key
         </a>
-        <a href="#section-keywords" class="nav-link" data-section="section-keywords">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          Keywords
-        </a>
         <a href="#section-model" class="nav-link" data-section="section-model">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
           Model
@@ -105,31 +101,6 @@
         <div class="form-actions">
           <button class="btn-primary" id="saveApiKey">Save API Key</button>
           <span class="save-feedback" id="apiSaveFeedback"></span>
-        </div>
-      </section>
-
-      <!-- Keywords Section -->
-      <section id="section-keywords" class="section">
-        <div class="section-header">
-          <h2>Keywords</h2>
-          <p class="section-desc">
-            Type a keyword at the end of any text in a textbox and the AI will rewrite it automatically.
-            Keywords must start with <code>//</code>.
-          </p>
-        </div>
-
-        <div id="commandsContainer" class="commands-container">
-          <!-- Populated by options.js -->
-        </div>
-
-        <button class="btn-add" id="addCommand">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add Keyword
-        </button>
-
-        <div class="form-actions" style="margin-top: 20px;">
-          <button class="btn-primary" id="saveCommands">Save Keywords</button>
-          <span class="save-feedback" id="cmdSaveFeedback"></span>
         </div>
       </section>
 
@@ -296,7 +267,7 @@
 
         <!-- RP Tools / Persona -->
         <div class="section-header" style="margin-top: 28px;">
-          <h3 style="font-size: 15px; color: var(--text-primary); margin: 0 0 6px;">RP Tools &mdash; Persona Prepend</h3>
+          <h3 style="font-size: 15px; color: var(--text-primary); margin: 0 0 6px;">RP Tools &mdash; Persona</h3>
           <p class="section-desc" style="margin: 0;">
             Ten saved persona slots. Activate one at a time — clicking the active slot deactivates it.
             Use <code>{{user}}</code> as a placeholder for your persona name.
@@ -324,7 +295,7 @@
             </div>
           </div>
         </div>
-        <!-- 5 persona edit slots -->
+        <!-- 10 persona edit slots -->
         <div id="rpPersonaSlots" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;"></div>
         <div class="form-actions" style="margin-top: 12px;">
           <button class="btn-primary" id="saveRpPersonas">Save All Personas</button>
@@ -335,7 +306,7 @@
         <div class="card" style="margin-top: 16px; padding: 16px;">
           <h3 style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin: 0 0 6px;">Export Config for Mobile</h3>
           <p style="font-size: 12px; color: var(--text-muted); margin: 0 0 12px; line-height: 1.5;">
-            Copies all 10 persona slots, global style rules, and AI commands as JSON. On iPhone, open Settings → <strong>Import</strong> tab and paste it there.
+            Copies all 10 persona slots and your 5 saved Rewrites as JSON. On iPhone, open Settings → <strong>Import</strong> tab and paste it there.
           </p>
           <div style="display:flex; align-items:center; gap:10px;">
             <button class="btn-primary" id="export-mobile-config-btn" style="font-size:12px; padding:6px 16px;">Export Config for Mobile</button>
@@ -396,29 +367,16 @@
         <div class="section-header">
           <h2>Formatter</h2>
           <p class="section-desc">
-            The formatter adds a small <strong>format button</strong> that appears above every focused
-            text input. Clicking it wraps text outside quotation marks in asterisks — no AI, instant,
-            no API calls required. You can also trigger it by typing the keyword at the end of your text.
+            The formatter cleans up text and wraps anything outside quotation marks in asterisks &mdash;
+            no AI, instant, no API calls. Trigger it with the keyboard shortcuts below.
           </p>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="formatterKeywordInput">Trigger Keyword</label>
-          <input
-            type="text"
-            id="formatterKeywordInput"
-            class="form-input"
-            placeholder="//format"
-            spellcheck="false"
-          />
-          <p class="form-hint">Type this keyword at the end of any text to instantly format it. Must start with <code>//</code>.</p>
         </div>
 
         <div class="card">
           <div class="toggle-row">
             <div class="toggle-info">
-              <span class="toggle-label">Enable format button</span>
-              <span class="toggle-hint">Shows a small button above focused text inputs on every page</span>
+              <span class="toggle-label">Enable formatter</span>
+              <span class="toggle-hint">Allows the formatter keyboard shortcuts and auto-format to run</span>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="formatterToggle" />
@@ -432,16 +390,6 @@
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="autoFormatAfterRewriteToggle" />
-              <span class="toggle-track"></span>
-            </label>
-          </div>
-          <div class="toggle-row" id="fmtPrependTrackerRow" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
-            <div class="toggle-info">
-              <span class="toggle-label">Inject Tracker Summary on Format</span>
-              <span class="toggle-hint">SpicyChat only. After formatting, prepends Party and Resources to the top of the active input.</span>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="fmtPrependTrackerSummaryToggle" />
               <span class="toggle-track"></span>
             </label>
           </div>
@@ -606,7 +554,7 @@
               autocomplete="off"
             />
           </div>
-          <p class="form-hint">Click the field and press any letter or number key. Fires the formatter on the currently focused text input on any page. Default: Ctrl+M.</p>
+          <p class="form-hint">Click the field and press any letter or number key. Formats the focused text input and, on SpicyChat, prepends the RPG tracker summary. Default: Ctrl+M.</p>
         </div>
 
         <div class="form-group" style="margin-top: 12px;">
@@ -624,7 +572,7 @@
               autocomplete="off"
             />
           </div>
-          <p class="form-hint">Runs the formatter on the focused input but never prepends the RPG tracker summary, even if tracker prepend is enabled. Default: Ctrl+Shift+M.</p>
+          <p class="form-hint">Runs the formatter on the focused input but never prepends the RPG tracker summary. Default: Ctrl+Shift+M.</p>
         </div>
 
         <div class="form-actions">

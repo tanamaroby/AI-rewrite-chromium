@@ -2,7 +2,7 @@
 
 ## Project overview
 
-This is a **Chromium MV3 browser extension** that rewrites text in any web textbox using AI keyword shortcuts (e.g. `//re`, `//bt`). It calls [OpenRouter](https://openrouter.ai) for all AI inference. No build step — pure HTML/CSS/JS.
+This is a **Chromium MV3 browser extension** for AI-assisted rewriting and roleplay on [SpicyChat](https://spicychat.ai), plus a local text formatter that works in any textbox. AI rewrites run only on SpicyChat (via saved **Rewrites** presets or `Ctrl+N`); the formatter runs anywhere via `Ctrl+M`. It calls [OpenRouter](https://openrouter.ai) for all AI inference. No build step — pure HTML/CSS/JS.
 
 ## Architecture
 
@@ -10,11 +10,11 @@ This is a **Chromium MV3 browser extension** that rewrites text in any web textb
 ── Chrome extension (load this folder in Chrome) ──────────────────────────────
 manifest.json              MV3 manifest — permissions, content scripts, service worker
 background.js              Service worker — all OpenRouter API calls happen here (keeps key off content pages)
-content.js                 Injected into every page — handles AI rewrites, local formatter, SpicyChat RP events
-content.css                Styles for loading overlay, formatter overlay, toast notifications, format button
-popup.html/css/js          Toolbar popup — API key status, model pill, keyword chips, quick toggles
-options.html/css/js        Settings page — sidebar nav: API Key, Keywords, Model, SpicyChat RPG Tracker, Formatter, RP Persona
-spicychat-memory-drawer.js Content script injected into SpicyChat chat pages only — resizable RPG session tracker drawer
+content.js                 Injected into every page — runs the local formatter everywhere; AI Rewrites + SpicyChat RP events are gated to spicychat.ai
+content.css                Styles for loading overlay, formatter overlay, toast notifications
+popup.html/css/js          Toolbar popup — API key status, model pill, Rewrites list, quick toggles
+options.html/css/js        Settings page — sidebar nav: API Key, Model, SpicyChat RPG Tracker, Formatter
+spicychat-memory-drawer.js Content script injected into SpicyChat chat pages only — resizable RPG session tracker drawer + RP Tools (Persona, Rewrites, Scene Context)
 icons/                     PNG icons at 16/32/48/128px
 
 ── Mobile userscript (Safari/Userscripts app on iPhone/iPad) ──────────────────
@@ -34,8 +34,8 @@ deploy-mobile.sh           Bumps @version in the userscript and copies it to iCl
 - **API calls only in `background.js`** — never call OpenRouter from `content.js` (CORS + key security)
 - **Messaging**: content → background via `chrome.runtime.sendMessage({ type: "REWRITE_TEXT", ... })`
 - **Storage**:
-  - `chrome.storage.sync`: `apiKey`, `model`, `commands[]`, all formatter settings (`fmt*`), `formatterEnabled`, `formatterKeyword`, `autoFormatAfterRewrite`, `fmtShortcut`, `rpPersonaEnabled`, `rpPersonaName`, `rpPersonaPrepend`, `rpGlobalStyle`, `spicychatNotesEnabled`
-  - `chrome.storage.local`: RPG tracker data keyed as `sc_quests_v1_<chatId>`, `sc_res_v1_<chatId>`, `sc_abl_v1_<chatId>`, `sc_party_v1_<chatId>`, `sc_npc_v1_<chatId>`, `sc_rumour_v1_<chatId>`, `sc_dice_mod_v1_<chatId>`; `sc_last_rewrite` (last rewrite for undo); `sc_note_width_v1` (drawer width)
+  - `chrome.storage.sync`: `apiKey`, `model`, all formatter settings (`fmt*`), `formatterEnabled`, `autoFormatAfterRewrite`, `fmtShortcut`, `fmtNoTrackerShortcut`, `rpRewrites[]` (5 × `{name,prompt}`), `rpActiveRewriteIndex`, `rpPersonas[]` (10 × `{label,name,personality}`), `rpActivePersonaIndex`, `spicychatNotesEnabled`
+  - `chrome.storage.local`: RPG tracker data keyed as `sc_quests_v1_<chatId>`, `sc_res_v1_<chatId>`, `sc_abl_v1_<chatId>`, `sc_party_v1_<chatId>`, `sc_npc_v1_<chatId>`, `sc_rumour_v1_<chatId>`, `sc_dice_mod_v1_<chatId>`; `sc_rpctx_v1_<chatId>` (Scene Context: `{location,clothes,status,dialogueStyle}`); `sc_last_rewrite` (last rewrite for undo); `sc_note_width_v1` (drawer width)
 - **Retry logic**: `MAX_RETRIES = 3`, `RETRY_DELAY_MS = 2000`, exponential backoff, honors `Retry-After` header
 - **Default model**: `openrouter/free` — auto-routes to any available free model
 - **No build tools** — no npm, no bundler, no TypeScript. Keep it plain JS
@@ -50,12 +50,13 @@ Default is `openrouter/free`. Known bad models (rate-limited or nonexistent) tra
 
 ## Content script pattern
 
-1. Listen for `input` events on `textarea`, `input[type=text/search/email/url/tel]`, `contenteditable`
-2. Debounce 300ms
-3. Check for AI rewrite keyword (`commands[]`) — if found: show overlay, strip keyword, send `REWRITE_TEXT` to background, replace text, show toast
-4. Check for formatter keyword (`//format` default) — if found: run local `formatText()`, no AI call
-5. On focus, show a small format button (SVG icon) near the element; hide on blur with 200ms delay
-6. `Ctrl+<fmtShortcut>` (default `Ctrl+M`) keyboard shortcut also triggers the local formatter
+The local formatter works on every page; AI Rewrites and RP behaviours are gated by `isSpicyChat`.
+
+1. On `input`/`focus`, on SpicyChat only, dispatch `sc-rp-input-stats` for the drawer
+2. `Ctrl+<fmtShortcut>` (default `Ctrl+M`) runs the local formatter on the focused input; on SpicyChat it also prepends the RPG tracker summary
+3. `Ctrl+Shift+<fmtNoTrackerShortcut>` runs the formatter but never prepends the tracker summary
+4. `Ctrl+<REWRITE_SHORTCUT_KEY>` (default `Ctrl+N`) runs the active Rewrite preset (`rpActiveRewriteIndex`) on the focused SpicyChat input
+5. There are no keyword triggers and no floating format button — all actions are clicks (in the drawer) or keyboard shortcuts
 
 ## Local text formatter (no AI)
 
@@ -72,7 +73,15 @@ Runs entirely in `content.js` — no API call. Controlled by `formatterEnabled` 
 - `fmtUnwrapBrackets` — wraps non-quoted, non-bracket text in `*…*`
 - `fmtExtraDelimiters` — user-defined character pairs (string of even length) treated like brackets
 
-`autoFormatAfterRewrite` — if true, runs the formatter automatically after every AI rewrite.
+`autoFormatAfterRewrite` — if true, runs the formatter automatically after every AI Rewrite.
+
+## Rewrites & Scene Context (SpicyChat AI)
+
+AI Rewrites are SpicyChat-only and composed in `content.js`:
+
+- **Rewrites presets** — `rpRewrites[]` (5 slots of `{name,prompt}`) + `rpActiveRewriteIndex`, managed in the drawer's RP Tools tab. `runRewrite(index)` validates the preset/focus/non-empty input, builds the prompt, sends `REWRITE_TEXT`, optionally auto-formats, stores `sc_last_rewrite`, and dispatches `sc-rp-rewrite-done` + `sc-rp-rewrite-result`.
+- **Scene Context** — `getSceneContext()` reads `sc_rpctx_v1_<chatId>` → `{location,clothes,status,dialogueStyle}` (per-chat).
+- `buildRewritePrompt(presetPrompt)` composes (joined by blank lines): persona block (name + personality, `{{user}}`→name) → scene block (location/clothes/status) → dialogue-style block → the preset prompt.
 
 ## SpicyChat features
 
@@ -134,32 +143,32 @@ All "Add" actions log **on blur** (after the user fills in the name/text), so th
 - **Input stats**: dispatches `sc-rp-input-stats` CustomEvent `{ chars, words }` on every input/focus
 - **Rewrite undo**: listens for `sc-rp-undo` → restores pre-rewrite text, dispatches `sc-rp-undo-done`
 - **Snippet inject**: listens for `sc-rp-inject { text, silent? }` → appends text to last focused input; if `silent: true`, suppresses the toast and strips a leading `\n` when the input is empty
-- **One-shot rewrite**: listens for `sc-rp-run-oneshot { prompt }` → rewrites current input content with given prompt, dispatches `sc-rp-oneshot-result` and `sc-rp-rewrite-done`
+- **One-shot/preset rewrite**: listens for `sc-rp-run-rewrite { index }` → runs that Rewrite preset on the current input, dispatches `sc-rp-rewrite-result` and `sc-rp-rewrite-done`
 - Last rewrite stored in `chrome.storage.local` as `sc_last_rewrite { before, after, label, ts }`
-- `lastFocusedEl` tracks the last focused editable on SpicyChat for inject/oneshot targets
+- `lastFocusedEl` tracks the last focused editable on SpicyChat for inject/rewrite targets
 
 ### RP Persona (SpicyChat only)
 
-`buildPrompt(basePrompt)` in `content.js` prepends persona context to prompts when on SpicyChat:
+`buildRewritePrompt(presetPrompt)` in `content.js` prepends persona + scene context when on SpicyChat:
 
-1. If `rpPersonaEnabled` + `rpPersonaPrepend` set: prepends a character-context block (resolves `{{user}}` → `rpPersonaName`)
-2. If `rpGlobalStyle` set: prepends global style rules
-3. Appends the base command prompt
+1. If the active persona (`rpActivePersonaIndex` of `rpPersonas[]`) has a `personality`: prepends a character-context block (resolves `{{user}}` → the persona `name`)
+2. Prepends the Scene Context block (location, clothes, status) and a dialogue-style block when those fields are set
+3. Appends the active Rewrite preset prompt
 
 ## Options page sections
 
 Sidebar nav with sections shown/hidden via JS (no routing library):
 
 1. **API Key** — save/toggle-visibility for OpenRouter key
-2. **Keywords** — CRUD for `commands[]`; each command has `keyword`, `label`, `prompt`
-3. **Model** — model ID input + click-to-select model cards; auto-migrates bad model IDs on load
-4. **SpicyChat RPG Tracker** — enable/disable drawer; view saved RPG data per chat (counts of quests/resources/abilities etc.) with delete-all per chat
-5. **Formatter** — all `fmt*` toggles, keyword, shortcut key, extra delimiters
-6. **RP Persona** — persona name, prepend text, global style (SpicyChat-only persona injection)
+2. **Model** — model ID input + click-to-select model cards; auto-migrates bad model IDs on load
+3. **SpicyChat RPG Tracker** — enable/disable drawer; view saved RPG data per chat (counts of quests/resources/abilities etc.) with delete-all per chat; **RP Persona** lives in this section (10 slots, `{label,name,personality}`, `{{user}}` resolves to the persona name); also Export Config for Mobile + Export/Import Personas
+4. **Formatter** — all `fmt*` toggles, format shortcut, no-tracker shortcut, extra delimiters
+
+> Rewrites presets and Scene Context are managed in the **SpicyChat side drawer → RP Tools**, not on the options page.
 
 ## Popup quick toggles
 
-Besides API key status, model pill, and keyword chips, the popup includes:
+Besides API key status and model pill, the popup lists the saved **Rewrites** (names, with the active one highlighted) and includes:
 
 - **SpicyChat Notes** toggle (`spicychatNotesEnabled`) — controls the RPG session tracker drawer
 - **Formatter** toggle (`formatterEnabled`)

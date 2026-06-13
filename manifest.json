@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "AI Rewriter",
-  "version": "1.0.0",
-  "description": "Rewrite text in any textbox using AI with keyword shortcuts like //re, //bt, //slime",
+  "version": "2.0.0",
+  "description": "AI-powered rewriting and roleplay tools for SpicyChat, plus a local text formatter for any textbox.",
   "permissions": ["storage", "activeTab"],
   "host_permissions": ["https://openrouter.ai/*"],
   "background": {

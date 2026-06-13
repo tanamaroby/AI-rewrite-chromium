@@ -208,6 +208,25 @@ body {
   border-color: rgba(108, 99, 255, 0.4);
   background: var(--bg3);
 }
+.command-chip.active {
+  border-color: rgba(108, 99, 255, 0.65);
+  background: rgba(108, 99, 255, 0.1);
+}
+.command-chip.active .cmd-keyword {
+  color: #fff;
+  background: rgba(108, 99, 255, 0.55);
+}
+.cmd-active-tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #c4b5fd;
+  background: rgba(108, 99, 255, 0.2);
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
 
 .cmd-keyword {
   font-family: var(--mono);
