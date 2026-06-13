@@ -733,14 +733,12 @@ document.getElementById("import-personas-btn").addEventListener("click", () => {
     showFeedback(fb, "\u2717 Unrecognised format", false);
     return;
   }
-  const incoming = data.personas
-    .slice(0, 10)
-    .map((p) => ({
-      label: (p && p.label) || "",
-      name: (p && p.name) || "",
-      description: (p && (p.description || p.prepend)) || "",
-      personality: (p && p.personality) || "",
-    }));
+  const incoming = data.personas.slice(0, 10).map((p) => ({
+    label: (p && p.label) || "",
+    name: (p && p.name) || "",
+    description: (p && (p.description || p.prepend)) || "",
+    personality: (p && p.personality) || "",
+  }));
   while (incoming.length < 10)
     incoming.push({ label: "", name: "", description: "", personality: "" });
   rpPersonasData = incoming;
