@@ -554,8 +554,14 @@
 
     const ctx = await getSceneContext();
     if (ctx.context && ctx.context.trim()) {
+      const resolvedBg = ctx.context.replace(/\{\{user\}\}/gi, name).trim();
       parts.push(
-        `[Current situation — a summary of what is happening in the scene right now. Stay consistent with it and never contradict it: ${ctx.context.trim()}]`,
+        `[Character background & long-term events — established facts and history that stay true across the whole story. Never contradict them: ${resolvedBg}]`,
+      );
+    }
+    if (ctx.prevScene && ctx.prevScene.trim()) {
+      parts.push(
+        `[Previous scene — what happened just before, for immediate context. Continue naturally from it but do not rewrite or repeat it:\n${ctx.prevScene.trim()}]`,
       );
     }
     const scene = [];

@@ -1891,8 +1891,12 @@
           <div class="rp-card">
             <div class="rp-hint" style="margin-bottom:8px;">Saved per chat. Woven into every rewrite to keep details consistent.</div>
             <div style="margin-bottom:6px;">
-              <div class="rp-hint" style="margin-bottom:4px;">Context / what's happening</div>
-              <textarea id="sc-rp-ctx-context" class="rp-input rp-textarea" style="min-height:56px;" placeholder="e.g. A tense standoff after the heist went wrong; both sides are wary but talking" data-ai-rewriter-ignore="1"></textarea>
+              <div class="rp-hint" style="margin-bottom:4px;">Previous scene &mdash; paste recent messages for context</div>
+              <textarea id="sc-rp-ctx-prevscene" class="rp-input rp-textarea" style="min-height:120px;" placeholder="Paste the previous scene or recent messages here so the rewrite has immediate context to continue from…" data-ai-rewriter-ignore="1"></textarea>
+            </div>
+            <div style="margin-bottom:6px;">
+              <div class="rp-hint" style="margin-bottom:4px;">Character background &amp; long-term events</div>
+              <textarea id="sc-rp-ctx-context" class="rp-input rp-textarea" style="min-height:56px;" placeholder="e.g. {{user}} is a retired thief who owes a debt to the guild; they betrayed their old partner months ago" data-ai-rewriter-ignore="1"></textarea>
             </div>
             <div style="margin-bottom:6px;">
               <div class="rp-hint" style="margin-bottom:4px;">Location</div>
@@ -2545,6 +2549,7 @@
     const rewriteStatusEl = document.getElementById("sc-rp-rewrite-status");
     const rewriteAutosaveEl = document.getElementById("sc-rp-rewrite-autosave");
     const ctxContextTa = document.getElementById("sc-rp-ctx-context");
+    const ctxPrevSceneTa = document.getElementById("sc-rp-ctx-prevscene");
     const ctxLocationInput = document.getElementById("sc-rp-ctx-location");
     const ctxClothesInput = document.getElementById("sc-rp-ctx-clothes");
     const ctxStatusInput = document.getElementById("sc-rp-ctx-status");
@@ -4918,6 +4923,7 @@
     function saveSceneContext() {
       chrome.storage.local.set({
         [REWRITE_CTX_KEY]: {
+          prevScene: ctxPrevSceneTa.value,
           context: ctxContextTa.value,
           location: ctxLocationInput.value,
           clothes: ctxClothesInput.value,
@@ -4939,6 +4945,7 @@
     }
 
     [
+      ctxPrevSceneTa,
       ctxContextTa,
       ctxLocationInput,
       ctxClothesInput,
@@ -4948,6 +4955,7 @@
 
     chrome.storage.local.get(REWRITE_CTX_KEY, (data) => {
       const c = data[REWRITE_CTX_KEY] || {};
+      ctxPrevSceneTa.value = c.prevScene || "";
       ctxContextTa.value = c.context || "";
       ctxLocationInput.value = c.location || "";
       ctxClothesInput.value = c.clothes || "";
