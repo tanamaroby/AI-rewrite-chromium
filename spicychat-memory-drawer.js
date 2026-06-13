@@ -3464,11 +3464,12 @@
       let breakdown = "";
       if (allRolls.length > 1) {
         if (faceArr.length === 1) {
-          breakdown = perDie[faceArr[0]].join(" — ");
+          breakdown = "Multiple roll values: " + perDie[faceArr[0]].join(" — ");
         } else {
           breakdown = faceArr
             .map((f) => "d" + f + ": " + perDie[f].join(" — "))
             .join("  ");
+          breakdown = "Multiple roll values: " + breakdown;
         }
       }
 
@@ -3542,12 +3543,12 @@
         ? natMsg
           ? `[${ctx} \u2014 Roll ${chipLabel}: ${total}${modPart}${targetPart} \u2014 ${natMsg}]`
           : breakdown
-            ? `[${ctx} \u2014 Roll ${chipLabel}: ${total}${modPart}${targetPart} ${breakdown}]`
+            ? `[${ctx} \u2014 Roll ${chipLabel}: ${total}${modPart}${targetPart} \u2014 ${breakdown}]`
             : `[${ctx} \u2014 Roll ${chipLabel}: ${total}${modPart}${targetPart}]`
         : natMsg
           ? `[Roll ${chipLabel}: ${total}${modPart}${targetPart} \u2014 ${natMsg}]`
           : breakdown
-            ? `[Roll ${chipLabel}: ${total}${modPart}${targetPart} ${breakdown}]`
+            ? `[Roll ${chipLabel}: ${total}${modPart}${targetPart} \u2014 ${breakdown}]`
             : `[Roll ${chipLabel}: ${total}${modPart}${targetPart}]`;
       addLog(logLine);
     });
