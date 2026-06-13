@@ -505,6 +505,9 @@ const fmtExtraDelimitersInput = document.getElementById(
   "fmtExtraDelimitersInput",
 );
 const fmtShortcutInput = document.getElementById("fmtShortcutInput");
+const fmtNoTrackerShortcutInput = document.getElementById(
+  "fmtNoTrackerShortcutInput",
+);
 const saveFormatterBtn = document.getElementById("saveFormatter");
 const formatterSaveFeedback = document.getElementById("formatterSaveFeedback");
 
@@ -548,6 +551,7 @@ chrome.storage.sync.get(
     "fmtPrependTrackerSummaryOnFormat",
     "fmtExtraDelimiters",
     "fmtShortcut",
+    "fmtNoTrackerShortcut",
     ...FMT_TOGGLES,
   ],
   (data) => {
@@ -559,6 +563,9 @@ chrome.storage.sync.get(
       data.fmtPrependTrackerSummaryOnFormat === true;
     fmtExtraDelimitersInput.value = data.fmtExtraDelimiters || "";
     fmtShortcutInput.value = (data.fmtShortcut || "m").toUpperCase();
+    fmtNoTrackerShortcutInput.value = (
+      data.fmtNoTrackerShortcut || "m"
+    ).toUpperCase();
     for (const key of FMT_TOGGLES) {
       const el = document.getElementById(key);
       if (el) el.checked = data[key] !== false;
@@ -569,16 +576,21 @@ chrome.storage.sync.get(
 
 formatterToggle.addEventListener("change", syncAutoFormatRowState);
 
-// Key capture for shortcut input
-fmtShortcutInput.addEventListener("keydown", (e) => {
-  if (/^[a-zA-Z0-9]$/.test(e.key)) {
-    e.preventDefault();
-    fmtShortcutInput.value = e.key.toUpperCase();
-  } else if (e.key !== "Tab" && e.key !== "Shift" && e.key !== "CapsLock") {
-    e.preventDefault();
-  }
-});
-fmtShortcutInput.addEventListener("focus", () => fmtShortcutInput.select());
+function bindShortcutInput(inputEl) {
+  inputEl.addEventListener("keydown", (e) => {
+    if (/^[a-zA-Z0-9]$/.test(e.key)) {
+      e.preventDefault();
+      inputEl.value = e.key.toUpperCase();
+    } else if (e.key !== "Tab" && e.key !== "Shift" && e.key !== "CapsLock") {
+      e.preventDefault();
+    }
+  });
+  inputEl.addEventListener("focus", () => inputEl.select());
+}
+
+// Key capture for shortcut inputs
+bindShortcutInput(fmtShortcutInput);
+bindShortcutInput(fmtNoTrackerShortcutInput);
 
 saveFormatterBtn.addEventListener("click", () => {
   const kw = formatterKeywordInput.value.trim();
@@ -595,6 +607,8 @@ saveFormatterBtn.addEventListener("click", () => {
     fmtPrependTrackerSummaryOnFormat: fmtPrependTrackerSummaryToggle.checked,
     fmtExtraDelimiters: fmtExtraDelimitersInput.value.trim(),
     fmtShortcut: fmtShortcutInput.value.trim().slice(0, 1).toLowerCase() || "m",
+    fmtNoTrackerShortcut:
+      fmtNoTrackerShortcutInput.value.trim().slice(0, 1).toLowerCase() || "m",
   };
   for (const key of FMT_TOGGLES) {
     const el = document.getElementById(key);

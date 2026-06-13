@@ -38,6 +38,7 @@
   let lastRewrite = null; // { el, before, after, label, ts }
   let lastFocusedEl = null; // last focused SpicyChat input
   let fmtShortcut = "m"; // keyboard shortcut key for format (Ctrl+key)
+  let fmtNoTrackerShortcut = "m"; // keyboard shortcut key for no-tracker format (Ctrl+Shift+key)
   let fmtPrependTrackerSummaryOnFormat = false;
   const isSpicyChat = location.hostname.includes("spicychat.ai");
 
@@ -77,6 +78,7 @@
         "rpPersonaPrepend",
         "rpGlobalStyle",
         "fmtShortcut",
+        "fmtNoTrackerShortcut",
       ],
       (data) => {
         commands = data.commands || [];
@@ -124,6 +126,7 @@
         }
         rpGlobalStyle = data.rpGlobalStyle || "";
         fmtShortcut = data.fmtShortcut || "m";
+        fmtNoTrackerShortcut = data.fmtNoTrackerShortcut || "m";
       },
     );
   }
@@ -472,7 +475,8 @@
     if (targetEl) targetEl.classList.remove("ai-formatter-loading");
   }
 
-  function handleFormat(el, textOverride) {
+  function handleFormat(el, textOverride, opts = {}) {
+    const includeTrackerSummary = opts.includeTrackerSummary !== false;
     const original =
       textOverride !== undefined
         ? textOverride
@@ -483,6 +487,12 @@
     createFormatOverlay(el);
     const formatted = formatText(original);
     setTimeout(() => {
+      if (!includeTrackerSummary) {
+        replaceText(el, formatted);
+        removeFormatOverlay(el);
+        showToast("✓ Formatted (no tracker)");
+        return;
+      }
       buildTrackerSummaryForFormat((summary) => {
         const hasExistingTracker = hasTrackerHeaderAtTop(formatted);
         const shouldPrependSummary = !!summary && !hasExistingTracker;
@@ -813,7 +823,22 @@
   document.addEventListener(
     "keydown",
     (e) => {
-      if (!fmtShortcut || !isEditableElement(document.activeElement)) return;
+      if (!isEditableElement(document.activeElement)) return;
+      if (
+        fmtNoTrackerShortcut &&
+        e.ctrlKey &&
+        e.shiftKey &&
+        !e.altKey &&
+        !e.metaKey &&
+        e.key.toLowerCase() === fmtNoTrackerShortcut.toLowerCase()
+      ) {
+        e.preventDefault();
+        handleFormat(document.activeElement, undefined, {
+          includeTrackerSummary: false,
+        });
+        return;
+      }
+      if (!fmtShortcut) return;
       if (e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) {
         if (e.key.toLowerCase() === fmtShortcut.toLowerCase()) {
           e.preventDefault();

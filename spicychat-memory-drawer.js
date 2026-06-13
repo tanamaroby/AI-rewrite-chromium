@@ -468,6 +468,116 @@
     }
     .dice-context-input::placeholder { color: #2a3447; }
     .dice-context-input:focus { border-color: rgba(108,99,255,0.4); color: #e2e8f0; font-style: normal; }
+    .dice-targets-wrap {
+      margin-top: 2px; padding: 8px 9px;
+      border: 1px solid rgba(108,99,255,0.18);
+      border-radius: 7px;
+      background: linear-gradient(180deg, rgba(108,99,255,0.07), rgba(108,99,255,0.02));
+      display: flex; flex-direction: column; gap: 7px;
+    }
+    .dice-targets-head { display: flex; align-items: center; gap: 6px; }
+    .dice-targets-title { font-size: 11px; color: #94a3b8; font-weight: 700; letter-spacing: 0.01em; flex: 1; }
+    .dice-targets-btn {
+      border: 1px solid rgba(108,99,255,0.28); background: rgba(108,99,255,0.13);
+      color: #a78bfa; border-radius: 5px; font-size: 10.5px; font-weight: 700;
+      font-family: inherit; padding: 3px 8px; cursor: pointer;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .dice-targets-btn:hover { background: rgba(108,99,255,0.22); border-color: rgba(108,99,255,0.5); }
+    .dice-targets-btn.clear {
+      background: rgba(15,23,42,0.4);
+      color: #94a3b8;
+      border-color: rgba(100,116,139,0.28);
+    }
+    .dice-targets-btn.clear:hover { color: #fca5a5; border-color: rgba(248,113,113,0.42); }
+    .dice-targets-empty {
+      font-size: 11px; color: #475569; text-align: center;
+      padding: 6px 4px; border: 1px dashed rgba(108,99,255,0.15);
+      border-radius: 6px;
+    }
+    .dice-targets-list { display: flex; flex-direction: column; gap: 6px; }
+    .dice-target-row {
+      border: 1px solid rgba(108,99,255,0.18);
+      border-radius: 7px;
+      background: rgba(15,23,42,0.32);
+      padding: 6px 7px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .dice-target-top { display: flex; align-items: center; gap: 5px; }
+    .dice-target-input {
+      flex: 1; min-width: 0;
+      background: rgba(0,0,0,0.24); border: 1px solid rgba(108,99,255,0.16);
+      border-radius: 5px; color: #e2e8f0; font-size: 11.5px;
+      font-family: inherit; padding: 4px 7px; outline: none;
+      transition: border-color 0.12s; caret-color: #a78bfa;
+    }
+    .dice-target-input:focus { border-color: rgba(108,99,255,0.45); }
+    .dice-target-input::placeholder { color: #334155; }
+    .dice-target-type {
+      width: 50px;
+      background: rgba(0,0,0,0.24);
+      border: 1px solid rgba(108,99,255,0.16);
+      border-radius: 5px;
+      color: #a78bfa;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: inherit;
+      padding: 4px 18px 4px 6px;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236c63ff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 6px center;
+      cursor: pointer;
+    }
+    .dice-target-type:focus { border-color: rgba(108,99,255,0.45); }
+    .dice-target-value {
+      width: 56px; text-align: center;
+      background: rgba(0,0,0,0.24); border: 1px solid rgba(108,99,255,0.16);
+      border-radius: 5px; color: #e2e8f0; font-size: 11.5px; font-weight: 700;
+      font-family: inherit; padding: 4px 4px; outline: none; caret-color: #a78bfa;
+    }
+    .dice-target-value:focus { border-color: rgba(108,99,255,0.45); }
+    .dice-target-icon-btn {
+      border: none; background: rgba(51,65,85,0.34); color: #94a3b8;
+      width: 23px; height: 23px; border-radius: 5px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: background 0.12s, color 0.12s;
+      flex-shrink: 0;
+    }
+    .dice-target-icon-btn:hover { background: rgba(108,99,255,0.2); color: #c4b5fd; }
+    .dice-target-icon-btn.delete:hover { background: rgba(239,68,68,0.17); color: #fda4af; }
+    .dice-target-notes {
+      width: 100%; box-sizing: border-box;
+      background: transparent; border: none; border-top: 1px solid rgba(108,99,255,0.1);
+      color: #94a3b8; font-size: 11px; font-family: inherit; font-style: italic;
+      padding: 5px 1px 1px; outline: none; caret-color: #a78bfa;
+    }
+    .dice-target-notes::placeholder { color: #334155; }
+    .dice-target-outcomes {
+      display: flex; flex-wrap: wrap; gap: 5px;
+      min-height: 0;
+    }
+    .dice-target-chip {
+      font-size: 10.5px; font-weight: 700;
+      border: 1px solid rgba(100,116,139,0.26);
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: rgba(15,23,42,0.45);
+      color: #94a3b8;
+      white-space: nowrap;
+    }
+    .dice-target-chip.pass {
+      color: #4ade80;
+      border-color: rgba(74,222,128,0.33);
+      background: rgba(34,197,94,0.12);
+    }
+    .dice-target-chip.fail {
+      color: #f87171;
+      border-color: rgba(248,113,113,0.33);
+      background: rgba(239,68,68,0.12);
+    }
     /* ── Dice Modifier List ── */
     .dmod-header { display: flex; align-items: center; gap: 6px; margin: 2px 0 5px; }
     .dmod-header-label { font-size: 11px; color: #475569; flex: 1; }
@@ -1094,6 +1204,14 @@
               </button>
             </div>
             <input id="sc-np-dice-context" type="text" class="dice-context-input" maxlength="80" placeholder="Context… e.g. attempting to pick the lock" data-ai-rewriter-ignore="1" />
+            <div class="dice-targets-wrap">
+              <div class="dice-targets-head">
+                <span class="dice-targets-title">Target Checks (DC/AC)</span>
+                <button id="sc-np-dice-target-add" class="dice-targets-btn">+ Add</button>
+                <button id="sc-np-dice-target-clear" class="dice-targets-btn clear">Clear</button>
+              </div>
+              <div id="sc-np-dice-target-list" class="dice-targets-list"></div>
+            </div>
             <div class="dmod-header">
               <span class="dmod-header-label">Modifiers</span>
               <span id="sc-np-dmod-total" class="dmod-total-pill">0</span>
@@ -1104,6 +1222,7 @@
               <div class="dice-result-breakdown" id="sc-np-dice-breakdown"></div>
               <div class="dice-result-nat" id="sc-np-dice-nat"></div>
               <div class="dice-result-modifier" id="sc-np-dice-mod-display"></div>
+              <div class="dice-target-outcomes" id="sc-np-dice-target-outcomes"></div>
             </div>
             <div class="dice-history" id="sc-np-dice-history"></div>
           </div>
@@ -1380,10 +1499,183 @@
     const diceRollBtn = document.getElementById("sc-np-dice-roll");
     const diceContextInput = document.getElementById("sc-np-dice-context");
     const diceModDisplayEl = document.getElementById("sc-np-dice-mod-display");
+    const diceTargetListEl = document.getElementById("sc-np-dice-target-list");
+    const diceTargetAddBtn = document.getElementById("sc-np-dice-target-add");
+    const diceTargetClearBtn = document.getElementById(
+      "sc-np-dice-target-clear",
+    );
     const dmodListEl = document.getElementById("sc-np-dmod-list");
     const dmodTotalEl = document.getElementById("sc-np-dmod-total");
     const DICE_MOD_KEY = "sc_dice_mod_v1_" + chatId;
     let diceModifiers = [];
+    let diceTargets = [];
+
+    function newDiceTarget(copyFrom) {
+      return {
+        id: Date.now() + Math.random(),
+        name:
+          copyFrom && typeof copyFrom.name === "string" ? copyFrom.name : "",
+        kind:
+          copyFrom && copyFrom.kind === "AC"
+            ? "AC"
+            : copyFrom && copyFrom.kind === "DC"
+              ? "DC"
+              : "DC",
+        value:
+          copyFrom && isFinite(parseInt(copyFrom.value, 10))
+            ? Math.max(1, Math.min(99, parseInt(copyFrom.value, 10)))
+            : 10,
+        notes:
+          copyFrom && typeof copyFrom.notes === "string" ? copyFrom.notes : "",
+      };
+    }
+
+    function renderDiceTargets() {
+      diceTargetListEl.innerHTML = "";
+      if (!diceTargets.length) {
+        const empty = document.createElement("div");
+        empty.className = "dice-targets-empty";
+        empty.textContent =
+          "No targets yet. Add DC/AC checks and every roll will auto-evaluate.";
+        diceTargetListEl.appendChild(empty);
+        return;
+      }
+
+      diceTargets.forEach((t, idx) => {
+        const row = document.createElement("div");
+        row.className = "dice-target-row";
+
+        const top = document.createElement("div");
+        top.className = "dice-target-top";
+
+        const nameIn = document.createElement("input");
+        nameIn.type = "text";
+        nameIn.className = "dice-target-input";
+        nameIn.placeholder = "Target name… e.g. Old lock, Bandit captain";
+        nameIn.maxLength = 50;
+        nameIn.value = t.name;
+        nameIn.setAttribute("data-ai-rewriter-ignore", "1");
+        nameIn.addEventListener("input", () => {
+          t.name = nameIn.value;
+        });
+
+        const typeSel = document.createElement("select");
+        typeSel.className = "dice-target-type";
+        typeSel.setAttribute("data-ai-rewriter-ignore", "1");
+        typeSel.innerHTML =
+          "<option value='DC'>DC</option><option value='AC'>AC</option>";
+        typeSel.value = t.kind === "AC" ? "AC" : "DC";
+        typeSel.addEventListener("change", () => {
+          t.kind = typeSel.value === "AC" ? "AC" : "DC";
+        });
+
+        const valueIn = document.createElement("input");
+        valueIn.type = "number";
+        valueIn.className = "dice-target-value";
+        valueIn.min = "1";
+        valueIn.max = "99";
+        valueIn.value = String(t.value);
+        valueIn.setAttribute("data-ai-rewriter-ignore", "1");
+        valueIn.addEventListener("input", () => {
+          const parsed = parseInt(valueIn.value, 10);
+          t.value = isFinite(parsed) ? Math.max(1, Math.min(99, parsed)) : 1;
+        });
+
+        const dupBtn = document.createElement("button");
+        dupBtn.className = "dice-target-icon-btn";
+        dupBtn.title = "Duplicate";
+        dupBtn.innerHTML = "⎘";
+        dupBtn.addEventListener("click", () => {
+          diceTargets.splice(idx + 1, 0, newDiceTarget(t));
+          renderDiceTargets();
+        });
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "dice-target-icon-btn delete";
+        delBtn.title = "Remove";
+        delBtn.innerHTML = "×";
+        delBtn.addEventListener("click", () => {
+          diceTargets.splice(idx, 1);
+          renderDiceTargets();
+        });
+
+        top.append(nameIn, typeSel, valueIn, dupBtn, delBtn);
+
+        const notesIn = document.createElement("input");
+        notesIn.type = "text";
+        notesIn.className = "dice-target-notes";
+        notesIn.placeholder = "Optional notes… e.g. heavy rain, partial cover";
+        notesIn.maxLength = 80;
+        notesIn.value = t.notes;
+        notesIn.setAttribute("data-ai-rewriter-ignore", "1");
+        notesIn.addEventListener("input", () => {
+          t.notes = notesIn.value;
+        });
+
+        row.append(top, notesIn);
+        diceTargetListEl.appendChild(row);
+      });
+    }
+
+    function evaluateDiceTargets(total) {
+      return diceTargets.map((t) => {
+        const targetValue = Math.max(
+          1,
+          Math.min(99, parseInt(t.value, 10) || 1),
+        );
+        const passed = total >= targetValue;
+        return {
+          kind: t.kind === "AC" ? "AC" : "DC",
+          value: targetValue,
+          name: t.name.trim(),
+          notes: t.notes.trim(),
+          passed,
+          reason: `${total}${passed ? " >= " : " < "}${targetValue}`,
+        };
+      });
+    }
+
+    function renderDiceTargetOutcomes(checks) {
+      diceTargetOutcomesEl.innerHTML = "";
+      checks.forEach((c) => {
+        const chip = document.createElement("span");
+        chip.className = "dice-target-chip " + (c.passed ? "pass" : "fail");
+        const label = c.name || "Target";
+        chip.textContent = `${label} ${c.kind}${c.value} ${c.passed ? "PASS" : "FAIL"}`;
+        if (c.notes) {
+          chip.title = `${c.kind}${c.value} | ${c.reason} | ${c.notes}`;
+        } else {
+          chip.title = `${c.kind}${c.value} | ${c.reason}`;
+        }
+        diceTargetOutcomesEl.appendChild(chip);
+      });
+    }
+
+    function buildDiceTargetLogPart(checks) {
+      if (!checks.length) return "";
+      const segs = checks.map((c) => {
+        const label = c.name || "Target";
+        const notesPart = c.notes ? `, ${c.notes}` : "";
+        return `${label} ${c.kind}${c.value} ${c.passed ? "PASS" : "FAIL"} (${c.reason}${notesPart})`;
+      });
+      return ` [Targets: ${segs.join(" | ")}]`;
+    }
+
+    diceTargetAddBtn.addEventListener("click", () => {
+      diceTargets.push(newDiceTarget());
+      renderDiceTargets();
+      const lastInput = diceTargetListEl.querySelector(
+        ".dice-target-row:last-child .dice-target-input",
+      );
+      if (lastInput) lastInput.focus();
+    });
+
+    diceTargetClearBtn.addEventListener("click", () => {
+      if (!diceTargets.length) return;
+      diceTargets = [];
+      renderDiceTargets();
+      renderDiceTargetOutcomes([]);
+    });
 
     function newDiceMod() {
       return {
@@ -1648,6 +1940,9 @@
     const diceTotalEl = document.getElementById("sc-np-dice-total");
     const diceBreakdownEl = document.getElementById("sc-np-dice-breakdown");
     const diceNatEl = document.getElementById("sc-np-dice-nat");
+    const diceTargetOutcomesEl = document.getElementById(
+      "sc-np-dice-target-outcomes",
+    );
     const diceHistoryEl = document.getElementById("sc-np-dice-history");
     const rpPanel = document.getElementById("sc-np-rp-panel");
     const fmtPanel = document.getElementById("sc-np-fmt-panel");
@@ -2547,6 +2842,7 @@
       const rawTotal = allRolls.reduce((a, b) => a + b, 0);
       const mod = computeDiceMod();
       const total = rawTotal + mod;
+      const targetChecks = evaluateDiceTargets(total);
 
       // Breakdown text
       let breakdown = "";
@@ -2595,6 +2891,7 @@
       } else {
         diceModDisplayEl.textContent = "";
       }
+      renderDiceTargetOutcomes(targetChecks);
 
       // History chip
       const label = faceArr.map((f) => count + "d" + f).join("+");
@@ -2624,20 +2921,22 @@
           .join(", ");
         modPart = ` (${modSign}${mod}${modItems ? ": " + modItems : ""})`;
       }
+      const targetPart = buildDiceTargetLogPart(targetChecks);
       const logLine = ctx
         ? natMsg
-          ? `[${ctx} \u2014 Roll ${chipLabel}: ${total}${modPart} \u2014 ${natMsg}]`
+          ? `[${ctx} \u2014 Roll ${chipLabel}: ${total}${modPart}${targetPart} \u2014 ${natMsg}]`
           : breakdown
-            ? `[${ctx} \u2014 Roll ${chipLabel}: ${total}${modPart} ${breakdown}]`
-            : `[${ctx} \u2014 Roll ${chipLabel}: ${total}${modPart}]`
+            ? `[${ctx} \u2014 Roll ${chipLabel}: ${total}${modPart}${targetPart} ${breakdown}]`
+            : `[${ctx} \u2014 Roll ${chipLabel}: ${total}${modPart}${targetPart}]`
         : natMsg
-          ? `[Roll ${chipLabel}: ${total}${modPart} \u2014 ${natMsg}]`
+          ? `[Roll ${chipLabel}: ${total}${modPart}${targetPart} \u2014 ${natMsg}]`
           : breakdown
-            ? `[Roll ${chipLabel}: ${total}${modPart} ${breakdown}]`
-            : `[Roll ${chipLabel}: ${total}${modPart}]`;
+            ? `[Roll ${chipLabel}: ${total}${modPart}${targetPart} ${breakdown}]`
+            : `[Roll ${chipLabel}: ${total}${modPart}${targetPart}]`;
       addLog(logLine);
     });
 
+    renderDiceTargets();
     updateDiceLabel();
 
     /* ════════════════ COLLAPSIBLE SECTIONS ════════════════ */
@@ -4617,7 +4916,9 @@
 
     function exportDiceLast() {
       if (!activityLog.length) return "[Dice: no roll yet]";
-      const diceEntry = activityLog.find((e) => e.msg.startsWith("[Roll"));
+      const diceEntry = activityLog.find(
+        (e) => e.msg.startsWith("[Roll ") || e.msg.includes(" — Roll "),
+      );
       return diceEntry ? diceEntry.msg : "[Dice: no roll yet]";
     }
 
