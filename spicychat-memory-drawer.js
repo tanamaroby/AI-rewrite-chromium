@@ -3464,10 +3464,10 @@
       let breakdown = "";
       if (allRolls.length > 1) {
         if (faceArr.length === 1) {
-          breakdown = perDie[faceArr[0]].join(", ");
+          breakdown = perDie[faceArr[0]].join(" — ");
         } else {
           breakdown = faceArr
-            .map((f) => "d" + f + ": " + perDie[f].join(", "))
+            .map((f) => "d" + f + ": " + perDie[f].join(" — "))
             .join("  ");
         }
       }
