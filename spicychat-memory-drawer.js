@@ -890,6 +890,87 @@
       caret-color: #a78bfa; overflow: hidden; min-height: 0; padding: 4px 0 2px;
     }
     .abl-notes-input::placeholder { color: #2a3447; }
+    .abl-rest-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 9px;
+      padding: 10px 11px 11px;
+      border: 1px solid rgba(214, 170, 88, 0.34);
+      border-radius: 9px;
+      background:
+        radial-gradient(circle at top left, rgba(250, 220, 144, 0.14), transparent 42%),
+        linear-gradient(180deg, rgba(68, 46, 18, 0.48), rgba(23, 16, 8, 0.72));
+      box-shadow: inset 0 1px 0 rgba(255, 231, 173, 0.08), 0 8px 18px rgba(0, 0, 0, 0.18);
+    }
+    .abl-rest-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .abl-rest-copy {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .abl-rest-title {
+      color: #f7deb0;
+      font: 700 12px/1.1 Georgia, "Times New Roman", serif;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+    }
+    .abl-rest-hint {
+      color: #cbb389;
+      font-size: 10.5px;
+      line-height: 1.35;
+    }
+    .abl-rest-btn {
+      flex-shrink: 0;
+      padding: 7px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(230, 192, 112, 0.54);
+      background: linear-gradient(180deg, rgba(144, 104, 33, 0.95), rgba(94, 59, 17, 0.95));
+      color: #fff4d7;
+      font: 700 11px/1 Georgia, "Times New Roman", serif;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255, 243, 205, 0.25), 0 4px 10px rgba(30, 18, 6, 0.28);
+      transition: transform 0.08s, filter 0.12s, box-shadow 0.12s;
+    }
+    .abl-rest-btn:hover {
+      filter: brightness(1.07);
+      box-shadow: inset 0 1px 0 rgba(255, 243, 205, 0.28), 0 6px 14px rgba(30, 18, 6, 0.34);
+    }
+    .abl-rest-btn:active { transform: translateY(1px) scale(0.99); }
+    .abl-rest-btn:disabled {
+      cursor: not-allowed;
+      filter: saturate(0.55) brightness(0.88);
+      box-shadow: inset 0 1px 0 rgba(255, 243, 205, 0.12);
+    }
+    .abl-rest-notes {
+      width: 100%;
+      box-sizing: border-box;
+      resize: none;
+      min-height: 0;
+      padding: 7px 9px;
+      border-radius: 7px;
+      border: 1px solid rgba(214, 170, 88, 0.22);
+      background: rgba(25, 16, 7, 0.46);
+      color: #e9ddc4;
+      font: 11.5px/1.45 Georgia, "Times New Roman", serif;
+      outline: none;
+      caret-color: #f7deb0;
+      transition: border-color 0.12s, background 0.12s;
+    }
+    .abl-rest-notes:focus {
+      border-color: rgba(230, 192, 112, 0.52);
+      background: rgba(36, 23, 10, 0.58);
+    }
+    .abl-rest-notes::placeholder { color: #a88f67; }
 
     /* ── Party Tracker ── */
     .party-item {
@@ -1260,7 +1341,19 @@
             </div>
           </div>
           <div id="sc-np-abl-body" class="ql-section-body">
-            <div class="rp-card" style="padding:8px 10px;gap:5px;"><div id="sc-np-abl-list"></div></div>
+            <div class="rp-card" style="padding:8px 10px;gap:5px;">
+              <div class="abl-rest-panel">
+                <div class="abl-rest-top">
+                  <div class="abl-rest-copy">
+                    <span class="abl-rest-title">Rest</span>
+                    <span class="abl-rest-hint">Restore every tracked ability and log the recovery.</span>
+                  </div>
+                  <button id="sc-np-abl-rest-btn" class="abl-rest-btn">Take Rest</button>
+                </div>
+                <textarea id="sc-np-abl-rest-notes" class="abl-rest-notes" rows="1" data-ai-rewriter-ignore="1" placeholder="Rest notes… campfire watch, prayer, tavern night, dawn march…"></textarea>
+              </div>
+              <div id="sc-np-abl-list"></div>
+            </div>
           </div>
           <!-- Party Tracker -->
           <div class="ql-section-header ql-collapsible-hdr" data-section="sc-np-party-body">
@@ -1641,11 +1734,11 @@
         const chip = document.createElement("span");
         chip.className = "dice-target-chip " + (c.passed ? "pass" : "fail");
         const label = c.name || "Target";
-        chip.textContent = `${label} ${c.kind}${c.value} ${c.passed ? "PASS" : "FAIL"}`;
+        chip.textContent = `${label} ${c.kind}: ${c.value} ${c.passed ? "PASS" : "FAIL"}`;
         if (c.notes) {
-          chip.title = `${c.kind}${c.value} | ${c.reason} | ${c.notes}`;
+          chip.title = `${c.kind}: ${c.value} — ${c.reason} — ${c.notes}`;
         } else {
-          chip.title = `${c.kind}${c.value} | ${c.reason}`;
+          chip.title = `${c.kind}: ${c.value} — ${c.reason}`;
         }
         diceTargetOutcomesEl.appendChild(chip);
       });
@@ -1655,8 +1748,13 @@
       if (!checks.length) return "";
       const segs = checks.map((c) => {
         const label = c.name || "Target";
-        const notesPart = c.notes ? `, ${c.notes}` : "";
-        return `${label} ${c.kind}${c.value} ${c.passed ? "PASS" : "FAIL"} (${c.reason}${notesPart})`;
+        const parts = [
+          `${label} ${c.kind}: ${c.value}`,
+          c.passed ? "PASS" : "FAIL",
+          c.reason,
+        ];
+        if (c.notes) parts.push(c.notes);
+        return parts.join(" — ");
       });
       return ` [Targets: ${segs.join(" | ")}]`;
     }
@@ -3220,6 +3318,8 @@
     let abilities = [];
     let ablSaveTimer = null;
     const ablListEl = document.getElementById("sc-np-abl-list");
+    const ablRestBtn = document.getElementById("sc-np-abl-rest-btn");
+    const ablRestNotesEl = document.getElementById("sc-np-abl-rest-notes");
 
     function newAbl() {
       return {
@@ -3238,7 +3338,64 @@
       ablSaveTimer = setTimeout(saveAbl, 500);
     }
 
+    function formatAbilityRestLogLine(changes, note) {
+      const restoredCount = changes.filter(
+        (change) => change.before !== change.after,
+      ).length;
+      const summary = changes.length
+        ? changes
+            .map((change) => {
+              const label = change.name || "(unnamed)";
+              if (change.before === change.after) {
+                return `${label} ${change.after}/${change.max}`;
+              }
+              return `${label} ${change.before}/${change.max} → ${change.after}/${change.max}`;
+            })
+            .join(" | ")
+        : "No abilities tracked";
+      const notePart = note ? ` — Notes: ${note}` : "";
+      return `[Rest: ${restoredCount} restored — ${summary}${notePart}]`;
+    }
+
+    function applyAbilityRest() {
+      const note = (ablRestNotesEl?.value || "").trim();
+      if (!abilities.length) {
+        addLog(
+          `[Rest: no abilities tracked${note ? ` — Notes: ${note}` : ""}]`,
+        );
+        if (ablRestNotesEl) {
+          ablRestNotesEl.value = "";
+          autoResizeTextarea(ablRestNotesEl);
+        }
+        return;
+      }
+
+      const changes = abilities.map((a) => {
+        const before = Math.max(0, Number(a.current) || 0);
+        const max = Math.max(1, Number(a.max) || 1);
+        a.current = max;
+        return {
+          name: (a.name || "").trim(),
+          before,
+          after: max,
+          max,
+        };
+      });
+
+      saveAbl();
+      addLog(formatAbilityRestLogLine(changes, note));
+      if (ablRestNotesEl) {
+        ablRestNotesEl.value = "";
+        autoResizeTextarea(ablRestNotesEl);
+      }
+      renderAbl();
+    }
+
     function renderAbl() {
+      if (ablRestBtn) {
+        ablRestBtn.disabled = abilities.length === 0;
+        ablRestBtn.textContent = abilities.length ? "Take Rest" : "No Rest";
+      }
       ablListEl.innerHTML = "";
       if (!abilities.length) {
         const e = document.createElement("div");
@@ -3503,6 +3660,11 @@
       });
       notesIn.addEventListener("input", () => autoResizeTextarea(notesIn));
     })();
+
+    ablRestBtn.addEventListener("click", applyAbilityRest);
+    ablRestNotesEl.addEventListener("input", () =>
+      autoResizeTextarea(ablRestNotesEl),
+    );
 
     function loadAbl() {
       chrome.storage.local.get(ABL_KEY, (d) => {
