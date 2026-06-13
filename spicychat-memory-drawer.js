@@ -1549,6 +1549,11 @@
       opacity: 0; transition: opacity 0.3s; height: 14px;
     }
     .rp-autosave.visible { opacity: 1; }
+    .rp-parse-notice {
+      font-size: 11px; color: #a78bfa; margin-top: 6px;
+      opacity: 0; transition: opacity 0.3s; min-height: 14px;
+    }
+    .rp-parse-notice.visible { opacity: 1; }
     .rp-toggle { position: relative; width: 32px; height: 18px; flex-shrink: 0; cursor: pointer; }
     .rp-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
     .rp-toggle-track {
@@ -1893,6 +1898,7 @@
             <div style="margin-bottom:6px;">
               <div class="rp-hint" style="margin-bottom:4px;">Previous scene &mdash; paste recent messages for context</div>
               <textarea id="sc-rp-ctx-prevscene" class="rp-input rp-textarea" style="min-height:120px;" placeholder="Paste the previous scene or recent messages here so the rewrite has immediate context to continue from…" data-ai-rewriter-ignore="1"></textarea>
+              <div class="rp-parse-notice" id="sc-rp-ctx-parse-notice"></div>
             </div>
             <div style="margin-bottom:6px;">
               <div class="rp-hint" style="margin-bottom:4px;">Character background &amp; long-term events</div>
@@ -4952,6 +4958,59 @@
       ctxStatusInput,
       ctxDialogueTa,
     ].forEach((el) => el.addEventListener("input", scheduleSceneContextSave));
+
+    /* ── Auto-parse a [ status | location | time | clothes ] line from pasted scene ── */
+    const ctxParseNotice = document.getElementById("sc-rp-ctx-parse-notice");
+    let ctxParseNoticeTimer = null;
+
+    function parseSceneBracket(text) {
+      // Find a bracketed status line containing pipe separators.
+      const m = text.match(/\[([^\[\]]*\|[^\[\]]*)\]/);
+      if (!m) return null;
+      const parts = m[1].split("|").map((s) => s.trim());
+      if (parts.length < 2) return null;
+      // parts[2] is time — intentionally ignored.
+      return {
+        status: parts[0] || "",
+        location: parts[1] || "",
+        clothes: parts.length >= 4 ? parts[3] : "",
+      };
+    }
+
+    function showCtxParseNotice(fields) {
+      ctxParseNotice.textContent =
+        "\u2728 Auto-filled " + fields.join(", ") + " from pasted scene";
+      ctxParseNotice.classList.add("visible");
+      clearTimeout(ctxParseNoticeTimer);
+      ctxParseNoticeTimer = setTimeout(
+        () => ctxParseNotice.classList.remove("visible"),
+        3200,
+      );
+    }
+
+    ctxPrevSceneTa.addEventListener("paste", () => {
+      // Let the pasted text land in the textarea value first.
+      setTimeout(() => {
+        const parsed = parseSceneBracket(ctxPrevSceneTa.value);
+        if (!parsed) return;
+        const changed = [];
+        if (parsed.status) {
+          ctxStatusInput.value = parsed.status;
+          changed.push("status");
+        }
+        if (parsed.location) {
+          ctxLocationInput.value = parsed.location;
+          changed.push("location");
+        }
+        if (parsed.clothes) {
+          ctxClothesInput.value = parsed.clothes;
+          changed.push("clothes");
+        }
+        if (!changed.length) return;
+        saveSceneContext();
+        showCtxParseNotice(changed);
+      }, 0);
+    });
 
     chrome.storage.local.get(REWRITE_CTX_KEY, (data) => {
       const c = data[REWRITE_CTX_KEY] || {};
