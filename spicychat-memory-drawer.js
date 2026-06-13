@@ -1928,7 +1928,7 @@
           </div>
           <div class="rp-section-label">One-Shot Rewrite</div>
           <div class="rp-card">
-            <div class="rp-hint" style="margin-bottom:6px;">Custom prompt — runs on the focused chat input. Persona prepend applies if enabled.</div>
+            <div class="rp-hint" style="margin-bottom:6px;">Custom prompt — runs on the focused chat input. Persona prepend applies if enabled. Shortcut: Ctrl+N.</div>
             <textarea id="sc-rp-oneshot-prompt" class="rp-input rp-textarea" style="min-height:60px;" placeholder="e.g. Make this more poetic and melancholy." data-ai-rewriter-ignore="1"></textarea>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
               <button id="sc-rp-oneshot-run" class="rp-action-btn">
@@ -2623,6 +2623,7 @@
     let snipEditMode = false;
 
     /* Storage keys */
+    const ONESHOT_PROMPT_KEY = "rpOneShotPrompt";
     const QUEST_KEY = "sc_quests_v1_" + chatId;
 
     /* ── CSS variable init ── */
@@ -5068,17 +5069,35 @@
       );
     });
 
-    chrome.storage.sync.get("rpSnippets", (data) => {
+    chrome.storage.sync.get(["rpSnippets", ONESHOT_PROMPT_KEY], (data) => {
       if (Array.isArray(data.rpSnippets)) {
         data.rpSnippets.forEach((s, i) => {
           if (i < MAX_SNIPPETS)
             rpSnippets[i] = { label: s.label || "", text: s.text || "" };
         });
       }
+      if (typeof data[ONESHOT_PROMPT_KEY] === "string") {
+        oneshotPromptTa.value = data[ONESHOT_PROMPT_KEY];
+      }
       renderSnippetChips();
     });
 
     /* ── One-shot ── */
+    let oneshotPromptSaveTimer = null;
+
+    oneshotPromptTa.addEventListener("input", () => {
+      clearTimeout(oneshotPromptSaveTimer);
+      const value = oneshotPromptTa.value;
+      oneshotPromptSaveTimer = setTimeout(() => {
+        chrome.storage.sync.set({ [ONESHOT_PROMPT_KEY]: value });
+      }, 220);
+    });
+
+    oneshotPromptTa.addEventListener("blur", () => {
+      clearTimeout(oneshotPromptSaveTimer);
+      chrome.storage.sync.set({ [ONESHOT_PROMPT_KEY]: oneshotPromptTa.value });
+    });
+
     oneshotRunBtn.addEventListener("click", () => {
       const prompt = oneshotPromptTa.value.trim();
       if (!prompt) {
@@ -5089,6 +5108,7 @@
       oneshotRunBtn.disabled = true;
       oneshotStatusEl.textContent = "Running\u2026";
       oneshotStatusEl.className = "rp-hint";
+      chrome.storage.sync.set({ [ONESHOT_PROMPT_KEY]: oneshotPromptTa.value });
       document.dispatchEvent(
         new CustomEvent("sc-rp-run-oneshot", { detail: { prompt } }),
       );
@@ -5154,6 +5174,7 @@
       "formatterEnabled",
       "formatterKeyword",
       "fmtShortcut",
+      "fmtNoTrackerShortcut",
       "autoFormatAfterRewrite",
       "fmtStripAsterisks",
       "fmtNormaliseQuotes",
@@ -5314,6 +5335,8 @@
       const enabled = d.formatterEnabled !== false;
       const keyword = d.formatterKeyword || "//format";
       const shortcut = "Ctrl+" + (d.fmtShortcut || "m").toUpperCase();
+      const noTrackerShortcut =
+        "Ctrl+Shift+" + (d.fmtNoTrackerShortcut || "m").toUpperCase();
       const autoFmt = d.autoFormatAfterRewrite !== false;
       const prependSummary = d.fmtPrependTrackerSummaryOnFormat === true;
 
@@ -5329,6 +5352,7 @@
         <div class="fmt-meta-row">
           <span>keyword</span><span class="fmt-meta-chip">${escH(keyword)}</span>
           <span style="margin-left:4px;">shortcut</span><span class="fmt-meta-chip">${escH(shortcut)}</span>
+          <span style="margin-left:4px;">no tracker shortcut</span><span class="fmt-meta-chip">${escH(noTrackerShortcut)}</span>
           <span style="margin-left:4px;">auto after rewrite</span>
           <span class="fmt-master-badge ${autoFmt ? "on" : "off"}" style="font-size:9.5px;">${autoFmt ? "ON" : "OFF"}</span>
           <span style="margin-left:4px;">inject tracker summary on format</span>

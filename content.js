@@ -39,8 +39,10 @@
   let lastFocusedEl = null; // last focused SpicyChat input
   let fmtShortcut = "m"; // keyboard shortcut key for format (Ctrl+key)
   let fmtNoTrackerShortcut = "m"; // keyboard shortcut key for no-tracker format (Ctrl+Shift+key)
+  let rpOneShotPrompt = ""; // saved one-shot prompt from RP drawer
   let fmtPrependTrackerSummaryOnFormat = false;
   const isSpicyChat = location.hostname.includes("spicychat.ai");
+  const ONESHOT_SHORTCUT_KEY = "n";
 
   // Load settings from storage
   function loadSettings() {
@@ -79,6 +81,7 @@
         "rpGlobalStyle",
         "fmtShortcut",
         "fmtNoTrackerShortcut",
+        "rpOneShotPrompt",
       ],
       (data) => {
         commands = data.commands || [];
@@ -127,6 +130,8 @@
         rpGlobalStyle = data.rpGlobalStyle || "";
         fmtShortcut = data.fmtShortcut || "m";
         fmtNoTrackerShortcut = data.fmtNoTrackerShortcut || "m";
+        rpOneShotPrompt =
+          typeof data.rpOneShotPrompt === "string" ? data.rpOneShotPrompt : "";
       },
     );
   }
@@ -592,7 +597,7 @@
     }
   }
 
-  // ─── Persona prompt builder ─────────────────────────────────────────────────
+  // ─── Persona prompt builder ────────────────────────────────────────────────
 
   function buildPrompt(basePrompt) {
     if (!isSpicyChat) return basePrompt;
@@ -628,7 +633,7 @@
     return parts.join("\n\n");
   }
 
-  // ─── Main rewrite handler ───────────────────────────────────────────────────
+  // ─── Main rewrite handler ──────────────────────────────────────────────────
 
   async function handleRewrite(el, match) {
     createOverlay(el);
@@ -818,32 +823,154 @@
     { passive: true },
   );
 
-  // ─── Format keyboard shortcut ───────────────────────────────────────────────────
+  function matchShortcut(e, key, requireShift) {
+    if (!key) return false;
+    return (
+      e.ctrlKey &&
+      e.shiftKey === requireShift &&
+      !e.altKey &&
+      !e.metaKey &&
+      e.key.toLowerCase() === key.toLowerCase()
+    );
+  }
+
+  function getShortcutAction(e) {
+    if (matchShortcut(e, fmtNoTrackerShortcut, true)) return "formatNoTracker";
+    if (matchShortcut(e, fmtShortcut, false)) return "format";
+    if (
+      isSpicyChat &&
+      matchShortcut(e, ONESHOT_SHORTCUT_KEY, false) &&
+      (!fmtShortcut || fmtShortcut.toLowerCase() !== ONESHOT_SHORTCUT_KEY)
+    ) {
+      return "oneShot";
+    }
+    return null;
+  }
+
+  async function runOneShotRewrite(rawPrompt) {
+    if (!isSpicyChat) return;
+    const prompt = (rawPrompt || "").trim();
+    if (!prompt) {
+      document.dispatchEvent(
+        new CustomEvent("sc-rp-oneshot-result", {
+          detail: {
+            error: "Set a One-Shot prompt in RP Tools first.",
+          },
+        }),
+      );
+      showToast("One-Shot needs a saved prompt in RP Tools.", true);
+      return;
+    }
+    if (!lastFocusedEl || !document.contains(lastFocusedEl)) {
+      document.dispatchEvent(
+        new CustomEvent("sc-rp-oneshot-result", {
+          detail: {
+            error: "No input focused — click inside the chat box first.",
+          },
+        }),
+      );
+      return;
+    }
+    const el = lastFocusedEl;
+    const rawText = el.isContentEditable
+      ? el.innerText || el.textContent || ""
+      : el.value || "";
+    const trimmed = rawText.trim();
+    if (!trimmed) {
+      document.dispatchEvent(
+        new CustomEvent("sc-rp-oneshot-result", {
+          detail: { error: "Input is empty." },
+        }),
+      );
+      return;
+    }
+    createOverlay(el);
+    const startTime = Date.now();
+    try {
+      const builtPrompt = buildPrompt(prompt);
+      const result = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+          {
+            type: "REWRITE_TEXT",
+            text: trimmed,
+            prompt: builtPrompt,
+            apiKey,
+            model,
+          },
+          (response) => {
+            if (chrome.runtime.lastError) {
+              reject(new Error(chrome.runtime.lastError.message));
+            } else if (response.success) {
+              resolve(response);
+            } else {
+              reject(new Error(response.error));
+            }
+          },
+        );
+      });
+      const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1);
+      let finalText = result.text;
+      if (autoFormatAfterRewrite && formatterEnabled)
+        finalText = formatText(result.text);
+      replaceText(el, finalText);
+      const rewriteDetail = {
+        before: trimmed,
+        after: finalText,
+        label: "One-Shot",
+        ts: Date.now(),
+        model: result.model || model,
+        usage: result.usage || null,
+        elapsed: parseFloat(elapsedSec),
+        promptText: builtPrompt,
+        reasoning: result.reasoning || null,
+      };
+      lastRewrite = { el, ...rewriteDetail };
+      chrome.storage.local.set({ sc_last_rewrite: rewriteDetail });
+      document.dispatchEvent(
+        new CustomEvent("sc-rp-rewrite-done", { detail: rewriteDetail }),
+      );
+      const modelShort = (result.model || model || "unknown").split("/").pop();
+      document.dispatchEvent(
+        new CustomEvent("sc-rp-oneshot-result", {
+          detail: { ok: true, elapsed: elapsedSec, model: modelShort },
+        }),
+      );
+      showToast(`✓ One-Shot · ${modelShort} · ${elapsedSec}s`);
+    } catch (err) {
+      replaceText(el, trimmed);
+      document.dispatchEvent(
+        new CustomEvent("sc-rp-oneshot-result", {
+          detail: { error: err.message },
+        }),
+      );
+      showToast(`✗ One-Shot — ${err.message}`, true);
+    } finally {
+      removeOverlay(el);
+    }
+  }
+
+  // ─── Keyboard shortcuts (format + one-shot) ───────────────────────────────────
 
   document.addEventListener(
     "keydown",
     (e) => {
       if (!isEditableElement(document.activeElement)) return;
-      if (
-        fmtNoTrackerShortcut &&
-        e.ctrlKey &&
-        e.shiftKey &&
-        !e.altKey &&
-        !e.metaKey &&
-        e.key.toLowerCase() === fmtNoTrackerShortcut.toLowerCase()
-      ) {
-        e.preventDefault();
+      const action = getShortcutAction(e);
+      if (!action) return;
+      e.preventDefault();
+      if (action === "formatNoTracker") {
         handleFormat(document.activeElement, undefined, {
           includeTrackerSummary: false,
         });
         return;
       }
-      if (!fmtShortcut) return;
-      if (e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) {
-        if (e.key.toLowerCase() === fmtShortcut.toLowerCase()) {
-          e.preventDefault();
-          handleFormat(document.activeElement);
-        }
+      if (action === "format") {
+        handleFormat(document.activeElement);
+        return;
+      }
+      if (action === "oneShot") {
+        if (e.repeat) return;
+        runOneShotRewrite(rpOneShotPrompt);
       }
     },
     true,
@@ -905,91 +1032,6 @@
   // ─── One-shot rewrite (triggered by RP Tools drawer) ────────────────────────
 
   document.addEventListener("sc-rp-run-oneshot", async (e) => {
-    if (!isSpicyChat) return;
-    if (!lastFocusedEl || !document.contains(lastFocusedEl)) {
-      document.dispatchEvent(
-        new CustomEvent("sc-rp-oneshot-result", {
-          detail: {
-            error: "No input focused \u2014 click inside the chat box first.",
-          },
-        }),
-      );
-      return;
-    }
-    const el = lastFocusedEl;
-    const rawText = el.isContentEditable
-      ? el.innerText || el.textContent || ""
-      : el.value || "";
-    const trimmed = rawText.trim();
-    if (!trimmed) {
-      document.dispatchEvent(
-        new CustomEvent("sc-rp-oneshot-result", {
-          detail: { error: "Input is empty." },
-        }),
-      );
-      return;
-    }
-    createOverlay(el);
-    const startTime = Date.now();
-    try {
-      const result = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage(
-          {
-            type: "REWRITE_TEXT",
-            text: trimmed,
-            prompt: buildPrompt(e.detail.prompt),
-            apiKey,
-            model,
-          },
-          (response) => {
-            if (chrome.runtime.lastError) {
-              reject(new Error(chrome.runtime.lastError.message));
-            } else if (response.success) {
-              resolve(response);
-            } else {
-              reject(new Error(response.error));
-            }
-          },
-        );
-      });
-      const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1);
-      let finalText = result.text;
-      if (autoFormatAfterRewrite && formatterEnabled)
-        finalText = formatText(result.text);
-      replaceText(el, finalText);
-      const rewriteDetail = {
-        before: trimmed,
-        after: finalText,
-        label: "One-Shot",
-        ts: Date.now(),
-        model: result.model || model,
-        usage: result.usage || null,
-        elapsed: parseFloat(elapsedSec),
-        promptText: buildPrompt(e.detail.prompt),
-        reasoning: result.reasoning || null,
-      };
-      lastRewrite = { el, ...rewriteDetail };
-      chrome.storage.local.set({ sc_last_rewrite: rewriteDetail });
-      document.dispatchEvent(
-        new CustomEvent("sc-rp-rewrite-done", { detail: rewriteDetail }),
-      );
-      const modelShort = (result.model || model || "unknown").split("/").pop();
-      document.dispatchEvent(
-        new CustomEvent("sc-rp-oneshot-result", {
-          detail: { ok: true, elapsed: elapsedSec, model: modelShort },
-        }),
-      );
-      showToast(`\u2713 One-Shot \u00b7 ${modelShort} \u00b7 ${elapsedSec}s`);
-    } catch (err) {
-      replaceText(el, trimmed);
-      document.dispatchEvent(
-        new CustomEvent("sc-rp-oneshot-result", {
-          detail: { error: err.message },
-        }),
-      );
-      showToast(`\u2717 One-Shot \u2014 ${err.message}`, true);
-    } finally {
-      removeOverlay(el);
-    }
+    await runOneShotRewrite(e?.detail?.prompt || rpOneShotPrompt);
   });
 })();
