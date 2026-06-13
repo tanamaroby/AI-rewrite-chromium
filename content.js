@@ -29,6 +29,7 @@
   let rpPersonas = Array.from({ length: 10 }, () => ({
     label: "",
     name: "",
+    description: "",
     personality: "",
   }));
   let rpActivePersonaIndex = -1;
@@ -104,10 +105,16 @@
           rpPersonas = data.rpPersonas.slice(0, 10).map((p) => ({
             label: p.label || "",
             name: p.name || "",
-            personality: p.personality || p.prepend || "",
+            description: p.description || p.prepend || "",
+            personality: p.personality || "",
           }));
           while (rpPersonas.length < 10)
-            rpPersonas.push({ label: "", name: "", personality: "" });
+            rpPersonas.push({
+              label: "",
+              name: "",
+              description: "",
+              personality: "",
+            });
           rpActivePersonaIndex =
             typeof data.rpActivePersonaIndex === "number"
               ? data.rpActivePersonaIndex
@@ -117,7 +124,8 @@
           rpPersonas[0] = {
             label: data.rpPersonaName || "Persona 1",
             name: data.rpPersonaName || "",
-            personality: data.rpPersonaPrepend || "",
+            description: data.rpPersonaPrepend || "",
+            personality: "",
           };
           rpActivePersonaIndex = data.rpPersonaEnabled === true ? 0 : -1;
         }
@@ -519,10 +527,21 @@
         : null;
     const name = (persona && persona.name && persona.name.trim()) || "the user";
 
-    if (persona && (persona.name?.trim() || persona.personality?.trim())) {
+    if (
+      persona &&
+      (persona.name?.trim() ||
+        persona.description?.trim() ||
+        persona.personality?.trim())
+    ) {
       let block =
         `[Roleplay context — the text you are rewriting is written in first person by ${name}. ` +
         `Preserve their voice, intent and point of view; never break character or narrate for other characters.`;
+      if (persona.description && persona.description.trim()) {
+        const resolvedDesc = persona.description
+          .replace(/\{\{user\}\}/gi, name)
+          .trim();
+        block += ` Who ${name} is: ${resolvedDesc}`;
+      }
       if (persona.personality && persona.personality.trim()) {
         const resolved = persona.personality
           .replace(/\{\{user\}\}/gi, name)
@@ -534,6 +553,11 @@
     }
 
     const ctx = await getSceneContext();
+    if (ctx.context && ctx.context.trim()) {
+      parts.push(
+        `[Current situation — a summary of what is happening in the scene right now. Stay consistent with it and never contradict it: ${ctx.context.trim()}]`,
+      );
+    }
     const scene = [];
     if (ctx.location && ctx.location.trim())
       scene.push(`Location: ${ctx.location.trim()}`);

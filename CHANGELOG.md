@@ -14,8 +14,8 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - **Rewrites presets** — five saveable rewrite presets (name + prompt), managed in the SpicyChat side drawer → RP Tools. Activate one at a time; `Ctrl+N` runs the active preset.
-- **Scene Context** (per-chat) — Location, Clothes, Status, and Dialogue Style fields injected into every Rewrite on SpicyChat.
-- **{{user}} Personality** — folded into each Persona slot; describes who `{{user}}` is and is injected before every Rewrite.
+- **Scene Context** (per-chat) — Context (a general description of what's happening), Location, Clothes, Status, and Dialogue Style fields injected into every Rewrite on SpicyChat.
+- **Persona Description + Personality** — each Persona slot now has a separate `{{user}}` **Description** (who they are) and **Personality** (how they think, speak and behave); both are injected before every Rewrite, with the description first.
 - Popup now lists the saved Rewrites and highlights the active one.
 
 ### Removed

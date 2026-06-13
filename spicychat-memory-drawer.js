@@ -1891,6 +1891,10 @@
           <div class="rp-card">
             <div class="rp-hint" style="margin-bottom:8px;">Saved per chat. Woven into every rewrite to keep details consistent.</div>
             <div style="margin-bottom:6px;">
+              <div class="rp-hint" style="margin-bottom:4px;">Context / what's happening</div>
+              <textarea id="sc-rp-ctx-context" class="rp-input rp-textarea" style="min-height:56px;" placeholder="e.g. A tense standoff after the heist went wrong; both sides are wary but talking" data-ai-rewriter-ignore="1"></textarea>
+            </div>
+            <div style="margin-bottom:6px;">
               <div class="rp-hint" style="margin-bottom:4px;">Location</div>
               <input type="text" id="sc-rp-ctx-location" class="rp-input" placeholder="e.g. A rain-soaked alley in the old quarter" data-ai-rewriter-ignore="1" />
             </div>
@@ -1925,6 +1929,10 @@
               <div style="margin-bottom:6px;">
                 <div class="rp-hint" style="margin-bottom:4px;">Persona name &mdash; replaces <code style="background:rgba(108,99,255,0.15);padding:1px 5px;border-radius:3px;font-size:10.5px;color:#a78bfa;">{{user}}</code></div>
                 <input type="text" id="sc-rp-persona-name" class="rp-input" placeholder="Your persona name…" data-ai-rewriter-ignore="1" />
+              </div>
+              <div style="margin-bottom:6px;">
+                <div class="rp-hint" style="margin-bottom:4px;">{{user}} description &mdash; who they are</div>
+                <textarea id="sc-rp-persona-description" class="rp-input rp-textarea" placeholder="e.g. {{user}} is a weathered ex-detective in their forties, now working as a private investigator." data-ai-rewriter-ignore="1"></textarea>
               </div>
               <div>
                 <div class="rp-hint" style="margin-bottom:4px;">{{user}} personality &mdash; how they think, speak and behave</div>
@@ -2507,6 +2515,9 @@
     const rpPersonaEditorEl = document.getElementById("sc-rp-persona-editor");
     const rpPersonaLabelInput = document.getElementById("sc-rp-persona-label");
     const rpPersonaNameInput = document.getElementById("sc-rp-persona-name");
+    const rpPersonaDescriptionTa = document.getElementById(
+      "sc-rp-persona-description",
+    );
     const rpPersonaPersonalityTa = document.getElementById(
       "sc-rp-persona-personality",
     );
@@ -2533,6 +2544,7 @@
     const rewriteRunBtn = document.getElementById("sc-rp-rewrite-run");
     const rewriteStatusEl = document.getElementById("sc-rp-rewrite-status");
     const rewriteAutosaveEl = document.getElementById("sc-rp-rewrite-autosave");
+    const ctxContextTa = document.getElementById("sc-rp-ctx-context");
     const ctxLocationInput = document.getElementById("sc-rp-ctx-location");
     const ctxClothesInput = document.getElementById("sc-rp-ctx-clothes");
     const ctxStatusInput = document.getElementById("sc-rp-ctx-status");
@@ -4681,6 +4693,7 @@
     let drawerPersonas = Array.from({ length: 10 }, () => ({
       label: "",
       name: "",
+      description: "",
       personality: "",
     }));
     let drawerActiveIdx = -1;
@@ -4714,6 +4727,7 @@
         const p = drawerPersonas[drawerActiveIdx];
         rpPersonaLabelInput.value = p.label || "";
         rpPersonaNameInput.value = p.name || "";
+        rpPersonaDescriptionTa.value = p.description || "";
         rpPersonaPersonalityTa.value = p.personality || "";
       }
     }
@@ -4723,6 +4737,7 @@
         drawerPersonas[drawerActiveIdx] = {
           label: rpPersonaLabelInput.value,
           name: rpPersonaNameInput.value,
+          description: rpPersonaDescriptionTa.value,
           personality: rpPersonaPersonalityTa.value,
         };
         // Refresh pill label live
@@ -4751,6 +4766,7 @@
 
     rpPersonaLabelInput.addEventListener("input", schedulePersonaSave);
     rpPersonaNameInput.addEventListener("input", schedulePersonaSave);
+    rpPersonaDescriptionTa.addEventListener("input", schedulePersonaSave);
     rpPersonaPersonalityTa.addEventListener("input", schedulePersonaSave);
 
     chrome.storage.sync.get(
@@ -4766,10 +4782,16 @@
           drawerPersonas = data.rpPersonas.slice(0, 10).map((p) => ({
             label: p.label || "",
             name: p.name || "",
-            personality: p.personality || p.prepend || "",
+            description: p.description || p.prepend || "",
+            personality: p.personality || "",
           }));
           while (drawerPersonas.length < 10)
-            drawerPersonas.push({ label: "", name: "", personality: "" });
+            drawerPersonas.push({
+              label: "",
+              name: "",
+              description: "",
+              personality: "",
+            });
           drawerActiveIdx =
             typeof data.rpActivePersonaIndex === "number"
               ? data.rpActivePersonaIndex
@@ -4779,7 +4801,8 @@
           drawerPersonas[0] = {
             label: data.rpPersonaName || "Persona 1",
             name: data.rpPersonaName || "",
-            personality: data.rpPersonaPrepend || "",
+            description: data.rpPersonaPrepend || "",
+            personality: "",
           };
           drawerActiveIdx = data.rpPersonaEnabled === true ? 0 : -1;
         }
@@ -4895,6 +4918,7 @@
     function saveSceneContext() {
       chrome.storage.local.set({
         [REWRITE_CTX_KEY]: {
+          context: ctxContextTa.value,
           location: ctxLocationInput.value,
           clothes: ctxClothesInput.value,
           status: ctxStatusInput.value,
@@ -4914,12 +4938,17 @@
       ctxSaveTimer = setTimeout(saveSceneContext, 500);
     }
 
-    [ctxLocationInput, ctxClothesInput, ctxStatusInput, ctxDialogueTa].forEach(
-      (el) => el.addEventListener("input", scheduleSceneContextSave),
-    );
+    [
+      ctxContextTa,
+      ctxLocationInput,
+      ctxClothesInput,
+      ctxStatusInput,
+      ctxDialogueTa,
+    ].forEach((el) => el.addEventListener("input", scheduleSceneContextSave));
 
     chrome.storage.local.get(REWRITE_CTX_KEY, (data) => {
       const c = data[REWRITE_CTX_KEY] || {};
+      ctxContextTa.value = c.context || "";
       ctxLocationInput.value = c.location || "";
       ctxClothesInput.value = c.clothes || "";
       ctxStatusInput.value = c.status || "";

@@ -484,6 +484,7 @@ const rpActivePersonaStatus = document.getElementById("rpActivePersonaStatus");
 const DEFAULT_PERSONAS = Array.from({ length: 10 }, () => ({
   label: "",
   name: "",
+  description: "",
   personality: "",
 }));
 
@@ -507,12 +508,17 @@ function buildPersonaSlots() {
       <div class="form-group" style="margin: 0 0 8px;">
         <label class="form-label" style="font-size:11.5px;">Persona Name</label>
         <input type="text" class="form-input" style="padding: 6px 10px;" placeholder="e.g. Aria" value="${escHtml(persona.name)}" data-field="name" spellcheck="false" />
-        <p class="form-hint">Replaces <code>{{user}}</code> in the personality text.</p>
+        <p class="form-hint">Replaces <code>{{user}}</code> in the description and personality text.</p>
+      </div>
+      <div class="form-group" style="margin: 0 0 8px;">
+        <label class="form-label" style="font-size:11.5px;">{{user}} Description</label>
+        <textarea class="form-input" rows="4" style="resize:vertical;font-family:ui-monospace,monospace;font-size:11.5px;" placeholder="e.g. {{user}} is a weathered ex-detective in their forties, now working as a private investigator." data-field="description">${escHtml(persona.description)}</textarea>
+        <p class="form-hint">Describes who <code>{{user}}</code> is. Injected before every Rewrite on SpicyChat only.</p>
       </div>
       <div class="form-group" style="margin: 0;">
         <label class="form-label" style="font-size:11.5px;">{{user}} Personality</label>
         <textarea class="form-input" rows="4" style="resize:vertical;font-family:ui-monospace,monospace;font-size:11.5px;" placeholder="e.g. {{user}} is witty, guarded, and slow to trust. Speaks in short, dry sentences." data-field="personality">${escHtml(persona.personality)}</textarea>
-        <p class="form-hint">Describes who <code>{{user}}</code> is. Injected before every Rewrite on SpicyChat only.</p>
+        <p class="form-hint">How <code>{{user}}</code> thinks, speaks and behaves. Injected after the description.</p>
       </div>`;
     rpPersonaSlotsEl.appendChild(card);
 
@@ -573,10 +579,16 @@ chrome.storage.sync.get(
       rpPersonasData = data.rpPersonas.slice(0, 10).map((p) => ({
         label: p.label || "",
         name: p.name || "",
-        personality: p.personality || p.prepend || "",
+        description: p.description || p.prepend || "",
+        personality: p.personality || "",
       }));
       while (rpPersonasData.length < 10)
-        rpPersonasData.push({ label: "", name: "", personality: "" });
+        rpPersonasData.push({
+          label: "",
+          name: "",
+          description: "",
+          personality: "",
+        });
       rpActivePersonaIndex =
         typeof data.rpActivePersonaIndex === "number"
           ? data.rpActivePersonaIndex
@@ -586,7 +598,8 @@ chrome.storage.sync.get(
       rpPersonasData[0] = {
         label: data.rpPersonaName || "Persona 1",
         name: data.rpPersonaName || "",
-        personality: data.rpPersonaPrepend || "",
+        description: data.rpPersonaPrepend || "",
+        personality: "",
       };
       rpActivePersonaIndex = data.rpPersonaEnabled === true ? 0 : -1;
     }
@@ -636,10 +649,16 @@ document
           .map((p) => ({
             label: p.label || "",
             name: p.name || "",
-            personality: p.personality || p.prepend || "",
+            description: p.description || p.prepend || "",
+            personality: p.personality || "",
           }));
         while (personas.length < 10)
-          personas.push({ label: "", name: "", personality: "" });
+          personas.push({
+            label: "",
+            name: "",
+            description: "",
+            personality: "",
+          });
 
         const rewrites = (Array.isArray(data.rpRewrites) ? data.rpRewrites : [])
           .slice(0, 5)
@@ -678,6 +697,7 @@ document.getElementById("export-personas-btn").addEventListener("click", () => {
     personas: rpPersonasData.map((p) => ({
       label: p.label || "",
       name: p.name || "",
+      description: p.description || "",
       personality: p.personality || "",
     })),
     activePersonaIdx: rpActivePersonaIndex,
@@ -715,20 +735,14 @@ document.getElementById("import-personas-btn").addEventListener("click", () => {
   }
   const incoming = data.personas
     .slice(0, 10)
-    .map((p) =>
-      Object.assign(
-        { label: "", name: "", personality: "" },
-        p,
-        p && p.prepend && !p.personality ? { personality: p.prepend } : {},
-      ),
-    )
     .map((p) => ({
-      label: p.label || "",
-      name: p.name || "",
-      personality: p.personality || "",
+      label: (p && p.label) || "",
+      name: (p && p.name) || "",
+      description: (p && (p.description || p.prepend)) || "",
+      personality: (p && p.personality) || "",
     }));
   while (incoming.length < 10)
-    incoming.push({ label: "", name: "", personality: "" });
+    incoming.push({ label: "", name: "", description: "", personality: "" });
   rpPersonasData = incoming;
   rpActivePersonaIndex =
     typeof data.activePersonaIdx === "number" ? data.activePersonaIdx : -1;

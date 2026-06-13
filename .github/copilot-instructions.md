@@ -34,8 +34,8 @@ deploy-mobile.sh           Bumps @version in the userscript and copies it to iCl
 - **API calls only in `background.js`** — never call OpenRouter from `content.js` (CORS + key security)
 - **Messaging**: content → background via `chrome.runtime.sendMessage({ type: "REWRITE_TEXT", ... })`
 - **Storage**:
-  - `chrome.storage.sync`: `apiKey`, `model`, all formatter settings (`fmt*`), `formatterEnabled`, `autoFormatAfterRewrite`, `fmtShortcut`, `fmtNoTrackerShortcut`, `rpRewrites[]` (5 × `{name,prompt}`), `rpActiveRewriteIndex`, `rpPersonas[]` (10 × `{label,name,personality}`), `rpActivePersonaIndex`, `spicychatNotesEnabled`
-  - `chrome.storage.local`: RPG tracker data keyed as `sc_quests_v1_<chatId>`, `sc_res_v1_<chatId>`, `sc_abl_v1_<chatId>`, `sc_party_v1_<chatId>`, `sc_npc_v1_<chatId>`, `sc_rumour_v1_<chatId>`, `sc_dice_mod_v1_<chatId>`; `sc_rpctx_v1_<chatId>` (Scene Context: `{location,clothes,status,dialogueStyle}`); `sc_last_rewrite` (last rewrite for undo); `sc_note_width_v1` (drawer width)
+  - `chrome.storage.sync`: `apiKey`, `model`, all formatter settings (`fmt*`), `formatterEnabled`, `autoFormatAfterRewrite`, `fmtShortcut`, `fmtNoTrackerShortcut`, `rpRewrites[]` (5 × `{name,prompt}`), `rpActiveRewriteIndex`, `rpPersonas[]` (10 × `{label,name,description,personality}`), `rpActivePersonaIndex`, `spicychatNotesEnabled`
+  - `chrome.storage.local`: RPG tracker data keyed as `sc_quests_v1_<chatId>`, `sc_res_v1_<chatId>`, `sc_abl_v1_<chatId>`, `sc_party_v1_<chatId>`, `sc_npc_v1_<chatId>`, `sc_rumour_v1_<chatId>`, `sc_dice_mod_v1_<chatId>`; `sc_rpctx_v1_<chatId>` (Scene Context: `{context,location,clothes,status,dialogueStyle}`); `sc_last_rewrite` (last rewrite for undo); `sc_note_width_v1` (drawer width)
 - **Retry logic**: `MAX_RETRIES = 3`, `RETRY_DELAY_MS = 2000`, exponential backoff, honors `Retry-After` header
 - **Default model**: `openrouter/free` — auto-routes to any available free model
 - **No build tools** — no npm, no bundler, no TypeScript. Keep it plain JS
@@ -80,8 +80,8 @@ Runs entirely in `content.js` — no API call. Controlled by `formatterEnabled` 
 AI Rewrites are SpicyChat-only and composed in `content.js`:
 
 - **Rewrites presets** — `rpRewrites[]` (5 slots of `{name,prompt}`) + `rpActiveRewriteIndex`, managed in the drawer's RP Tools tab. `runRewrite(index)` validates the preset/focus/non-empty input, builds the prompt, sends `REWRITE_TEXT`, optionally auto-formats, stores `sc_last_rewrite`, and dispatches `sc-rp-rewrite-done` + `sc-rp-rewrite-result`.
-- **Scene Context** — `getSceneContext()` reads `sc_rpctx_v1_<chatId>` → `{location,clothes,status,dialogueStyle}` (per-chat).
-- `buildRewritePrompt(presetPrompt)` composes (joined by blank lines): persona block (name + personality, `{{user}}`→name) → scene block (location/clothes/status) → dialogue-style block → the preset prompt.
+- **Scene Context** — `getSceneContext()` reads `sc_rpctx_v1_<chatId>` → `{context,location,clothes,status,dialogueStyle}` (per-chat).
+- `buildRewritePrompt(presetPrompt)` composes (joined by blank lines): persona block (name + description + personality, `{{user}}`→name) → current-situation block (context) → scene block (location/clothes/status) → dialogue-style block → the preset prompt.
 
 ## SpicyChat features
 
@@ -151,8 +151,8 @@ All "Add" actions log **on blur** (after the user fills in the name/text), so th
 
 `buildRewritePrompt(presetPrompt)` in `content.js` prepends persona + scene context when on SpicyChat:
 
-1. If the active persona (`rpActivePersonaIndex` of `rpPersonas[]`) has a `personality`: prepends a character-context block (resolves `{{user}}` → the persona `name`)
-2. Prepends the Scene Context block (location, clothes, status) and a dialogue-style block when those fields are set
+1. If the active persona (`rpActivePersonaIndex` of `rpPersonas[]`) has a `description` or `personality`: prepends a character-context block (resolves `{{user}}` → the persona `name`), description first then personality
+2. Prepends the current-situation block (`context`), the Scene Context block (location, clothes, status) and a dialogue-style block when those fields are set
 3. Appends the active Rewrite preset prompt
 
 ## Options page sections
@@ -161,7 +161,7 @@ Sidebar nav with sections shown/hidden via JS (no routing library):
 
 1. **API Key** — save/toggle-visibility for OpenRouter key
 2. **Model** — model ID input + click-to-select model cards; auto-migrates bad model IDs on load
-3. **SpicyChat RPG Tracker** — enable/disable drawer; view saved RPG data per chat (counts of quests/resources/abilities etc.) with delete-all per chat; **RP Persona** lives in this section (10 slots, `{label,name,personality}`, `{{user}}` resolves to the persona name); also Export Config for Mobile + Export/Import Personas
+3. **SpicyChat RPG Tracker** — enable/disable drawer; view saved RPG data per chat (counts of quests/resources/abilities etc.) with delete-all per chat; **RP Persona** lives in this section (10 slots, `{label,name,description,personality}`, `{{user}}` resolves to the persona name); also Export Config for Mobile + Export/Import Personas
 4. **Formatter** — all `fmt*` toggles, format shortcut, no-tracker shortcut, extra delimiters
 
 > Rewrites presets and Scene Context are managed in the **SpicyChat side drawer → RP Tools**, not on the options page.
