@@ -4977,9 +4977,12 @@
       };
     }
 
-    function showCtxParseNotice(fields) {
+    function showCtxParseNotice(fields, sourceLabel) {
       ctxParseNotice.textContent =
-        "\u2728 Auto-filled " + fields.join(", ") + " from pasted scene";
+        "\u2728 Auto-filled " +
+        fields.join(", ") +
+        " from " +
+        (sourceLabel || "pasted scene");
       ctxParseNotice.classList.add("visible");
       clearTimeout(ctxParseNoticeTimer);
       ctxParseNoticeTimer = setTimeout(
@@ -4988,29 +4991,45 @@
       );
     }
 
+    function applySceneHeaderParse(sceneText, sourceLabel) {
+      const parsed = parseSceneBracket(sceneText);
+      if (!parsed) return;
+      const changed = [];
+      if (parsed.status) {
+        ctxStatusInput.value = parsed.status;
+        changed.push("status");
+      }
+      if (parsed.location) {
+        ctxLocationInput.value = parsed.location;
+        changed.push("location");
+      }
+      if (parsed.clothes) {
+        ctxClothesInput.value = parsed.clothes;
+        changed.push("clothes");
+      }
+      if (!changed.length) return;
+      saveSceneContext();
+      showCtxParseNotice(changed, sourceLabel);
+    }
+
     ctxPrevSceneTa.addEventListener("paste", () => {
       // Let the pasted text land in the textarea value first.
       setTimeout(() => {
-        const parsed = parseSceneBracket(ctxPrevSceneTa.value);
-        if (!parsed) return;
-        const changed = [];
-        if (parsed.status) {
-          ctxStatusInput.value = parsed.status;
-          changed.push("status");
-        }
-        if (parsed.location) {
-          ctxLocationInput.value = parsed.location;
-          changed.push("location");
-        }
-        if (parsed.clothes) {
-          ctxClothesInput.value = parsed.clothes;
-          changed.push("clothes");
-        }
-        if (!changed.length) return;
-        saveSceneContext();
-        showCtxParseNotice(changed);
+        applySceneHeaderParse(ctxPrevSceneTa.value, "pasted scene");
       }, 0);
     });
+
+    document.addEventListener(
+      "sc-rp-set-prev-scene",
+      (e) => {
+        const txt = String(e?.detail?.text || "").trim();
+        if (!txt) return;
+        ctxPrevSceneTa.value = txt;
+        saveSceneContext();
+        applySceneHeaderParse(txt, "chat message");
+      },
+      _sig,
+    );
 
     chrome.storage.local.get(REWRITE_CTX_KEY, (data) => {
       const c = data[REWRITE_CTX_KEY] || {};

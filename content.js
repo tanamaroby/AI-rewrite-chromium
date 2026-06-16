@@ -877,4 +877,152 @@
     }
     await runRewrite(idx);
   });
+
+  // ─── SpicyChat AI-message quick action: send message to Previous Scene ─────
+
+  function parseSceneBracket(text) {
+    const m = String(text || "").match(/\[([^\[\]]*\|[^\[\]]*)\]/);
+    if (!m) return null;
+    const parts = m[1].split("|").map((s) => s.trim());
+    if (parts.length < 2) return null;
+    return {
+      status: parts[0] || "",
+      location: parts[1] || "",
+      clothes: parts.length >= 4 ? parts[3] : "",
+    };
+  }
+
+  function getMessageTextForScene(messageRoot) {
+    const lines = Array.from(messageRoot.querySelectorAll("span.leading-6"))
+      .map((el) => (el.innerText || el.textContent || "").trim())
+      .filter(Boolean);
+    return lines.join("\n").trim();
+  }
+
+  function saveSceneContextFromMessage(sceneText) {
+    return new Promise((resolve) => {
+      const chatId = getSpicyChatChatId();
+      if (!chatId) {
+        resolve({ ok: false, changed: [] });
+        return;
+      }
+      const key = "sc_rpctx_v1_" + chatId;
+      chrome.storage.local.get(key, (d) => {
+        const current = d && d[key] && typeof d[key] === "object" ? d[key] : {};
+        const next = {
+          prevScene: sceneText,
+          context: current.context || "",
+          location: current.location || "",
+          clothes: current.clothes || "",
+          status: current.status || "",
+          dialogueStyle: current.dialogueStyle || "",
+        };
+
+        const parsed = parseSceneBracket(sceneText);
+        const changed = [];
+        if (parsed) {
+          if (parsed.status) {
+            next.status = parsed.status;
+            changed.push("status");
+          }
+          if (parsed.location) {
+            next.location = parsed.location;
+            changed.push("location");
+          }
+          if (parsed.clothes) {
+            next.clothes = parsed.clothes;
+            changed.push("clothes");
+          }
+        }
+
+        chrome.storage.local.set({ [key]: next }, () => {
+          // Keep the drawer UI in sync if it is mounted.
+          document.dispatchEvent(
+            new CustomEvent("sc-rp-set-prev-scene", {
+              detail: { text: sceneText },
+            }),
+          );
+          resolve({ ok: true, changed });
+        });
+      });
+    });
+  }
+
+  function isAiMessageBlock(messageRoot) {
+    if (!messageRoot) return false;
+    const hasVoiceBtn = !!messageRoot.querySelector(
+      'button[aria-label="Volume2-button"]',
+    );
+    const hasBotLink = !!messageRoot.querySelector('a[href^="/chatbot/"]');
+    return hasVoiceBtn && hasBotLink;
+  }
+
+  async function onSceneFillButtonClick(messageRoot) {
+    const sceneText = getMessageTextForScene(messageRoot);
+    if (!sceneText) {
+      showToast("No message text found to save.", true);
+      return;
+    }
+    const result = await saveSceneContextFromMessage(sceneText);
+    if (!result.ok) {
+      showToast("Could not save Previous scene for this chat.", true);
+      return;
+    }
+    if (result.changed.length) {
+      showToast(
+        "\u2713 Previous scene saved + auto-filled " +
+          result.changed.join(", ") +
+          ".",
+      );
+    } else {
+      showToast("\u2713 Previous scene saved.");
+    }
+  }
+
+  function mountSceneFillButtons() {
+    if (!isSpicyChat) return;
+    const messages = document.querySelectorAll('div[id^="message-"]');
+    messages.forEach((messageRoot) => {
+      if (!(messageRoot instanceof HTMLElement)) return;
+      if (messageRoot.dataset.aiSceneFillMounted === "1") return;
+      if (!isAiMessageBlock(messageRoot)) return;
+
+      const controlRow = messageRoot.querySelector(
+        "div.flex.justify-between.items-center",
+      );
+      if (!controlRow) return;
+
+      const rightSlot =
+        controlRow.lastElementChild instanceof HTMLElement
+          ? controlRow.lastElementChild
+          : controlRow;
+      rightSlot.classList.add("ai-scene-action-slot");
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "ai-scene-fill-btn";
+      btn.textContent = "\u2b73 Use As Previous Scene";
+      btn.title = "Send this AI message to Previous scene context";
+      btn.addEventListener("click", () => onSceneFillButtonClick(messageRoot));
+      rightSlot.appendChild(btn);
+
+      messageRoot.dataset.aiSceneFillMounted = "1";
+    });
+  }
+
+  if (isSpicyChat) {
+    let mountQueued = false;
+    const scheduleMount = () => {
+      if (mountQueued) return;
+      mountQueued = true;
+      requestAnimationFrame(() => {
+        mountQueued = false;
+        mountSceneFillButtons();
+      });
+    };
+
+    mountSceneFillButtons();
+    const obs = new MutationObserver(scheduleMount);
+    obs.observe(document.body, { childList: true, subtree: true });
+  }
 })();
