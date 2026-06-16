@@ -3,213 +3,319 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Rewriter — Mobile Toolbar Preview</title>
+<title>AI Rewriter - Mobile Toolbar Preview</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; }
-  body { margin:0; padding:0; background:#0a0514; color:#e2e8f0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; min-height:100vh; }
-  .page-content { padding:88px 20px 200px; max-width:600px; margin:0 auto; }
-  h1 { font-size:20px; font-weight:800; color:#c4b5fd; margin-bottom:8px; }
-  .subtitle { color:#475569; font-size:14px; margin-bottom:28px; }
-  label { display:block; font-size:12px; font-weight:700; color:rgba(139,92,246,0.6); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:8px; }
-  textarea { width:100%; min-height:160px; background:rgba(255,255,255,0.04); border:1px solid rgba(139,92,246,0.2); border-radius:14px; color:#e2e8f0; font-size:15px; padding:14px 16px; resize:vertical; font-family:inherit; line-height:1.6; }
-  textarea:focus { outline:none; border-color:rgba(139,92,246,0.5); }
-  .status-msg { font-size:13px; color:#475569; margin-top:10px; font-style:italic; }
+  body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: #0a0514;
+    color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
 
-  /* Toolbar */
-  #ai-mobile-toolbar { position:fixed; top:0; left:0; right:0; background:rgba(8,5,20,0.97); -webkit-backdrop-filter:blur(24px) saturate(180%); backdrop-filter:blur(24px) saturate(180%); border-bottom:1px solid rgba(139,92,246,0.4); box-shadow:0 0 0 1px rgba(109,40,217,0.15),0 6px 32px rgba(0,0,0,0.7); display:flex; flex-direction:column; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; -webkit-user-select:none; user-select:none; z-index:100; }
-  #ai-tb-main-row { display:flex; flex-direction:row; align-items:stretch; height:68px; }
-  #ai-tb-fmt-pin { flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center; width:70px; gap:4px; cursor:pointer; background:linear-gradient(160deg,rgba(16,185,129,0.18) 0%,rgba(5,12,10,0) 100%); border:none; border-right:1px solid rgba(52,211,153,0.25); padding:0; transition:background 0.15s; }
-  #ai-tb-fmt-pin:active { background:linear-gradient(160deg,rgba(16,185,129,0.35) 0%,rgba(5,30,20,0.6) 100%); }
-  #ai-tb-fmt-pin .fmt-emoji { font-size:22px; line-height:1; display:block; }
-  #ai-tb-fmt-pin .fmt-label { font-size:11px; font-weight:700; letter-spacing:0.04em; color:#34d399; text-transform:uppercase; }
-  #ai-tb-right { flex:1; min-width:0; display:flex; flex-direction:column; overflow:hidden; }
-  #ai-tb-status-row { display:flex; align-items:center; padding:5px 10px 2px; gap:6px; flex-shrink:0; }
-  #ai-tb-label { font-size:9px; font-weight:800; color:rgba(139,92,246,0.7); letter-spacing:0.14em; text-transform:uppercase; flex-shrink:0; }
-  #ai-tb-status { font-size:11px; color:rgba(224,222,255,0.35); flex:1; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; transition:color 0.2s; }
-  #ai-tb-status.working { color:#a78bfa; }
-  #ai-tb-status.error   { color:#f87171; }
-  #ai-tb-status.done    { color:#6ee7b7; }
-  #ai-tb-buttons { display:flex; flex-direction:row; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; gap:6px; padding:3px 10px 10px; flex:1; align-items:center; }
-  #ai-tb-buttons::-webkit-scrollbar { display:none; }
-  #ai-tb-settings-btn { flex-shrink:0; display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:10px; border:1px solid rgba(139,92,246,0.22); background:transparent; color:rgba(139,92,246,0.45); font-size:17px; cursor:pointer; transition:all 0.12s; }
-  #ai-tb-settings-btn:active { background:rgba(139,92,246,0.15); color:#a78bfa; }
-  .ai-tb-persona-pill { flex-shrink:0; height:26px; padding:0 9px; border-radius:13px; border:1px solid rgba(52,211,153,0.12); background:transparent; color:rgba(52,211,153,0.22); font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap; transition:all 0.12s; display:flex; align-items:center; }
-  .ai-tb-persona-pill.configured { color:#334155; border-color:rgba(52,211,153,0.22); }
-  .ai-tb-persona-pill.active { border-color:rgba(52,211,153,0.55); background:rgba(52,211,153,0.13); color:#34d399; box-shadow:0 0 8px rgba(52,211,153,0.18); }
-  .ai-tb-pill-sep { width:1px; height:22px; background:rgba(139,92,246,0.1); flex-shrink:0; margin:0 4px; align-self:center; }
-  .ai-tb-btn { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0; min-width:54px; padding:6px 10px 5px; border-radius:12px; border:1px solid rgba(109,40,217,0.4); background:linear-gradient(145deg,rgba(30,20,60,0.95) 0%,rgba(20,14,40,0.95) 100%); color:#ddd6fe; font-size:10.5px; font-weight:600; line-height:1.2; cursor:pointer; transition:all 0.1s; box-shadow:0 2px 8px rgba(0,0,0,0.4); }
-  .ai-tb-btn:active { background:linear-gradient(145deg,rgba(109,40,217,0.55) 0%,rgba(76,29,149,0.7) 100%); border-color:rgba(167,139,250,0.8); transform:scale(0.91); }
-  .ai-tb-btn-emoji { display:block; font-size:17px; line-height:1; margin-bottom:2px; }
-  .ai-tb-dice-btn { border-color:rgba(251,191,36,0.35) !important; background:linear-gradient(145deg,rgba(25,18,5,0.95),rgba(15,10,3,0.95)) !important; color:#fbbf24 !important; }
-  .ai-tb-dice-btn:active { background:linear-gradient(145deg,rgba(90,60,0,0.5),rgba(60,40,0,0.65)) !important; border-color:rgba(251,191,36,0.7) !important; transform:scale(0.91); }
+  #ai-mobile-toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+    background: rgba(8, 5, 20, 0.96);
+    border-bottom: 1px solid rgba(139, 92, 246, 0.35);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+  }
 
-  /* Settings sheet */
-  #ai-settings-backdrop { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,0.65); opacity:0; pointer-events:none; transition:opacity 0.22s; }
-  #ai-settings-backdrop.open { opacity:1; pointer-events:all; }
-  #ai-settings-sheet { position:fixed; left:0; right:0; bottom:0; z-index:201; background:rgba(7,4,18,0.99); -webkit-backdrop-filter:blur(32px) saturate(200%); backdrop-filter:blur(32px) saturate(200%); border-top:1px solid rgba(139,92,246,0.3); border-radius:22px 22px 0 0; height:95vh; display:flex; flex-direction:column; transform:translateY(110%); transition:transform 0.3s cubic-bezier(0.4,0,0.2,1); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-  #ai-settings-sheet.open { transform:none; }
-  #ai-settings-handle-area { padding:14px 0 8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; cursor:pointer; }
-  #ai-settings-handle { width:44px; height:5px; background:rgba(139,92,246,0.3); border-radius:3px; pointer-events:none; }
-  #ai-settings-header { display:flex; align-items:center; padding:2px 22px 16px; gap:14px; flex-shrink:0; }
-  #ai-settings-title { font-size:22px; font-weight:800; color:#e2e8f0; flex:1; letter-spacing:-0.02em; }
-  #ai-settings-close { width:36px; height:36px; border-radius:50%; border:1px solid rgba(139,92,246,0.18); background:rgba(20,14,40,0.6); color:#475569; font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
-  #ai-settings-close:active { background:rgba(76,29,149,0.4); color:#a78bfa; }
-  #ai-settings-tabs { display:flex; overflow-x:auto; scrollbar-width:none; gap:8px; padding:0 22px 18px; flex-shrink:0; border-bottom:1px solid rgba(139,92,246,0.09); }
-  #ai-settings-tabs::-webkit-scrollbar { display:none; }
-  .ai-stg-tab { flex-shrink:0; padding:11px 22px; border-radius:24px; border:1px solid rgba(139,92,246,0.18); background:transparent; color:#475569; font-size:15px; font-weight:700; white-space:nowrap; cursor:pointer; transition:all 0.14s; }
-  .ai-stg-tab.active { background:rgba(139,92,246,0.16); border-color:rgba(139,92,246,0.55); color:#c4b5fd; }
-  #ai-settings-content { flex:1; overflow-y:auto; padding:22px 22px 48px; }
-  .ai-stg-section-label { font-size:11px; font-weight:800; color:rgba(139,92,246,0.5); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:10px; display:block; }
-  .ai-stg-hint { font-size:14px; color:#475569; line-height:1.6; margin-bottom:20px; }
-  .ai-stg-input { display:block; width:100%; box-sizing:border-box; background:rgba(255,255,255,0.04); border:1px solid rgba(139,92,246,0.18); border-radius:14px; color:#e2e8f0; font-size:16px; padding:15px 16px; font-family:inherit; -webkit-appearance:none; margin-bottom:10px; }
-  .ai-stg-input:focus { outline:none; border-color:rgba(139,92,246,0.48); }
-  .ai-stg-input::placeholder { color:#2d3748; }
-  .ai-stg-textarea { resize:none; line-height:1.65; }
-  .ai-stg-btn { display:inline-flex; align-items:center; justify-content:center; padding:14px 20px; border-radius:14px; border:1px solid rgba(139,92,246,0.4); background:rgba(139,92,246,0.12); color:#a78bfa; font-size:15px; font-weight:700; cursor:pointer; transition:all 0.12s; }
-  .ai-stg-btn:active { background:rgba(139,92,246,0.26); }
-  .ai-stg-btn-block { display:block; width:100%; margin-bottom:10px; text-align:center; }
-  .ai-stg-btn-green { border-color:rgba(52,211,153,0.4); background:rgba(52,211,153,0.1); color:#34d399; }
-  .ai-stg-btn-green:active { background:rgba(52,211,153,0.22); }
-  .ai-stg-btn-danger { border-color:rgba(239,68,68,0.3); background:rgba(239,68,68,0.05); color:#f87171; }
-  .ai-stg-persona-slot { border:1px solid rgba(139,92,246,0.12); border-radius:16px; margin-bottom:10px; overflow:hidden; background:rgba(16,11,32,0.7); }
-  .ai-stg-persona-slot.slot-active { border-color:rgba(52,211,153,0.4); background:rgba(10,24,16,0.7); }
-  .ai-stg-persona-header { display:flex; align-items:center; padding:18px 20px; gap:14px; cursor:pointer; user-select:none; }
-  .ai-stg-persona-num { width:30px; height:30px; border-radius:50%; flex-shrink:0; border:2px solid rgba(139,92,246,0.2); background:rgba(25,17,50,0.8); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; color:#475569; }
-  .slot-active .ai-stg-persona-num { border-color:#34d399; background:rgba(10,40,25,0.8); color:#34d399; }
-  .ai-stg-persona-label-text { flex:1; font-size:16px; font-weight:600; color:#64748b; }
-  .slot-active .ai-stg-persona-label-text { color:#6ee7b7; }
-  .ai-stg-active-badge { font-size:10px; font-weight:800; color:#34d399; background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.3); border-radius:8px; padding:3px 9px; flex-shrink:0; }
-  .ai-stg-chevron { color:#2d3748; font-size:20px; flex-shrink:0; transition:transform 0.18s; }
-  .ai-stg-chevron.open { transform:rotate(90deg); }
-  .ai-stg-persona-body { padding:0 20px 20px; display:none; flex-direction:column; gap:10px; }
-  .ai-stg-persona-body.open { display:flex; }
-  .ai-stg-persona-actions { display:flex; gap:8px; flex-wrap:wrap; }
-  .ai-stg-cmd-card { border:1px solid rgba(139,92,246,0.12); border-radius:16px; margin-bottom:10px; overflow:hidden; background:rgba(16,11,32,0.7); }
-  .ai-stg-cmd-header { display:flex; align-items:center; padding:16px 20px; gap:12px; cursor:pointer; user-select:none; }
-  .ai-stg-emoji-input { width:46px; font-size:22px; text-align:center; background:rgba(255,255,255,0.04); border:1px solid rgba(139,92,246,0.15); border-radius:10px; color:#e2e8f0; padding:6px 2px; -webkit-appearance:none; flex-shrink:0; }
-  .ai-stg-cmd-label-input { flex:1; font-size:16px; font-weight:700; background:rgba(255,255,255,0.04); border:1px solid rgba(139,92,246,0.15); border-radius:10px; color:#e2e8f0; padding:12px 14px; -webkit-appearance:none; }
-  .ai-stg-cmd-label-input:focus { outline:none; border-color:rgba(139,92,246,0.45); }
-  .ai-stg-cmd-body { padding:0 20px 20px; display:none; flex-direction:column; gap:10px; }
-  .ai-stg-cmd-body.open { display:flex; }
+  #ai-tb-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 42px;
+    gap: 8px;
+    align-items: center;
+  }
 
-  /* Dice overlay */
-  #ai-dice-overlay { position:fixed; inset:0; z-index:300; background:rgba(0,0,0,0.88); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.2s; }
-  #ai-dice-overlay.open { opacity:1; pointer-events:all; }
-  #ai-dice-card { width:min(340px,88vw); background:rgba(8,5,20,0.98); border:1px solid rgba(139,92,246,0.3); border-radius:26px; padding:28px 24px 24px; display:flex; flex-direction:column; gap:20px; box-shadow:0 0 60px rgba(109,40,217,0.22),0 24px 64px rgba(0,0,0,0.65); }
-  #ai-dice-title { font-size:20px; font-weight:800; color:#e2e8f0; text-align:center; letter-spacing:-0.01em; }
-  #ai-dice-selectors { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .ai-dice-face-btn { padding:20px 10px; border-radius:18px; border:2px solid rgba(139,92,246,0.18); background:rgba(16,11,32,0.8); color:#334155; font-size:28px; font-weight:900; cursor:pointer; transition:all 0.14s; text-align:center; }
-  .ai-dice-face-btn.active { border-color:rgba(139,92,246,0.65); background:rgba(60,22,120,0.35); color:#e9d5ff; box-shadow:0 0 20px rgba(109,40,217,0.28); }
-  .ai-dice-face-btn:active { transform:scale(0.94); }
-  #ai-dice-roll-btn { width:100%; padding:20px; border-radius:18px; border:2px solid rgba(139,92,246,0.5); background:linear-gradient(135deg,rgba(76,29,149,0.5),rgba(45,18,90,0.7)); color:#e9d5ff; font-size:22px; font-weight:800; cursor:pointer; transition:all 0.12s; }
-  #ai-dice-roll-btn:active { background:linear-gradient(135deg,rgba(109,40,217,0.65),rgba(76,29,149,0.8)); transform:scale(0.97); }
-  #ai-dice-result-area { text-align:center; min-height:110px; display:flex; flex-direction:column; align-items:center; gap:6px; }
-  #ai-dice-result-num { font-size:100px; font-weight:900; line-height:1; color:#e9d5ff; transition:color 0.2s; }
-  #ai-dice-result-num.nat20 { color:#fbbf24; }
-  #ai-dice-result-num.nat1  { color:#f87171; }
-  #ai-dice-result-label { font-size:15px; font-weight:700; color:#64748b; min-height:22px; }
-  #ai-dice-result-label.special20 { color:#fbbf24; }
-  #ai-dice-result-label.special1  { color:#f87171; }
-  #ai-dice-result-break { font-size:13px; color:#2d3748; font-family:monospace; min-height:18px; }
-  #ai-dice-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  #ai-dice-copy-btn { padding:16px; border-radius:14px; border:1px solid rgba(52,211,153,0.35); background:rgba(52,211,153,0.1); color:#34d399; font-size:15px; font-weight:700; cursor:pointer; }
-  #ai-dice-copy-btn:active { background:rgba(52,211,153,0.22); }
-  #ai-dice-dismiss-btn { padding:16px; border-radius:14px; border:1px solid rgba(139,92,246,0.18); background:rgba(20,14,40,0.6); color:#475569; font-size:15px; font-weight:700; cursor:pointer; }
-  #ai-dice-dismiss-btn:active { background:rgba(76,29,149,0.35); color:#a78bfa; }
+  .ai-tb-action {
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid rgba(139, 92, 246, 0.35);
+    background: linear-gradient(145deg, rgba(30, 20, 60, 0.95), rgba(20, 14, 40, 0.95));
+    color: #e9d5ff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .ai-tb-action:active {
+    transform: scale(0.97);
+    background: linear-gradient(145deg, rgba(109, 40, 217, 0.55), rgba(76, 29, 149, 0.75));
+  }
+
+  #ai-tb-format {
+    border-color: rgba(52, 211, 153, 0.45);
+    color: #6ee7b7;
+    background: linear-gradient(145deg, rgba(16, 80, 60, 0.5), rgba(10, 30, 20, 0.9));
+  }
+
+  #ai-tb-format:active {
+    background: linear-gradient(145deg, rgba(16, 185, 129, 0.45), rgba(6, 60, 40, 0.95));
+  }
+
+  #ai-tb-settings {
+    height: 44px;
+    width: 42px;
+    border-radius: 12px;
+    border: 1px solid rgba(139, 92, 246, 0.35);
+    background: rgba(25, 17, 50, 0.9);
+    color: #c4b5fd;
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  #ai-tb-status {
+    min-height: 16px;
+    font-size: 11px;
+    color: rgba(224, 222, 255, 0.7);
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #ai-tb-status.working { color: #a78bfa; }
+  #ai-tb-status.error { color: #f87171; }
+  #ai-tb-status.done { color: #6ee7b7; }
+
+  #ai-settings-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  #ai-settings-backdrop.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  #ai-settings-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 201;
+    transform: translateY(105%);
+    transition: transform 0.25s ease;
+    border-radius: 20px 20px 0 0;
+    border-top: 1px solid rgba(139, 92, 246, 0.35);
+    background: rgba(7, 4, 18, 0.99);
+    padding: 16px;
+  }
+
+  #ai-settings-sheet.open {
+    transform: translateY(0);
+  }
+
+  #ai-settings-title {
+    margin: 0 0 10px;
+    font-size: 18px;
+    font-weight: 800;
+    color: #e2e8f0;
+  }
+
+  .ai-stg-label {
+    display: block;
+    margin: 12px 0 8px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(139, 92, 246, 0.7);
+  }
+
+  .ai-stg-model {
+    margin: 0;
+    font-size: 13px;
+    color: #c4b5fd;
+  }
+
+  #ai-stg-prompt {
+    width: 100%;
+    min-height: 130px;
+    resize: none;
+    box-sizing: border-box;
+    border-radius: 12px;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    background: rgba(255, 255, 255, 0.04);
+    color: #e2e8f0;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 12px;
+    font-family: inherit;
+  }
+
+  #ai-settings-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .ai-stg-btn {
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid rgba(139, 92, 246, 0.35);
+    background: rgba(139, 92, 246, 0.16);
+    color: #c4b5fd;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .ai-stg-btn.green {
+    border-color: rgba(52, 211, 153, 0.4);
+    background: rgba(52, 211, 153, 0.12);
+    color: #34d399;
+  }
+
+  #ai-settings-close {
+    margin-top: 8px;
+    width: 100%;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    background: rgba(20, 14, 40, 0.7);
+    color: #94a3b8;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .page-content {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 94px 18px 40px;
+  }
+
+  h1 {
+    margin: 0 0 8px;
+    font-size: 22px;
+    color: #c4b5fd;
+  }
+
+  .subtitle {
+    margin: 0 0 20px;
+    color: #94a3b8;
+    font-size: 14px;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(139, 92, 246, 0.7);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  #demo-textarea {
+    width: 100%;
+    min-height: 170px;
+    border-radius: 14px;
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    background: rgba(255, 255, 255, 0.04);
+    color: #e2e8f0;
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 14px 16px;
+    resize: vertical;
+    font-family: inherit;
+  }
+
+  #page-status {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #94a3b8;
+    font-style: italic;
+  }
 </style>
 </head>
 <body>
 
 <div id="ai-mobile-toolbar">
-  <div id="ai-tb-main-row">
-    <button id="ai-tb-fmt-pin">
-      <span class="fmt-emoji">✨</span>
-      <span class="fmt-label">Format</span>
-    </button>
-    <div id="ai-tb-right">
-      <div id="ai-tb-status-row">
-        <span id="ai-tb-label">AI Rewriter</span>
-        <span id="ai-tb-status">Preview Mode</span>
-      </div>
-      <div id="ai-tb-buttons">
-        <button id="ai-tb-settings-btn">&#9881;</button>
-        <div id="ai-tb-persona-pills-zone" style="display:flex;align-items:center;flex-shrink:0;gap:4px;"></div>
-        <div class="ai-tb-pill-sep"></div>
-      </div>
-    </div>
+  <div id="ai-tb-row">
+    <button id="ai-tb-format" class="ai-tb-action">Format</button>
+    <button id="ai-tb-rewrite" class="ai-tb-action">Rewrite</button>
+    <button id="ai-tb-settings">&#9881;</button>
   </div>
+  <div id="ai-tb-status">Ready</div>
 </div>
 
 <div id="ai-settings-backdrop"></div>
 <div id="ai-settings-sheet">
-  <div id="ai-settings-handle-area"><div id="ai-settings-handle"></div></div>
-  <div id="ai-settings-header">
-    <span id="ai-settings-title">Settings</span>
-    <button id="ai-settings-close">&#10005;</button>
+  <h2 id="ai-settings-title">Rewrite Settings</h2>
+  <span class="ai-stg-label">Model</span>
+  <p class="ai-stg-model" id="ai-stg-model-text"></p>
+  <span class="ai-stg-label">Rewrite Prompt</span>
+  <textarea id="ai-stg-prompt"></textarea>
+  <div id="ai-settings-actions">
+    <button id="ai-stg-save" class="ai-stg-btn green">Save Prompt</button>
+    <button id="ai-stg-reset" class="ai-stg-btn">Reset Default</button>
   </div>
-  <div id="ai-settings-tabs"></div>
-  <div id="ai-settings-content"></div>
-</div>
-
-<div id="ai-dice-overlay">
-  <div id="ai-dice-card">
-    <div id="ai-dice-title">&#127922; Dice Roll</div>
-    <div id="ai-dice-selectors">
-      <button class="ai-dice-face-btn" data-faces="6">d6</button>
-      <button class="ai-dice-face-btn active" data-faces="20">d20</button>
-    </div>
-    <button id="ai-dice-roll-btn">Roll</button>
-    <div id="ai-dice-result-area">
-      <div id="ai-dice-result-num">&#8212;</div>
-      <div id="ai-dice-result-label"></div>
-      <div id="ai-dice-result-break"></div>
-    </div>
-    <div id="ai-dice-actions">
-      <button id="ai-dice-copy-btn">Copy</button>
-      <button id="ai-dice-dismiss-btn">Dismiss</button>
-    </div>
-  </div>
+  <button id="ai-settings-close">Close</button>
 </div>
 
 <div class="page-content">
   <h1>Mobile Toolbar Preview</h1>
-  <p class="subtitle">Live interactive preview. Settings and personas persist via localStorage.</p>
+  <p class="subtitle">Minimal mobile UI preview with one rewrite preset and one local formatter.</p>
   <label for="demo-textarea">Demo Text Area</label>
-  <textarea id="demo-textarea" placeholder="Type some text here and use the toolbar above to format or rewrite it...">The quick brown fox jumped over the lazy dog. she said "i can't believe it" and ran away. He looked at her, wondering what had gone wrong...</textarea>
-  <p class="status-msg" id="page-status">Click Format or any AI command button above.</p>
+  <textarea id="demo-textarea">*This is a test sentence,* should be allowed and now having it changed to *This is a test sentence,.* (ignore capitalization for now)</textarea>
+  <p id="page-status">Use Format to test local formatting. Rewrite is simulated in preview.</p>
 </div>
 
 <script>
 (function () {
   "use strict";
 
-  const COMMANDS_DEFAULT = [
-    { label: "Rewrite", emoji: "\u270F\uFE0F", prompt: "(AI rewrite prompt)" },
-    { label: "Moan",    emoji: "\uD83D\uDC97", prompt: "(Moan rewrite prompt)" },
-    { label: "Brain",   emoji: "\uD83E\uDDE0", prompt: "(Brain rewrite prompt)" },
-    { label: "Open",    emoji: "\uD83D\uDE2E", prompt: "(Open rewrite prompt)" },
-    { label: "BJ",      emoji: "\uD83D\uDCA6", prompt: "(BJ rewrite prompt)" },
-    { label: "Slutty",  emoji: "\uD83C\uDF80", prompt: "(Slutty rewrite prompt)" },
-  ];
+  var MODEL = "google/gemini-3.1-flash-lite";
+  var DEFAULT_REWRITE_PROMPT =
+    "Rewrite text for clarity, flow, and word choice. Speech distortions apply only to spoken dialogue (in quotes). Don't add plot, characters, events, paragraphs, or sentences. Max 2 sentences per paragraph.";
 
   function save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
   function load(key, def) { try { var v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : def; } catch { return def; } }
 
-  var mobileCommands         = load("preview_commands_v1", null) || COMMANDS_DEFAULT.slice();
-  var mobilePersonas         = load("preview_personas_v1", null) || Array.from({ length: 10 }, function() { return { label: "", name: "", prepend: "" }; });
-  while (mobilePersonas.length < 10) mobilePersonas.push({ label: "", name: "", prepend: "" });
-  var mobileActivePersonaIdx = load("preview_active_persona_v1", -1);
-  var mobileGlobalStyle      = load("preview_global_style_v1", "");
+  var rewritePrompt = load("preview_rewrite_prompt_v1", DEFAULT_REWRITE_PROMPT);
 
-  var btnRow          = document.getElementById("ai-tb-buttons");
-  var personaPillsZone = document.getElementById("ai-tb-persona-pills-zone");
-  var statusEl        = document.getElementById("ai-tb-status");
-  var demoTextarea    = document.getElementById("demo-textarea");
-  var pageStatus      = document.getElementById("page-status");
+  var demoTextarea = document.getElementById("demo-textarea");
+  var statusEl = document.getElementById("ai-tb-status");
+  var pageStatus = document.getElementById("page-status");
+  var stgBackdrop = document.getElementById("ai-settings-backdrop");
+  var stgSheet = document.getElementById("ai-settings-sheet");
+  var promptInput = document.getElementById("ai-stg-prompt");
+
+  document.getElementById("ai-stg-model-text").textContent = MODEL;
 
   function setStatus(text, cls) {
     statusEl.textContent = text;
     statusEl.className = cls || "";
+  }
+
+  function wrapOutside(str) {
+    return str.replace(/[^\n]+/g, function(chunk) {
+      var trimmed = chunk.trim();
+      if (!trimmed) return chunk;
+      var lead = chunk.slice(0, chunk.length - chunk.trimStart().length);
+      var trail = chunk.slice(chunk.trimEnd().length);
+      return lead + "*" + trimmed + "*" + trail;
+    });
   }
 
   function formatText(text) {
@@ -217,334 +323,102 @@
     text = text.replace(/\*/g, "");
     text = text.replace(/[\u201C\u201D]/g, '"');
     text = text.replace(/[\u2018\u2019]/g, "'");
+    text = text.replace(/(?<!-)--(?!-)/g, "\u2014");
+    text = text.replace(/ +([,!?:;])/g, "$1");
+    text = text.replace(/ +(\.)(?!\d)/g, "$1");
+    text = text.replace(/\.{2,}/g, "...");
+    text = text.replace(/\.{3}/g, "\u2026");
+    text = text.replace(/(?<=[^\d\s.!?,;:\u2026])\.(?=[A-Za-z])/g, ". ");
+    text = text.replace(/([,!?:;])(?=[A-Za-z])/g, "$1 ");
     text = text.replace(/[ \t]{2,}/g, " ");
     text = text.replace(/\bi\b/g, "I");
     text = text.split("\n").map(function(l) { return l.trim(); }).join("\n");
     text = text.replace(/\n+/g, "\n\n");
     text = text.replace(/(^|\n\n)([a-z])/g, function(_, sep, ch) { return sep + ch.toUpperCase(); });
-    return text;
-  }
+    text = text.replace(/([^.\u2026])([.!?]) +([a-z])/g, function(_, pre, punc, ch) { return pre + punc + " " + ch.toUpperCase(); });
+    text = text.replace(/"([a-z])/g, function(_, ch) { return '"' + ch.toUpperCase(); });
 
-  function rebuildCmdButtons() {
-    Array.from(btnRow.querySelectorAll(".ai-tb-btn")).forEach(function(b) { b.remove(); });
-    mobileCommands.forEach(function(cmd) {
-      var btn = document.createElement("button");
-      btn.className = "ai-tb-btn";
-      btn.innerHTML = '<span class="ai-tb-btn-emoji">' + cmd.emoji + '</span>' + cmd.label;
-      btn.addEventListener("click", function() {
-        setStatus(cmd.label + " (preview \u2014 no AI call)", "working");
-        pageStatus.textContent = "Would run: " + cmd.label + " prompt via OpenRouter.";
-        setTimeout(function() { setStatus("Ready"); }, 2000);
-      });
-      btnRow.appendChild(btn);
-    });
-    var diceBtn = document.createElement("button");
-    diceBtn.className = "ai-tb-btn ai-tb-dice-btn";
-    diceBtn.innerHTML = '<span class="ai-tb-btn-emoji">\uD83C\uDFB2</span>Dice';
-    diceBtn.addEventListener("click", openDiceOverlay);
-    btnRow.appendChild(diceBtn);
-  }
-  rebuildCmdButtons();
+    var parts = [];
+    var regex = /"[^"]*"|\[[^\]]*\]/g;
+    var lastIndex = 0;
+    var m;
 
-  function rebuildPersonaPills() {
-    personaPillsZone.innerHTML = "";
-    for (var i = 0; i < 10; i++) {
-      (function(idx) {
-        var p = mobilePersonas[idx];
-        var isActive = idx === mobileActivePersonaIdx;
-        var hasContent = !!(p.label || p.name || p.prepend);
-        var pill = document.createElement("button");
-        pill.className = "ai-tb-persona-pill" + (isActive ? " active" : hasContent ? " configured" : "");
-        pill.textContent = p.label ? p.label.slice(0, 6) : String(idx + 1);
-        pill.addEventListener("click", function() {
-          mobileActivePersonaIdx = (mobileActivePersonaIdx === idx) ? -1 : idx;
-          save("preview_active_persona_v1", mobileActivePersonaIdx);
-          rebuildPersonaPills();
-          if (mobileActivePersonaIdx >= 0) {
-            var name = mobilePersonas[mobileActivePersonaIdx].label || ("P" + (mobileActivePersonaIdx + 1));
-            setStatus("Persona: " + name, "done");
-            setTimeout(function() { setStatus("Ready"); }, 2200);
-          } else {
-            setStatus("Persona off");
-            setTimeout(function() { setStatus("Ready"); }, 1400);
-          }
-        });
-        personaPillsZone.appendChild(pill);
-      })(i);
+    while ((m = regex.exec(text)) !== null) {
+      if (m.index > lastIndex) parts.push(wrapOutside(text.slice(lastIndex, m.index)));
+      parts.push(m[0]);
+      lastIndex = regex.lastIndex;
     }
-  }
-  rebuildPersonaPills();
 
-  document.getElementById("ai-tb-fmt-pin").addEventListener("click", function() {
+    if (lastIndex < text.length) parts.push(wrapOutside(text.slice(lastIndex)));
+
+    var result = parts.join("");
+    result = result.replace(/\*([^*\n]+)\*/g, function(_, inner) {
+      var t = inner.trimEnd();
+      return /[.!?,;:\u2026\u2014\-_]$/.test(t) ? "*" + inner + "*" : "*" + t + ".*";
+    });
+    result = result.replace(/([.!?\u2026\u2014\-_]\*)([^*]*)\*([a-z])/g, function(_, end, mid, ch) {
+      return end + mid + "*" + ch.toUpperCase();
+    });
+
+    return result;
+  }
+
+  function openSettings() {
+    promptInput.value = rewritePrompt;
+    stgBackdrop.classList.add("open");
+    stgSheet.classList.add("open");
+  }
+
+  function closeSettings() {
+    stgBackdrop.classList.remove("open");
+    stgSheet.classList.remove("open");
+  }
+
+  document.getElementById("ai-tb-format").addEventListener("click", function() {
     var text = demoTextarea.value.trim();
-    if (!text) return;
+    if (!text) {
+      setStatus("Nothing to format", "error");
+      return;
+    }
     demoTextarea.value = formatText(text);
-    setStatus("\u2713 Formatted", "done");
-    pageStatus.textContent = "Text formatted locally (no AI call).";
-    setTimeout(function() { setStatus("Ready"); }, 2000);
+    setStatus("Formatted", "done");
+    pageStatus.textContent = "Formatted locally. Comma/colon ending in wrapped text is preserved.";
   });
 
-  var stgBackdrop  = document.getElementById("ai-settings-backdrop");
-  var stgSheet     = document.getElementById("ai-settings-sheet");
-  var stgTabsEl    = document.getElementById("ai-settings-tabs");
-  var stgContentEl = document.getElementById("ai-settings-content");
-  var stgActiveTab = "personas";
-
-  var SETTINGS_TABS = [
-    { id: "personas", label: "Personas" },
-    { id: "style",    label: "Style" },
-    { id: "commands", label: "Commands" },
-    { id: "import",   label: "Import" },
-  ];
-  SETTINGS_TABS.forEach(function(t) {
-    var btn = document.createElement("button");
-    btn.className = "ai-stg-tab"; btn.dataset.tab = t.id; btn.textContent = t.label;
-    btn.addEventListener("click", function() { setSettingsTab(t.id); });
-    stgTabsEl.appendChild(btn);
+  document.getElementById("ai-tb-rewrite").addEventListener("click", function() {
+    var text = demoTextarea.value.trim();
+    if (!text) {
+      setStatus("Nothing to rewrite", "error");
+      return;
+    }
+    setStatus("Rewriting (preview)...", "working");
+    pageStatus.textContent = "Preview mode: this simulates AI rewrite then local format.";
+    setTimeout(function() {
+      demoTextarea.value = formatText(text);
+      setStatus("Done", "done");
+    }, 500);
   });
 
-  function openSettings() { stgSheet.classList.add("open"); stgBackdrop.classList.add("open"); setSettingsTab(stgActiveTab); }
-  function closeSettings() { stgSheet.classList.remove("open"); stgBackdrop.classList.remove("open"); }
-  function setSettingsTab(id) {
-    stgActiveTab = id;
-    stgTabsEl.querySelectorAll(".ai-stg-tab").forEach(function(b) { b.classList.toggle("active", b.dataset.tab === id); });
-    renderSettingsTab();
-  }
-  function renderSettingsTab() {
-    stgContentEl.innerHTML = "";
-    if (stgActiveTab === "personas") renderPersonasTab();
-    else if (stgActiveTab === "style") renderStyleTab();
-    else if (stgActiveTab === "commands") renderCommandsTab();
-    else if (stgActiveTab === "import") renderImportTab();
-  }
-
-  document.getElementById("ai-tb-settings-btn").addEventListener("click", openSettings);
+  document.getElementById("ai-tb-settings").addEventListener("click", openSettings);
   document.getElementById("ai-settings-close").addEventListener("click", closeSettings);
   stgBackdrop.addEventListener("click", closeSettings);
 
-  function mkLabel(text) { var el = document.createElement("span"); el.className = "ai-stg-section-label"; el.textContent = text; return el; }
-  function mkHint(text)  { var el = document.createElement("p"); el.className = "ai-stg-hint"; el.textContent = text; return el; }
-  function mkInput(ph, val) { var el = document.createElement("input"); el.type = "text"; el.className = "ai-stg-input"; el.placeholder = ph; el.value = val || ""; return el; }
-  function mkTextarea(ph, val, minH) { var el = document.createElement("textarea"); el.className = "ai-stg-input ai-stg-textarea"; el.placeholder = ph; el.value = val || ""; el.style.minHeight = (minH || 90) + "px"; return el; }
-  function mkBtn(text, cls) { var el = document.createElement("button"); el.className = "ai-stg-btn" + (cls ? " " + cls : ""); el.textContent = text; return el; }
-
-  function renderPersonasTab() {
-    stgContentEl.appendChild(mkLabel("RP Personas"));
-    stgContentEl.appendChild(mkHint("Tap a slot to expand. Use the numbered pills in the toolbar to activate/deactivate on the fly."));
-    for (var i = 0; i < 10; i++) {
-      (function(idx) {
-        var p = mobilePersonas[idx];
-        var isActive = idx === mobileActivePersonaIdx;
-        var slot = document.createElement("div");
-        slot.className = "ai-stg-persona-slot" + (isActive ? " slot-active" : "");
-        var hdr = document.createElement("div"); hdr.className = "ai-stg-persona-header";
-        var numCircle = document.createElement("div"); numCircle.className = "ai-stg-persona-num"; numCircle.textContent = String(idx + 1);
-        var labelText = document.createElement("div"); labelText.className = "ai-stg-persona-label-text";
-        labelText.textContent = p.label || p.name || ("Slot " + (idx + 1));
-        var chevron = document.createElement("span"); chevron.className = "ai-stg-chevron"; chevron.textContent = "\u203A";
-        hdr.appendChild(numCircle); hdr.appendChild(labelText);
-        if (isActive) { var b = document.createElement("span"); b.className = "ai-stg-active-badge"; b.textContent = "Active"; hdr.appendChild(b); }
-        hdr.appendChild(chevron);
-        var body = document.createElement("div"); body.className = "ai-stg-persona-body";
-        var labelIn  = mkInput("Short label (shown as pill)\u2026", p.label);
-        var nameIn   = mkInput("Character name \u2014 replaces {{user}}\u2026", p.name);
-        var prependTa = mkTextarea("Persona text prepended before every AI prompt\u2026", p.prepend, 110);
-        var actRow = document.createElement("div"); actRow.className = "ai-stg-persona-actions";
-        var actBtn = mkBtn(isActive ? "\u2713 Active \u2014 Deactivate" : "Activate", "ai-stg-btn-green");
-        var saveBtn = mkBtn("Save");
-        actRow.appendChild(actBtn); actRow.appendChild(saveBtn);
-        body.appendChild(labelIn); body.appendChild(nameIn); body.appendChild(prependTa); body.appendChild(actRow);
-        var savePersona = function() {
-          mobilePersonas[idx] = { label: labelIn.value.trim(), name: nameIn.value.trim(), prepend: prependTa.value };
-          save("preview_personas_v1", mobilePersonas);
-          rebuildPersonaPills();
-        };
-        actBtn.addEventListener("click", function() {
-          savePersona();
-          mobileActivePersonaIdx = (mobileActivePersonaIdx === idx) ? -1 : idx;
-          save("preview_active_persona_v1", mobileActivePersonaIdx);
-          rebuildPersonaPills();
-          renderPersonasTab();
-        });
-        saveBtn.addEventListener("click", function() {
-          savePersona();
-          labelText.textContent = mobilePersonas[idx].label || mobilePersonas[idx].name || ("Slot " + (idx + 1));
-          saveBtn.textContent = "\u2713 Saved";
-          setTimeout(function() { saveBtn.textContent = "Save"; }, 1600);
-        });
-        var expanded = false;
-        hdr.addEventListener("click", function() {
-          expanded = !expanded;
-          body.classList.toggle("open", expanded);
-          chevron.classList.toggle("open", expanded);
-        });
-        slot.appendChild(hdr); slot.appendChild(body);
-        stgContentEl.appendChild(slot);
-      })(i);
-    }
-  }
-
-  function renderStyleTab() {
-    stgContentEl.appendChild(mkLabel("Global Style Rules"));
-    stgContentEl.appendChild(mkHint("Prepended before every AI prompt when non-empty."));
-    var ta = mkTextarea("e.g. Always write in second-person present tense\u2026", mobileGlobalStyle, 150);
-    var saveBtn = mkBtn("Save Style Rules", "ai-stg-btn-block");
-    saveBtn.style.marginTop = "6px";
-    saveBtn.addEventListener("click", function() {
-      mobileGlobalStyle = ta.value;
-      save("preview_global_style_v1", mobileGlobalStyle);
-      saveBtn.textContent = "\u2713 Saved";
-      setTimeout(function() { saveBtn.textContent = "Save Style Rules"; }, 1600);
-    });
-    stgContentEl.appendChild(ta);
-    stgContentEl.appendChild(saveBtn);
-  }
-
-  function renderCommandsTab() {
-    stgContentEl.appendChild(mkLabel("AI Commands"));
-    stgContentEl.appendChild(mkHint("Edit labels, emojis, and prompts. Changes apply to the toolbar immediately."));
-    mobileCommands.forEach(function(cmd, i) {
-      var card = document.createElement("div"); card.className = "ai-stg-cmd-card";
-      var hdr = document.createElement("div"); hdr.className = "ai-stg-cmd-header";
-      var emojiIn = document.createElement("input");
-      emojiIn.type = "text"; emojiIn.className = "ai-stg-emoji-input"; emojiIn.value = cmd.emoji || "\u270F\uFE0F";
-      emojiIn.addEventListener("click", function(e) { e.stopPropagation(); });
-      var labelIn = document.createElement("input");
-      labelIn.type = "text"; labelIn.className = "ai-stg-cmd-label-input"; labelIn.value = cmd.label || ""; labelIn.placeholder = "Label\u2026";
-      labelIn.addEventListener("click", function(e) { e.stopPropagation(); });
-      var chevron = document.createElement("span"); chevron.className = "ai-stg-chevron"; chevron.textContent = "\u203A";
-      hdr.appendChild(emojiIn); hdr.appendChild(labelIn); hdr.appendChild(chevron);
-      var body = document.createElement("div"); body.className = "ai-stg-cmd-body";
-      var promptTa = mkTextarea("System prompt\u2026", cmd.prompt, 110);
-      var saveBtn = mkBtn("Save", "ai-stg-btn-block");
-      saveBtn.style.marginTop = "4px";
-      (function(cmdIdx) {
-        saveBtn.addEventListener("click", function(e) {
-          e.stopPropagation();
-          mobileCommands[cmdIdx] = { label: labelIn.value.trim() || cmd.label, emoji: emojiIn.value.trim() || cmd.emoji, prompt: promptTa.value };
-          save("preview_commands_v1", mobileCommands);
-          rebuildCmdButtons();
-          saveBtn.textContent = "\u2713 Saved";
-          setTimeout(function() { saveBtn.textContent = "Save"; }, 1600);
-        });
-      })(i);
-      body.appendChild(promptTa); body.appendChild(saveBtn);
-      var expanded = false;
-      hdr.addEventListener("click", function() {
-        expanded = !expanded;
-        body.classList.toggle("open", expanded);
-        chevron.classList.toggle("open", expanded);
-      });
-      card.appendChild(hdr); card.appendChild(body);
-      stgContentEl.appendChild(card);
-    });
-    var resetBtn = mkBtn("Reset to Built-in Defaults", "ai-stg-btn-danger ai-stg-btn-block");
-    resetBtn.style.marginTop = "18px";
-    resetBtn.addEventListener("click", function() {
-      if (!confirm("Reset all commands?")) return;
-      mobileCommands = COMMANDS_DEFAULT.map(function(c) { return Object.assign({}, c); });
-      save("preview_commands_v1", mobileCommands);
-      rebuildCmdButtons();
-      renderCommandsTab();
-    });
-    stgContentEl.appendChild(resetBtn);
-  }
-
-  function renderImportTab() {
-    stgContentEl.appendChild(mkLabel("Import Config"));
-    stgContentEl.appendChild(mkHint("On your desktop: Options \u2192 RP Persona \u2192 \"Export Config for Mobile\". Paste the JSON below."));
-    var ta = mkTextarea("{\"version\":1,\"type\":\"config\",\u2026} \u2014 paste here", "", 150);
-    var applyBtn = mkBtn("\u2193 Apply Config", "ai-stg-btn-green ai-stg-btn-block");
-    applyBtn.style.marginTop = "8px";
-    applyBtn.addEventListener("click", function() {
-      var raw = ta.value.trim(); if (!raw) return;
-      var data;
-      try { data = JSON.parse(raw); } catch { alert("Invalid JSON"); return; }
-      if (!data || data.version !== 1 || data.type !== "config") { alert("Unrecognised format."); return; }
-      if (!confirm("Apply this config?")) return;
-      if (Array.isArray(data.commands) && data.commands.length) {
-        mobileCommands = data.commands;
-        save("preview_commands_v1", mobileCommands);
-        rebuildCmdButtons();
-      }
-      if (Array.isArray(data.personas)) {
-        while (data.personas.length < 10) data.personas.push({ label: "", name: "", prepend: "" });
-        mobilePersonas = data.personas.slice(0, 10);
-        save("preview_personas_v1", mobilePersonas);
-      }
-      if (typeof data.activePersonaIdx === "number") {
-        mobileActivePersonaIdx = data.activePersonaIdx;
-        save("preview_active_persona_v1", mobileActivePersonaIdx);
-      }
-      if (typeof data.globalStyle === "string") {
-        mobileGlobalStyle = data.globalStyle;
-        save("preview_global_style_v1", mobileGlobalStyle);
-      }
-      rebuildPersonaPills();
-      ta.value = "";
-      alert("Config applied!");
-      setSettingsTab("personas");
-    });
-    stgContentEl.appendChild(ta);
-    stgContentEl.appendChild(applyBtn);
-  }
-
-  var diceOverlay       = document.getElementById("ai-dice-overlay");
-  var diceResultNumEl   = document.getElementById("ai-dice-result-num");
-  var diceResultLabelEl = document.getElementById("ai-dice-result-label");
-  var diceResultBreakEl = document.getElementById("ai-dice-result-break");
-  var diceSelectedFaces = new Set([20]);
-  var diceLastResult    = null;
-
-  diceOverlay.querySelectorAll(".ai-dice-face-btn").forEach(function(btn) {
-    btn.addEventListener("click", function() {
-      var f = parseInt(btn.dataset.faces, 10);
-      if (btn.classList.contains("active")) {
-        if (diceSelectedFaces.size > 1) { diceSelectedFaces.delete(f); btn.classList.remove("active"); }
-      } else { diceSelectedFaces.add(f); btn.classList.add("active"); }
-    });
+  document.getElementById("ai-stg-save").addEventListener("click", function() {
+    var value = promptInput.value.trim();
+    rewritePrompt = value || DEFAULT_REWRITE_PROMPT;
+    save("preview_rewrite_prompt_v1", rewritePrompt);
+    setStatus("Prompt saved", "done");
+    closeSettings();
   });
 
-  document.getElementById("ai-dice-roll-btn").addEventListener("click", function() {
-    var faces = Array.from(diceSelectedFaces).sort(function(a, b) { return a - b; });
-    var rolls = faces.map(function(f) { return Math.floor(Math.random() * f) + 1; });
-    var total = rolls.reduce(function(a, b) { return a + b; }, 0);
-    var natClass = "", natMsg = "";
-    if (faces.length === 1 && faces[0] === 20) {
-      if (rolls[0] === 20) { natClass = "nat20"; natMsg = "Natural 20! \uD83C\uDF1F"; }
-      else if (rolls[0] === 1) { natClass = "nat1"; natMsg = "Critical Fail \uD83D\uDC80"; }
-    } else if (faces.length === 1 && faces[0] === 6) {
-      if (rolls[0] === 6) natMsg = "Max Roll!";
-      else if (rolls[0] === 1) natMsg = "Min Roll.";
-    }
-    var breakdown = faces.length > 1 ? "(" + faces.map(function(f, i) { return "d" + f + "=" + rolls[i]; }).join("  ") + ")" : "";
-    var labelLine = natMsg ? natMsg : faces.length === 1 ? "d" + faces[0] : faces.map(function(f) { return "d" + f; }).join("+") + " = " + rolls.join("+");
-    diceLastResult = { total: total, faces: faces, rolls: rolls, natClass: natClass, natMsg: natMsg, breakdown: breakdown };
-    diceResultNumEl.textContent = total;
-    diceResultNumEl.className = natClass;
-    diceResultLabelEl.textContent = labelLine;
-    diceResultLabelEl.className = natClass === "nat20" ? "special20" : natClass === "nat1" ? "special1" : "";
-    diceResultBreakEl.textContent = breakdown;
+  document.getElementById("ai-stg-reset").addEventListener("click", function() {
+    rewritePrompt = DEFAULT_REWRITE_PROMPT;
+    promptInput.value = DEFAULT_REWRITE_PROMPT;
+    save("preview_rewrite_prompt_v1", rewritePrompt);
+    setStatus("Prompt reset", "done");
   });
-
-  document.getElementById("ai-dice-copy-btn").addEventListener("click", function() {
-    if (!diceLastResult) return;
-    var total = diceLastResult.total, faces = diceLastResult.faces, natMsg = diceLastResult.natMsg;
-    var faceStr = faces.map(function(f) { return "d" + f; }).join("+");
-    var text = natMsg ? ("\uD83C\uDFB2 " + faceStr + " \u2192 " + total + " \u2014 " + natMsg) : ("\uD83C\uDFB2 " + faceStr + " \u2192 " + total);
-    navigator.clipboard.writeText(text).then(function() {
-      var b = document.getElementById("ai-dice-copy-btn"); b.textContent = "\u2713 Copied!";
-      setTimeout(function() { b.textContent = "Copy"; }, 1500);
-    }).catch(function() {});
-  });
-
-  document.getElementById("ai-dice-dismiss-btn").addEventListener("click", closeDiceOverlay);
-  diceOverlay.addEventListener("click", function(e) { if (e.target === diceOverlay) closeDiceOverlay(); });
-
-  function openDiceOverlay()  { diceOverlay.classList.add("open"); }
-  function closeDiceOverlay() { diceOverlay.classList.remove("open"); }
-
 })();
 </script>
+
 </body>
 </html>
