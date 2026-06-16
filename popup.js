@@ -68,7 +68,7 @@ function escHtml(str) {
     .replace(/"/g, "&quot;");
 }
 
-// SpicyChat notes toggle
+// SpicyChat RPG Tracker toggle
 const spicychatNotesTogglePopup = document.getElementById(
   "spicychatNotesTogglePopup",
 );

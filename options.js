@@ -152,7 +152,7 @@ saveModelBtn.addEventListener("click", () => {
   });
 });
 
-// ─── SpicyChat Notes ───────────────────────────────────────────────────────────────
+// ─── SpicyChat RPG Tracker ─────────────────────────────────────────────────────────
 
 const spicychatNotesToggle = document.getElementById("spicychatNotesToggle");
 const spicychatNotesSaveFeedback = document.getElementById(

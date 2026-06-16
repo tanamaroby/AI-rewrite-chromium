@@ -14,7 +14,7 @@ content.js                 Injected into every page — runs the local formatter
 content.css                Styles for loading overlay, formatter overlay, toast notifications
 popup.html/css/js          Toolbar popup — API key status, model pill, Rewrites list, quick toggles
 options.html/css/js        Settings page — sidebar nav: API Key, Model, SpicyChat RPG Tracker, Formatter
-spicychat-memory-drawer.js Content script injected into SpicyChat chat pages only — resizable RPG session tracker drawer + RP Tools (Persona, Rewrites, Scene Context)
+spicychat-rpg-tracker-drawer.js Content script injected into SpicyChat chat pages only — resizable RPG tracker drawer + RP Tools (Persona, Rewrites, Scene Context)
 icons/                     PNG icons at 16/32/48/128px
 
 ── Mobile userscript (Safari/Userscripts app on iPhone/iPad) ──────────────────
@@ -87,7 +87,7 @@ AI Rewrites are SpicyChat-only and composed in `content.js`:
 
 Two content scripts run on `spicychat.ai`:
 
-### `spicychat-memory-drawer.js`
+### `spicychat-rpg-tracker-drawer.js`
 
 - Injected on `/chat/*` pages (desktop only — skipped on touch devices)
 - Resizable slide-in drawer panel (`#sc-np`) with a tab button (`#sc-np-tab`) at the right edge
@@ -103,7 +103,7 @@ Two content scripts run on `spicychat.ai`:
 | Quest Log | `sc_quests_v1_<id>`   | title, notes, state (active/done/failed), latest update text |
 | Resources | `sc_res_v1_<id>`      | name, value (integer), notes                                 |
 | Abilities | `sc_abl_v1_<id>`      | name, notes, current uses, max uses                          |
-| Party     | `sc_party_v1_<id>`    | name, status (active/downed/dead/absent)                     |
+| Party     | `sc_party_v1_<id>`    | name, status (default Healthy; supports freeform values)     |
 | NPCs      | `sc_npc_v1_<id>`      | name, note, disposition (friendly/neutral/hostile)           |
 | Rumours   | `sc_rumour_v1_<id>`   | text, done (bool)                                            |
 | Dice Mod  | `sc_dice_mod_v1_<id>` | persistent modifier value + note label                       |
@@ -170,7 +170,7 @@ Sidebar nav with sections shown/hidden via JS (no routing library):
 
 Besides API key status and model pill, the popup lists the saved **Rewrites** (names, with the active one highlighted) and includes:
 
-- **SpicyChat Notes** toggle (`spicychatNotesEnabled`) — controls the RPG session tracker drawer
+- **SpicyChat RPG Tracker** toggle (`spicychatNotesEnabled`, legacy key name) — controls the RPG session tracker drawer
 - **Formatter** toggle (`formatterEnabled`)
 
 ## Release process

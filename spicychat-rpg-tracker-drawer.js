@@ -1434,21 +1434,38 @@
     }
     .party-item:focus-within { border-color: rgba(108,99,255,0.35); }
     .party-top { display: flex; align-items: center; gap: 7px; width: 100%; }
-    .party-status-btn {
+    .party-status-pill {
       flex-shrink: 0; padding: 2px 8px; border-radius: 100px; border: 1px solid transparent;
-      font-size: 9.5px; font-weight: 700; cursor: pointer; font-family: inherit; min-width: 54px;
+      font-size: 9.5px; font-weight: 700; font-family: inherit; min-width: 54px;
       text-align: center; transition: background 0.12s, border-color 0.12s, color 0.12s;
     }
-    .party-status-active { background: rgba(34,197,94,0.12);  border-color: rgba(34,197,94,0.3);  color: #22c55e; }
+    .party-status-healthy { background: rgba(34,197,94,0.12);  border-color: rgba(34,197,94,0.3);  color: #22c55e; }
     .party-status-downed { background: rgba(251,191,36,0.1);  border-color: rgba(251,191,36,0.3);  color: #fbbf24; }
     .party-status-dead   { background: rgba(239,68,68,0.1);   border-color: rgba(239,68,68,0.28);  color: #f87171; }
     .party-status-absent { background: rgba(100,116,139,0.1); border-color: rgba(100,116,139,0.25);color: #64748b; }
+    .party-status-custom { background: rgba(56,189,248,0.12); border-color: rgba(56,189,248,0.25); color: #38bdf8; }
     .party-name-input {
       flex: 1; background: transparent; border: none; outline: none;
       color: #e2e8f0; font-size: 12.5px; font-weight: 600; font-family: inherit;
       caret-color: #a78bfa; min-width: 0;
     }
     .party-name-input::placeholder { color: #334155; }
+    .party-status-input {
+      flex: 0 0 104px;
+      min-width: 88px;
+      max-width: 128px;
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid rgba(108,99,255,0.24);
+      border-radius: 5px;
+      color: #cbd5e1;
+      font: 11px/1.3 inherit;
+      padding: 4px 6px;
+      outline: none;
+    }
+    .party-status-input:focus {
+      border-color: rgba(108,99,255,0.45);
+      background: rgba(20, 27, 44, 0.6);
+    }
     .party-note-input {
       width: 100%; box-sizing: border-box; background: transparent;
       border: none; border-top: 1px solid rgba(108,99,255,0.07); outline: none;
@@ -2709,13 +2726,27 @@
       };
     }
 
+    function normalizePartyStatus(status) {
+      const trimmed = String(status || "").trim();
+      if (!trimmed) return "Healthy";
+      if (trimmed.toLowerCase() === "active") return "Healthy";
+      return trimmed.slice(0, 40);
+    }
+
+    function partyStatusToneClass(status) {
+      const normalized = normalizePartyStatus(status).toLowerCase();
+      if (normalized === "healthy") return "healthy";
+      if (normalized === "downed") return "downed";
+      if (normalized === "dead") return "dead";
+      if (normalized === "absent") return "absent";
+      return "custom";
+    }
+
     function normalizeImportedPartyMember(raw, idx) {
       if (!raw || typeof raw !== "object") return null;
       const name = typeof raw.name === "string" ? raw.name : "";
       const notes = typeof raw.notes === "string" ? raw.notes : "";
-      const status = PARTY_STATUSES.includes(raw.status)
-        ? raw.status
-        : "active";
+      const status = normalizePartyStatus(raw.status);
       return {
         id: normalizeId(raw.id, idx),
         name,
@@ -4172,7 +4203,8 @@
 
     /* ════════════════ PARTY TRACKER ════════════════ */
     const PARTY_KEY = "sc_party_v1_" + chatId;
-    const PARTY_STATUSES = ["active", "downed", "dead", "absent"];
+    const DEFAULT_PARTY_STATUS = "Healthy";
+    const PARTY_STATUS_PRESETS = ["Healthy", "Downed", "Dead", "Absent"];
     let party = [];
     let partySaveTimer = null;
     const partyListEl = document.getElementById("sc-np-party-list");
@@ -4182,7 +4214,7 @@
         id: Date.now() + Math.random(),
         name: "",
         notes: "",
-        status: "active",
+        status: DEFAULT_PARTY_STATUS,
       };
     }
     function saveParty() {
@@ -4208,21 +4240,10 @@
         row.className = "party-item";
         const top = document.createElement("div");
         top.className = "party-top";
-        const statusBtn = document.createElement("button");
-        statusBtn.className = "party-status-btn party-status-" + m.status;
-        statusBtn.textContent =
-          m.status.charAt(0).toUpperCase() + m.status.slice(1);
-        statusBtn.title = "Click to cycle status";
-        statusBtn.addEventListener("click", () => {
-          const cur = PARTY_STATUSES.indexOf(m.status);
-          m.status = PARTY_STATUSES[(cur + 1) % PARTY_STATUSES.length];
-          statusBtn.className = "party-status-btn party-status-" + m.status;
-          statusBtn.textContent =
-            m.status.charAt(0).toUpperCase() + m.status.slice(1);
-          saveParty();
-          const notesPart = m.notes ? ` — ${m.notes}` : "";
-          addLog(`[Party: ${m.name || "(unnamed)"} → ${m.status}${notesPart}]`);
-        });
+        const statusPill = document.createElement("span");
+        statusPill.className =
+          "party-status-pill party-status-" + partyStatusToneClass(m.status);
+        statusPill.textContent = normalizePartyStatus(m.status);
         const nameSpan = document.createElement("span");
         nameSpan.className = "item-disp-name";
         nameSpan.textContent = m.name || "(unnamed)";
@@ -4254,31 +4275,63 @@
           m.notes = notesEditIn.value;
           schedulePartySave();
         });
+        const statusEditIn = document.createElement("input");
+        statusEditIn.type = "text";
+        statusEditIn.className = "party-status-input";
+        statusEditIn.value = normalizePartyStatus(m.status);
+        statusEditIn.placeholder = "Status…";
+        statusEditIn.maxLength = 40;
+        statusEditIn.style.display = "none";
+        statusEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+        statusEditIn.setAttribute("list", "sc-np-party-status-list");
+        statusEditIn.addEventListener("input", () => {
+          m.status = normalizePartyStatus(statusEditIn.value);
+          schedulePartySave();
+        });
         const toggleBtn = document.createElement("button");
         toggleBtn.className = "item-toggle-btn edit";
         toggleBtn.textContent = "✎";
         let isEditing = false;
+        let statusBeforeEdit = normalizePartyStatus(m.status);
         toggleBtn.addEventListener("click", () => {
           isEditing = !isEditing;
           if (isEditing) {
             nameSpan.style.display = "none";
             nameEditIn.style.display = "";
+            statusPill.style.display = "none";
+            statusEditIn.style.display = "";
             notesSpan.style.display = "none";
             notesEditIn.style.display = "";
             toggleBtn.className = "item-toggle-btn save";
             toggleBtn.textContent = "✓ Save";
             nameEditIn.value = m.name;
+            statusBeforeEdit = normalizePartyStatus(m.status);
+            statusEditIn.value = statusBeforeEdit;
             notesEditIn.value = m.notes || "";
             nameEditIn.focus();
           } else {
+            m.status = normalizePartyStatus(statusEditIn.value);
             nameEditIn.style.display = "none";
             nameSpan.style.display = "";
+            statusEditIn.style.display = "none";
+            statusPill.className =
+              "party-status-pill party-status-" +
+              partyStatusToneClass(m.status);
+            statusPill.textContent = normalizePartyStatus(m.status);
+            statusPill.style.display = "";
             notesEditIn.style.display = "none";
             notesSpan.textContent = m.notes || "";
             notesSpan.style.display = m.notes ? "" : "none";
             toggleBtn.className = "item-toggle-btn edit";
             toggleBtn.textContent = "✎";
             nameSpan.textContent = m.name || "(unnamed)";
+            const statusAfterEdit = normalizePartyStatus(m.status);
+            if (statusAfterEdit !== statusBeforeEdit) {
+              const notesPart = m.notes ? ` — ${m.notes}` : "";
+              addLog(
+                `[Party: ${m.name || "(unnamed)"} status ${statusBeforeEdit} → ${statusAfterEdit}${notesPart}]`,
+              );
+            }
           }
         });
         const delBtn = document.createElement("button");
@@ -4292,7 +4345,14 @@
           saveParty();
           renderParty();
         });
-        top.append(statusBtn, nameSpan, nameEditIn, toggleBtn, delBtn);
+        top.append(
+          statusPill,
+          nameSpan,
+          nameEditIn,
+          statusEditIn,
+          toggleBtn,
+          delBtn,
+        );
         row.append(top, notesSpan, notesEditIn);
         partyListEl.appendChild(row);
       });
@@ -4308,15 +4368,21 @@
       nameIn.placeholder = "Member name\u2026";
       nameIn.maxLength = 40;
       nameIn.setAttribute("data-ai-rewriter-ignore", "1");
-      const statusSel = document.createElement("select");
-      statusSel.className = "af-select";
-      statusSel.style.maxWidth = "90px";
-      statusSel.setAttribute("data-ai-rewriter-ignore", "1");
-      PARTY_STATUSES.forEach((s) => {
+      const statusIn = document.createElement("input");
+      statusIn.type = "text";
+      statusIn.className = "af-input";
+      statusIn.placeholder = "Status…";
+      statusIn.maxLength = 40;
+      statusIn.style.maxWidth = "120px";
+      statusIn.value = DEFAULT_PARTY_STATUS;
+      statusIn.setAttribute("data-ai-rewriter-ignore", "1");
+      statusIn.setAttribute("list", "sc-np-party-status-list");
+      const statusList = document.createElement("datalist");
+      statusList.id = "sc-np-party-status-list";
+      PARTY_STATUS_PRESETS.forEach((status) => {
         const opt = document.createElement("option");
-        opt.value = s;
-        opt.textContent = s.charAt(0).toUpperCase() + s.slice(1);
-        statusSel.appendChild(opt);
+        opt.value = status;
+        statusList.appendChild(opt);
       });
       const notesIn = document.createElement("input");
       notesIn.type = "text";
@@ -4329,12 +4395,13 @@
       submitBtn.textContent = "+ Add";
       const row = document.createElement("div");
       row.className = "af-row";
-      row.append(nameIn, statusSel, submitBtn);
+      row.append(nameIn, statusIn, submitBtn);
       form.append(row, notesIn);
+      form.appendChild(statusList);
       partyListEl.parentNode.insertBefore(form, partyListEl);
       const doAdd = () => {
         const name = nameIn.value.trim();
-        const status = statusSel.value || "active";
+        const status = normalizePartyStatus(statusIn.value);
         const notes = notesIn.value.trim();
         const member = newPartyMember();
         member.name = name;
@@ -4348,7 +4415,7 @@
           `[Party: ${name || "(unnamed)"} joined — ${status}${notesPart}]`,
         );
         nameIn.value = "";
-        statusSel.value = "active";
+        statusIn.value = DEFAULT_PARTY_STATUS;
         notesIn.value = "";
         nameIn.focus();
       };
@@ -4363,7 +4430,12 @@
 
     function loadParty() {
       chrome.storage.local.get(PARTY_KEY, (d) => {
-        party = Array.isArray(d[PARTY_KEY]) ? d[PARTY_KEY] : [];
+        const incoming = Array.isArray(d[PARTY_KEY]) ? d[PARTY_KEY] : [];
+        party = incoming
+          .map((member, idx) => normalizeImportedPartyMember(member, idx))
+          .filter(Boolean);
+        const migrated = JSON.stringify(incoming) !== JSON.stringify(party);
+        if (migrated) saveParty();
         renderParty();
       });
     }

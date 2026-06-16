@@ -239,11 +239,14 @@
   }
 
   function formatPartyStatusLabel(status) {
-    const s = String(status || "active").toLowerCase();
+    const raw = String(status || "").trim();
+    if (!raw) return "Healthy";
+    const s = raw.toLowerCase();
+    if (s === "healthy" || s === "active") return "Healthy";
     if (s === "downed") return "Downed";
     if (s === "dead") return "Dead";
     if (s === "absent") return "Absent";
-    return "Active";
+    return raw;
   }
 
   function hasTrackerHeaderAtTop(text) {
