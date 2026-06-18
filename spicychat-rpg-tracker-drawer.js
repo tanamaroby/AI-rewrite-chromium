@@ -4268,7 +4268,6 @@
         notesEditIn.className = "party-note-input";
         notesEditIn.value = m.notes || "";
         notesEditIn.placeholder = "Notes (optional)…";
-        notesEditIn.maxLength = 80;
         notesEditIn.style.display = "none";
         notesEditIn.setAttribute("data-ai-rewriter-ignore", "1");
         notesEditIn.addEventListener("input", () => {
@@ -4388,7 +4387,6 @@
       notesIn.type = "text";
       notesIn.className = "af-input";
       notesIn.placeholder = "Notes (optional)…";
-      notesIn.maxLength = 80;
       notesIn.setAttribute("data-ai-rewriter-ignore", "1");
       const submitBtn = document.createElement("button");
       submitBtn.className = "af-submit";
