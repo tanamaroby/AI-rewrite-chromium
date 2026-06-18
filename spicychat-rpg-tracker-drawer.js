@@ -4,6 +4,29 @@
   /* PC only — skip on touch/mobile devices */
   if ("ontouchstart" in window || navigator.maxTouchPoints > 1) return;
 
+  const DRAWER_GLOBAL_KEYS = Object.freeze({
+    enabled: "spicychatNotesEnabled",
+    width: "sc_note_width_v1",
+  });
+
+  function getDrawerChatId(pathname) {
+    return pathname.replace(/^\/chat\//, "").replace(/\/$/, "") || "default";
+  }
+
+  function createDrawerStorageKeys(chatId) {
+    return {
+      legacyNote: "sc_note_v1_" + chatId,
+      rewriteCtx: "sc_rpctx_v1_" + chatId,
+      quests: "sc_quests_v1_" + chatId,
+      resources: "sc_res_v1_" + chatId,
+      abilities: "sc_abl_v1_" + chatId,
+      party: "sc_party_v1_" + chatId,
+      npcs: "sc_npc_v1_" + chatId,
+      rumours: "sc_rumour_v1_" + chatId,
+      diceMod: "sc_dice_mod_v1_" + chatId,
+    };
+  }
+
   let currentTeardown = null;
 
   function maybeInit() {
@@ -14,10 +37,10 @@
     /* Only run on SpicyChat chat pages */
     if (!/^\/chat\//.test(location.pathname)) return;
 
-    chrome.storage.sync.get("spicychatNotesEnabled", (syncData) => {
-      if (syncData.spicychatNotesEnabled === false) return;
-      chrome.storage.local.get("sc_note_width_v1", (localData) => {
-        currentTeardown = init(localData["sc_note_width_v1"]);
+    chrome.storage.sync.get(DRAWER_GLOBAL_KEYS.enabled, (syncData) => {
+      if (syncData[DRAWER_GLOBAL_KEYS.enabled] === false) return;
+      chrome.storage.local.get(DRAWER_GLOBAL_KEYS.width, (localData) => {
+        currentTeardown = init(localData[DRAWER_GLOBAL_KEYS.width]);
       });
     });
   }
@@ -42,12 +65,11 @@
     const MIN_W = 260;
     const MAX_W = 780;
     const DEFAULT_W = 360;
-    const WIDTH_KEY = "sc_note_width_v1";
+    const WIDTH_KEY = DRAWER_GLOBAL_KEYS.width;
 
     /* Chat ID = last path segment, e.g. /chat/abc123 → "abc123" */
-    const chatId =
-      location.pathname.replace(/^\/chat\//, "").replace(/\/$/, "") ||
-      "default";
+    const chatId = getDrawerChatId(location.pathname);
+    const STORAGE_KEYS = createDrawerStorageKeys(chatId);
 
     /* Restore saved width */
     let DRAWER_W =
@@ -2093,7 +2115,7 @@
     );
     const dmodListEl = document.getElementById("sc-np-dmod-list");
     const dmodTotalEl = document.getElementById("sc-np-dmod-total");
-    const DICE_MOD_KEY = "sc_dice_mod_v1_" + chatId;
+    const DICE_MOD_KEY = STORAGE_KEYS.diceMod;
     let diceModifiers = [];
     let diceTargets = [];
 
@@ -2617,8 +2639,8 @@
     let snipEditMode = false;
 
     /* Storage keys */
-    const REWRITE_CTX_KEY = "sc_rpctx_v1_" + chatId;
-    const QUEST_KEY = "sc_quests_v1_" + chatId;
+    const REWRITE_CTX_KEY = STORAGE_KEYS.rewriteCtx;
+    const QUEST_KEY = STORAGE_KEYS.quests;
 
     /* ── CSS variable init ── */
     document.documentElement.style.setProperty("--sc-np-w", DRAWER_W + "px");
@@ -3577,7 +3599,7 @@
     });
 
     /* ════════════════ RESOURCE COUNTERS ════════════════ */
-    const RES_KEY = "sc_res_v1_" + chatId;
+    const RES_KEY = STORAGE_KEYS.resources;
     let resources = [];
     let resSaveTimer = null;
     const resListEl = document.getElementById("sc-np-res-list");
@@ -3842,7 +3864,7 @@
     }
 
     /* ════════════════ ABILITY USES ════════════════ */
-    const ABL_KEY = "sc_abl_v1_" + chatId;
+    const ABL_KEY = STORAGE_KEYS.abilities;
     let abilities = [];
     let ablSaveTimer = null;
     const ablListEl = document.getElementById("sc-np-abl-list");
@@ -4202,7 +4224,7 @@
     }
 
     /* ════════════════ PARTY TRACKER ════════════════ */
-    const PARTY_KEY = "sc_party_v1_" + chatId;
+    const PARTY_KEY = STORAGE_KEYS.party;
     const DEFAULT_PARTY_STATUS = "Healthy";
     const PARTY_STATUS_PRESETS = ["Healthy", "Downed", "Dead", "Absent"];
     let party = [];
@@ -4439,7 +4461,7 @@
     }
 
     /* ════════════════ NPC TRACKER ════════════════ */
-    const NPC_KEY = "sc_npc_v1_" + chatId;
+    const NPC_KEY = STORAGE_KEYS.npcs;
     const NPC_DISPS = ["friendly", "neutral", "hostile"];
     const DISP_LABELS = {
       friendly: "Friendly",
@@ -4640,7 +4662,7 @@
     }
 
     /* ════════════════ RUMOURS BOARD ════════════════ */
-    const RUMOUR_KEY = "sc_rumour_v1_" + chatId;
+    const RUMOUR_KEY = STORAGE_KEYS.rumours;
     let rumours = [];
     let rumourSaveTimer = null;
     const rumourListEl = document.getElementById("sc-np-rumour-list");
@@ -5885,37 +5907,50 @@
       });
     }
 
-    bindCopyBtn("sc-np-export-all", exportAll);
-    bindCopyBtn("sc-np-quest-copy", exportQuests);
-    bindCopyBtn("sc-np-res-copy", exportResources);
-    bindCopyBtn("sc-np-abl-copy", exportAbilities);
-    bindCopyBtn("sc-np-party-copy", exportParty);
-    bindCopyBtn("sc-np-npc-copy", exportNpcs);
-    bindCopyBtn("sc-np-rumour-copy", exportRumours);
+    function bindExportButtons() {
+      bindCopyBtn("sc-np-export-all", exportAll);
+      bindCopyBtn("sc-np-quest-copy", exportQuests);
+      bindCopyBtn("sc-np-res-copy", exportResources);
+      bindCopyBtn("sc-np-abl-copy", exportAbilities);
+      bindCopyBtn("sc-np-party-copy", exportParty);
+      bindCopyBtn("sc-np-npc-copy", exportNpcs);
+      bindCopyBtn("sc-np-rumour-copy", exportRumours);
+    }
 
-    // Dice insert — inserts last roll into chat
-    document.getElementById("sc-np-dice-copy").addEventListener("click", () => {
+    function bindDiceExportButton() {
       const btn = document.getElementById("sc-np-dice-copy");
-      const text = exportDiceLast();
-      document.dispatchEvent(
-        new CustomEvent("sc-rp-inject", {
-          detail: { text: "\n" + text, silent: true },
-        }),
-      );
-      flashCopyBtnLabel(btn, btn.textContent);
-    });
+      if (!btn) return;
+      btn.addEventListener("click", () => {
+        const text = exportDiceLast();
+        document.dispatchEvent(
+          new CustomEvent("sc-rp-inject", {
+            detail: { text: "\n" + text, silent: true },
+          }),
+        );
+        flashCopyBtnLabel(btn, btn.textContent);
+      });
+    }
 
-    /* ── Boot ── */
-    // Erase any legacy notes storage for this chat
-    chrome.storage.local.remove(["sc_note_v1_" + chatId]);
-    loadDiceMods();
-    loadQuests();
-    loadRes();
-    loadAbl();
-    loadParty();
-    loadNpcs();
-    loadRumours();
-    setOpen(true);
+    function loadAllTrackerSections() {
+      loadDiceMods();
+      loadQuests();
+      loadRes();
+      loadAbl();
+      loadParty();
+      loadNpcs();
+      loadRumours();
+    }
+
+    function bootDrawerState() {
+      // Erase any legacy notes storage for this chat
+      chrome.storage.local.remove([STORAGE_KEYS.legacyNote]);
+      bindExportButtons();
+      bindDiceExportButton();
+      loadAllTrackerSections();
+      setOpen(true);
+    }
+
+    bootDrawerState();
 
     return function teardown() {
       _ac.abort();

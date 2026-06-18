@@ -238,6 +238,14 @@
     return location.pathname.replace(/^\/chat\//, "").replace(/\/$/, "");
   }
 
+  function getSpicyChatStorageKeys(chatId) {
+    return {
+      party: "sc_party_v1_" + chatId,
+      resources: "sc_res_v1_" + chatId,
+      rewriteCtx: "sc_rpctx_v1_" + chatId,
+    };
+  }
+
   function formatPartyStatusLabel(status) {
     const raw = String(status || "").trim();
     if (!raw) return "Healthy";
@@ -266,8 +274,9 @@
       return;
     }
 
-    const partyKey = "sc_party_v1_" + chatId;
-    const resourcesKey = "sc_res_v1_" + chatId;
+    const keys = getSpicyChatStorageKeys(chatId);
+    const partyKey = keys.party;
+    const resourcesKey = keys.resources;
     chrome.storage.local.get([partyKey, resourcesKey], (data) => {
       const party = Array.isArray(data[partyKey]) ? data[partyKey] : [];
       const resources = Array.isArray(data[resourcesKey])
@@ -515,8 +524,9 @@
         resolve({});
         return;
       }
-      chrome.storage.local.get("sc_rpctx_v1_" + chatId, (d) => {
-        const c = d["sc_rpctx_v1_" + chatId];
+      const keys = getSpicyChatStorageKeys(chatId);
+      chrome.storage.local.get(keys.rewriteCtx, (d) => {
+        const c = d[keys.rewriteCtx];
         resolve(c && typeof c === "object" ? c : {});
       });
     });
@@ -909,7 +919,7 @@
         resolve({ ok: false, changed: [] });
         return;
       }
-      const key = "sc_rpctx_v1_" + chatId;
+      const key = getSpicyChatStorageKeys(chatId).rewriteCtx;
       chrome.storage.local.get(key, (d) => {
         const current = d && d[key] && typeof d[key] === "object" ? d[key] : {};
         const next = {
