@@ -333,133 +333,30 @@
   // ─── Text formatter (no AI) ─────────────────────────────────────────────────
 
   function formatText(text) {
-    if (fmtOocBrackets)
-      text = text.replace(/\(\(\s*([\s\S]*?)\s*\)\)/g, "($1)");
-    // Repair/strip any pre-existing asterisks before processing
-    if (fmtRepairAsterisks) {
-      text = text
-        .split("\n")
-        .map((line) => {
-          const count = (line.match(/\*/g) || []).length;
-          return count % 2 !== 0 ? line + "*" : line;
-        })
-        .join("\n");
+    const utils = window.AIRewriterContentUtils;
+    if (!utils || typeof utils.formatText !== "function") {
+      return text;
     }
-    if (fmtStripAsterisks) text = text.replace(/\*/g, "");
-    if (fmtNormaliseQuotes) text = text.replace(/[\u201C\u201D]/g, '"');
-    if (fmtNormaliseApostrophes) text = text.replace(/[\u2018\u2019]/g, "'");
-    // Em-dash: exactly two hyphens between word-chars or spaces → —
-    // Exclude --- (horizontal rules / longer runs)
-    if (fmtEmDash) text = text.replace(/(?<!-)--(?!-)/g, "\u2014");
-    // Remove space(s) immediately before , . ! ? : ;
-    // but not before … (already an ellipsis character) and not mid-number periods
-    if (fmtNoSpaceBeforePunct)
-      text = text.replace(/ +([,!?:;])/g, "$1").replace(/ +(\.)(?!\d)/g, "$1");
-    if (fmtNormaliseEllipsis) {
-      text = text.replace(/\.{2,}/g, "...");
-      text = text.replace(/\.{3}/g, "\u2026");
-    }
-    // Ensure exactly one space after , . ! ? : ; when followed directly by a letter
-    // Exceptions: skip digits after period (decimals), skip when char before is also punctuation
-    if (fmtSpaceAfterPunct) {
-      // Period: skip if preceded by a digit (decimal) or followed by a digit
-      text = text.replace(/(?<=[^\d\s.!?,;:\u2026])\.(?=[A-Za-z])/g, ". ");
-      // Other punctuation (,!?:;) always safe
-      text = text.replace(/([,!?:;])(?=[A-Za-z])/g, "$1 ");
-    }
-    if (fmtCollapseSpaces) text = text.replace(/[ \t]{2,}/g, " ");
-    if (fmtCapitaliseI) text = text.replace(/\bi\b/g, "I");
-    if (fmtTrimLines) {
-      text = text
-        .split("\n")
-        .map((line) => line.trim())
-        .join("\n");
-    }
-    if (fmtNormaliseNewlines) text = text.replace(/\n+/g, "\n\n");
-    if (fmtCapitaliseSentences) text = capitaliseSentences(text);
-    // Capitalise first letter of dialogue inside straight quotes
-    if (fmtCapitaliseQuotes)
-      text = text.replace(/"([a-z])/g, (_, ch) => '"' + ch.toUpperCase());
-
-    const patterns = ['"[^"]*"'];
-    if (fmtUnwrapBrackets) patterns.push("\\[[^\\]]*\\]");
-    for (const [open, close] of parseDelimiterPairs(fmtExtraDelimiters)) {
-      patterns.push(
-        `${escapeRegex(open)}[^${escapeForCharClass(close)}]*${escapeRegex(close)}`,
-      );
-    }
-    const regex = new RegExp(patterns.join("|"), "g");
-
-    const parts = [];
-    let lastIndex = 0;
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push(wrapOutsideText(text.slice(lastIndex, match.index)));
-      }
-      parts.push(match[0]);
-      lastIndex = regex.lastIndex;
-    }
-    if (lastIndex < text.length) {
-      parts.push(wrapOutsideText(text.slice(lastIndex)));
-    }
-    let result = parts.join("");
-
-    // Action punctuation runs after wrapping so it sees the new *...* pairs
-    if (fmtActionPunctuation) {
-      result = result.replace(/\*([^*\n]+)\*/g, (_, inner) => {
-        const t = inner.trimEnd();
-        return /[.!?,:\u2026\u2014\-_]$/.test(t) ? `*${inner}*` : `*${t}.*`;
-      });
-    }
-    // Capitalise the first letter of each *action* that follows a sentence end:
-    // handles patterns like  .*  "quote"  *next action*
-    if (fmtActionPunctuation || fmtCapitaliseSentences) {
-      result = result.replace(
-        /([.!?\u2026\u2014\-_]\*)([^*]*)\*([a-z])/g,
-        (_, end, mid, ch) => end + mid + "*" + ch.toUpperCase(),
-      );
-    }
-    return result;
-  }
-
-  function wrapOutsideText(str) {
-    return str.replace(/[^\n]+/g, (chunk) => {
-      const trimmed = chunk.trim();
-      if (!trimmed) return chunk;
-      const leadWS = chunk.slice(0, chunk.length - chunk.trimStart().length);
-      const trailWS = chunk.slice(chunk.trimEnd().length);
-      return leadWS + "*" + trimmed + "*" + trailWS;
+    return utils.formatText(text, {
+      fmtStripAsterisks,
+      fmtNormaliseQuotes,
+      fmtNormaliseApostrophes,
+      fmtNormaliseEllipsis,
+      fmtCollapseSpaces,
+      fmtCapitaliseI,
+      fmtTrimLines,
+      fmtNormaliseNewlines,
+      fmtCapitaliseSentences,
+      fmtUnwrapBrackets,
+      fmtExtraDelimiters,
+      fmtRepairAsterisks,
+      fmtOocBrackets,
+      fmtActionPunctuation,
+      fmtCapitaliseQuotes,
+      fmtEmDash,
+      fmtNoSpaceBeforePunct,
+      fmtSpaceAfterPunct,
     });
-  }
-
-  function capitaliseSentences(text) {
-    // Capitalise first letter of each paragraph
-    text = text.replace(
-      /(^|\n\n)([a-z])/g,
-      (_, sep, ch) => sep + ch.toUpperCase(),
-    );
-    // Capitalise after .  ! or ? but NOT after … or ...
-    text = text.replace(
-      /([^.…])([.!?]) +([a-z])/g,
-      (_, pre, punc, ch) => pre + punc + " " + ch.toUpperCase(),
-    );
-    return text;
-  }
-
-  function parseDelimiterPairs(str) {
-    const pairs = [];
-    for (let i = 0; i + 1 < str.length; i += 2)
-      pairs.push([str[i], str[i + 1]]);
-    return pairs;
-  }
-
-  function escapeRegex(s) {
-    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  }
-
-  function escapeForCharClass(ch) {
-    return ch.replace(/[\\^\]]/g, "\\$&");
   }
 
   // ─── Format overlay ──────────────────────────────────────────────────────────
@@ -552,71 +449,21 @@
   }
 
   async function buildRewritePrompt(presetPrompt) {
-    const parts = [];
+    const utils = window.AIRewriterContentUtils;
+    if (!utils || typeof utils.composeRewritePrompt !== "function") {
+      return presetPrompt;
+    }
+
     const persona =
       rpActivePersonaIndex >= 0 && rpActivePersonaIndex < rpPersonas.length
         ? rpPersonas[rpActivePersonaIndex]
         : null;
-    const name = (persona && persona.name && persona.name.trim()) || "the user";
-
-    if (
-      persona &&
-      (persona.name?.trim() ||
-        persona.description?.trim() ||
-        persona.personality?.trim())
-    ) {
-      let block =
-        `[Roleplay context — the text you are rewriting is written in first person by ${name}. ` +
-        `Preserve their voice, intent and point of view; never break character or narrate for other characters.`;
-      if (persona.description && persona.description.trim()) {
-        const resolvedDesc = persona.description
-          .replace(/\{\{user\}\}/gi, name)
-          .trim();
-        block += ` Who ${name} is: ${resolvedDesc}`;
-      }
-      if (persona.personality && persona.personality.trim()) {
-        const resolved = persona.personality
-          .replace(/\{\{user\}\}/gi, name)
-          .trim();
-        block += ` ${name}'s personality: ${resolved}`;
-      }
-      block += `]`;
-      parts.push(block);
-    }
-
-    const ctx = await getSceneContext();
-    if (ctx.context && ctx.context.trim()) {
-      const resolvedBg = ctx.context.replace(/\{\{user\}\}/gi, name).trim();
-      parts.push(
-        `[Character background & long-term events — established facts and history that stay true across the whole story. Never contradict them: ${resolvedBg}]`,
-      );
-    }
-    if (ctx.prevScene && ctx.prevScene.trim()) {
-      parts.push(
-        `[Previous scene — what happened just before, for immediate context. Continue naturally from it but do not rewrite or repeat it:\n${ctx.prevScene.trim()}]`,
-      );
-    }
-    const scene = [];
-    if (ctx.location && ctx.location.trim())
-      scene.push(`Location: ${ctx.location.trim()}`);
-    if (ctx.clothes && ctx.clothes.trim())
-      scene.push(`${name}'s clothing / appearance: ${ctx.clothes.trim()}`);
-    if (ctx.status && ctx.status.trim())
-      scene.push(`${name}'s current status / condition: ${ctx.status.trim()}`);
-    if (scene.length) {
-      parts.push(
-        `[Scene details — keep these consistent and never contradict them, but only surface a detail when it is naturally relevant to the text:\n${scene.join("\n")}]`,
-      );
-    }
-
-    if (ctx.dialogueStyle && ctx.dialogueStyle.trim()) {
-      parts.push(
-        `[Spoken dialogue only (text inside quotation marks) must follow this voice and style: ${ctx.dialogueStyle.trim()}. Do not apply it to narration or actions.]`,
-      );
-    }
-
-    parts.push(presetPrompt);
-    return parts.join("\n\n");
+    const sceneContext = await getSceneContext();
+    return utils.composeRewritePrompt({
+      presetPrompt,
+      persona,
+      sceneContext,
+    });
   }
 
   // ─── Input stats for RP Tools (SpicyChat) ────────────────────────────────
