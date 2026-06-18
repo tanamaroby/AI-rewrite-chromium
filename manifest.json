@@ -17,7 +17,10 @@
     {
       "matches": ["https://spicychat.ai/*"],
       "js": [
+        "spicychat-rpg-tracker-layout.js",
         "spicychat-rpg-tracker-sections.js",
+        "spicychat-rpg-tracker-activity-exports.js",
+        "spicychat-rpg-tracker-rp-tools.js",
         "spicychat-rpg-tracker-drawer.js"
       ],
       "run_at": "document_end"

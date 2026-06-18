@@ -14,6 +14,10 @@ content.js                 Injected into every page — runs the local formatter
 content.css                Styles for loading overlay, formatter overlay, toast notifications
 popup.html/css/js          Toolbar popup — API key status, model pill, Rewrites list, quick toggles
 options.html/css/js        Settings page — sidebar nav: API Key, Model, SpicyChat RPG Tracker, Formatter
+spicychat-rpg-tracker-layout.js Drawer CSS + HTML template payloads (styles/markup only)
+spicychat-rpg-tracker-sections.js Resources/Abilities/Party/NPCs/Rumours section factories
+spicychat-rpg-tracker-activity-exports.js Activity log strip + Insert/Export wiring
+spicychat-rpg-tracker-rp-tools.js RP Tools tab logic (Persona, Rewrites, Scene Context, snippets, input stats, rewrite log)
 spicychat-rpg-tracker-drawer.js Content script injected into SpicyChat chat pages only — resizable RPG tracker drawer + RP Tools (Persona, Rewrites, Scene Context)
 icons/                     PNG icons at 16/32/48/128px
 
@@ -95,6 +99,20 @@ Two content scripts run on `spicychat.ai`:
 - Drawer width saved to `chrome.storage.local` as `sc_note_width_v1`
 - Toggle controlled by `spicychatNotesEnabled` in sync storage
 - On boot, erases legacy `sc_note_v1_<chatId>` keys automatically
+
+#### Drawer module map
+
+- `spicychat-rpg-tracker-layout.js`: visual shell only (styles + markup templates)
+- `spicychat-rpg-tracker-sections.js`: tracker section logic for Resources/Abilities/Party/NPCs/Rumours
+- `spicychat-rpg-tracker-activity-exports.js`: activity log behavior and Insert/Export formatting
+- `spicychat-rpg-tracker-rp-tools.js`: RP tools behavior (persona, rewrites, scene context, snippets, rewrite telemetry)
+- `spicychat-rpg-tracker-drawer.js`: orchestrator only (boot, wiring, quest+dice logic, resize, tab state)
+
+#### Change-routing rule (important)
+
+- When asked to modify tracker behavior, edit only the file that owns that behavior.
+- Do not implement unrelated edits in `spicychat-rpg-tracker-drawer.js` if a dedicated module already exists.
+- Keep storage-key changes scoped to the specific section/module and preserve existing key names unless migration is explicitly requested.
 
 #### RPG tracker sections (all per-chat, stored in `chrome.storage.local`)
 
@@ -227,3 +245,9 @@ Open `mobile/toolbar-preview.html` in any browser to interactively test the tool
 ## Copilot behaviour rules
 
 - **After any edit to `mobile/ai-rewriter-mobile.user.js`**, always ask: _"Do you want to deploy to iPhone? (`./deploy-mobile.sh [patch|minor|major]`)"_ before ending the response.
+- For RPG tracker changes, route edits to the most relevant module first:
+  - Layout/markup: `spicychat-rpg-tracker-layout.js`
+  - Resources/Abilities/Party/NPCs/Rumours: `spicychat-rpg-tracker-sections.js`
+  - Activity log and Insert/Export actions: `spicychat-rpg-tracker-activity-exports.js`
+  - RP tools tab (Persona/Rewrites/Scene Context/Snippets/Last Log): `spicychat-rpg-tracker-rp-tools.js`
+  - Core orchestration/quest+dice/resize/lifecycle: `spicychat-rpg-tracker-drawer.js`
