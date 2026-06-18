@@ -888,7 +888,7 @@
             const statusAfterEdit = normalizePartyStatus(m.status);
             if (statusAfterEdit !== statusBeforeEdit) {
               addLog(
-                `[Party: ${m.name || "(unnamed)"} status ${statusBeforeEdit} → ${statusAfterEdit}${getPartyDetailsSuffix(m)}]`,
+                `[Party: ${m.name || "(unnamed)"} status ${statusBeforeEdit} → ${statusAfterEdit}]`,
               );
             }
           }
