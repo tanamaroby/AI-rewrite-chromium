@@ -15,6 +15,8 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - WIP: Mobile userscript no longer requires embedding an API key in source; API key is now saved in userscript runtime storage via settings UI.
 - WIP: Updated project docs and in-product copy to match current behavior (no keyword triggers, SpicyChat-only AI rewrites, formatter shortcuts).
 - WIP: Unified RPG tracker storage key handling in options data management so saved-chat list, export/import, and delete-all operations stay consistent with current keys (including Dice Mods and Scene Context) while cleaning legacy inventory keys on delete.
+- WIP: Improved runtime performance and resiliency by reloading content-script settings only when relevant sync keys change, and by hardening service-worker rewrite requests with explicit timeout handling plus retries for transient network/server failures.
+- WIP: Added lightweight in-memory runtime diagnostics in the service worker (request/success/failure/retry/timeout/rate-limit counters plus recent events) with message endpoints to query and reset diagnostics during troubleshooting.
 
 ## [2.0.0] - 2026-06-14
 

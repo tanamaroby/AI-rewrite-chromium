@@ -41,116 +41,129 @@
   let fmtNoTrackerShortcut = "m"; // keyboard shortcut key for no-tracker format (Ctrl+Shift+key)
   const isSpicyChat = location.hostname.includes("spicychat.ai");
   const REWRITE_SHORTCUT_KEY = "n";
+  const SYNC_SETTINGS_KEYS = [
+    "apiKey",
+    "model",
+    "formatterEnabled",
+    "autoFormatAfterRewrite",
+    "fmtStripAsterisks",
+    "fmtNormaliseQuotes",
+    "fmtNormaliseApostrophes",
+    "fmtNormaliseEllipsis",
+    "fmtCollapseSpaces",
+    "fmtCapitaliseI",
+    "fmtTrimLines",
+    "fmtNormaliseNewlines",
+    "fmtCapitaliseSentences",
+    "fmtUnwrapBrackets",
+    "fmtExtraDelimiters",
+    "fmtRepairAsterisks",
+    "fmtOocBrackets",
+    "fmtActionPunctuation",
+    "fmtCapitaliseQuotes",
+    "fmtEmDash",
+    "fmtNoSpaceBeforePunct",
+    "fmtSpaceAfterPunct",
+    "rpPersonas",
+    "rpActivePersonaIndex",
+    "rpPersonaEnabled",
+    "rpPersonaName",
+    "rpPersonaPrepend",
+    "rpRewrites",
+    "rpActiveRewriteIndex",
+    "fmtShortcut",
+    "fmtNoTrackerShortcut",
+  ];
+  const SYNC_SETTINGS_KEY_SET = new Set(SYNC_SETTINGS_KEYS);
+  let settingsReloadTimer = null;
+
+  function scheduleSettingsReload(delayMs = 50) {
+    clearTimeout(settingsReloadTimer);
+    settingsReloadTimer = setTimeout(() => {
+      settingsReloadTimer = null;
+      loadSettings();
+    }, delayMs);
+  }
 
   // Load settings from storage
   function loadSettings() {
-    chrome.storage.sync.get(
-      [
-        "apiKey",
-        "model",
-        "formatterEnabled",
-        "autoFormatAfterRewrite",
-        "fmtStripAsterisks",
-        "fmtNormaliseQuotes",
-        "fmtNormaliseApostrophes",
-        "fmtNormaliseEllipsis",
-        "fmtCollapseSpaces",
-        "fmtCapitaliseI",
-        "fmtTrimLines",
-        "fmtNormaliseNewlines",
-        "fmtCapitaliseSentences",
-        "fmtUnwrapBrackets",
-        "fmtExtraDelimiters",
-        "fmtRepairAsterisks",
-        "fmtOocBrackets",
-        "fmtActionPunctuation",
-        "fmtCapitaliseQuotes",
-        "fmtEmDash",
-        "fmtNoSpaceBeforePunct",
-        "fmtSpaceAfterPunct",
-        "rpPersonas",
-        "rpActivePersonaIndex",
-        "rpPersonaEnabled",
-        "rpPersonaName",
-        "rpPersonaPrepend",
-        "rpRewrites",
-        "rpActiveRewriteIndex",
-        "fmtShortcut",
-        "fmtNoTrackerShortcut",
-      ],
-      (data) => {
-        apiKey = data.apiKey || "";
-        model = data.model || "openrouter/free";
-        formatterEnabled = data.formatterEnabled !== false;
-        autoFormatAfterRewrite = data.autoFormatAfterRewrite !== false;
-        fmtStripAsterisks = data.fmtStripAsterisks !== false;
-        fmtNormaliseQuotes = data.fmtNormaliseQuotes !== false;
-        fmtNormaliseApostrophes = data.fmtNormaliseApostrophes !== false;
-        fmtNormaliseEllipsis = data.fmtNormaliseEllipsis !== false;
-        fmtCollapseSpaces = data.fmtCollapseSpaces !== false;
-        fmtCapitaliseI = data.fmtCapitaliseI !== false;
-        fmtTrimLines = data.fmtTrimLines !== false;
-        fmtNormaliseNewlines = data.fmtNormaliseNewlines !== false;
-        fmtCapitaliseSentences = data.fmtCapitaliseSentences !== false;
-        fmtUnwrapBrackets = data.fmtUnwrapBrackets !== false;
-        fmtExtraDelimiters = data.fmtExtraDelimiters || "";
-        fmtRepairAsterisks = data.fmtRepairAsterisks !== false;
-        fmtOocBrackets = data.fmtOocBrackets !== false;
-        fmtActionPunctuation = data.fmtActionPunctuation !== false;
-        fmtCapitaliseQuotes = data.fmtCapitaliseQuotes !== false;
-        fmtEmDash = data.fmtEmDash !== false;
-        fmtNoSpaceBeforePunct = data.fmtNoSpaceBeforePunct !== false;
-        fmtSpaceAfterPunct = data.fmtSpaceAfterPunct !== false;
-        if (Array.isArray(data.rpPersonas) && data.rpPersonas.length > 0) {
-          rpPersonas = data.rpPersonas.slice(0, 10).map((p) => ({
-            label: p.label || "",
-            name: p.name || "",
-            description: p.description || p.prepend || "",
-            personality: p.personality || "",
-          }));
-          while (rpPersonas.length < 10)
-            rpPersonas.push({
-              label: "",
-              name: "",
-              description: "",
-              personality: "",
-            });
-          rpActivePersonaIndex =
-            typeof data.rpActivePersonaIndex === "number"
-              ? data.rpActivePersonaIndex
-              : -1;
-        } else {
-          // Migrate old single-persona storage
-          rpPersonas[0] = {
-            label: data.rpPersonaName || "Persona 1",
-            name: data.rpPersonaName || "",
-            description: data.rpPersonaPrepend || "",
+    chrome.storage.sync.get(SYNC_SETTINGS_KEYS, (data) => {
+      apiKey = data.apiKey || "";
+      model = data.model || "openrouter/free";
+      formatterEnabled = data.formatterEnabled !== false;
+      autoFormatAfterRewrite = data.autoFormatAfterRewrite !== false;
+      fmtStripAsterisks = data.fmtStripAsterisks !== false;
+      fmtNormaliseQuotes = data.fmtNormaliseQuotes !== false;
+      fmtNormaliseApostrophes = data.fmtNormaliseApostrophes !== false;
+      fmtNormaliseEllipsis = data.fmtNormaliseEllipsis !== false;
+      fmtCollapseSpaces = data.fmtCollapseSpaces !== false;
+      fmtCapitaliseI = data.fmtCapitaliseI !== false;
+      fmtTrimLines = data.fmtTrimLines !== false;
+      fmtNormaliseNewlines = data.fmtNormaliseNewlines !== false;
+      fmtCapitaliseSentences = data.fmtCapitaliseSentences !== false;
+      fmtUnwrapBrackets = data.fmtUnwrapBrackets !== false;
+      fmtExtraDelimiters = data.fmtExtraDelimiters || "";
+      fmtRepairAsterisks = data.fmtRepairAsterisks !== false;
+      fmtOocBrackets = data.fmtOocBrackets !== false;
+      fmtActionPunctuation = data.fmtActionPunctuation !== false;
+      fmtCapitaliseQuotes = data.fmtCapitaliseQuotes !== false;
+      fmtEmDash = data.fmtEmDash !== false;
+      fmtNoSpaceBeforePunct = data.fmtNoSpaceBeforePunct !== false;
+      fmtSpaceAfterPunct = data.fmtSpaceAfterPunct !== false;
+      if (Array.isArray(data.rpPersonas) && data.rpPersonas.length > 0) {
+        rpPersonas = data.rpPersonas.slice(0, 10).map((p) => ({
+          label: p.label || "",
+          name: p.name || "",
+          description: p.description || p.prepend || "",
+          personality: p.personality || "",
+        }));
+        while (rpPersonas.length < 10)
+          rpPersonas.push({
+            label: "",
+            name: "",
+            description: "",
             personality: "",
-          };
-          rpActivePersonaIndex = data.rpPersonaEnabled === true ? 0 : -1;
-        }
-        if (Array.isArray(data.rpRewrites) && data.rpRewrites.length > 0) {
-          rpRewrites = data.rpRewrites.slice(0, 5).map((r) => ({
-            name: r.name || "",
-            prompt: r.prompt || "",
-          }));
-          while (rpRewrites.length < 5)
-            rpRewrites.push({ name: "", prompt: "" });
-        }
-        rpActiveRewriteIndex =
-          typeof data.rpActiveRewriteIndex === "number"
-            ? data.rpActiveRewriteIndex
+          });
+        rpActivePersonaIndex =
+          typeof data.rpActivePersonaIndex === "number"
+            ? data.rpActivePersonaIndex
             : -1;
-        fmtShortcut = data.fmtShortcut || "m";
-        fmtNoTrackerShortcut = data.fmtNoTrackerShortcut || "m";
-      },
-    );
+      } else {
+        // Migrate old single-persona storage
+        rpPersonas[0] = {
+          label: data.rpPersonaName || "Persona 1",
+          name: data.rpPersonaName || "",
+          description: data.rpPersonaPrepend || "",
+          personality: "",
+        };
+        rpActivePersonaIndex = data.rpPersonaEnabled === true ? 0 : -1;
+      }
+      if (Array.isArray(data.rpRewrites) && data.rpRewrites.length > 0) {
+        rpRewrites = data.rpRewrites.slice(0, 5).map((r) => ({
+          name: r.name || "",
+          prompt: r.prompt || "",
+        }));
+        while (rpRewrites.length < 5) rpRewrites.push({ name: "", prompt: "" });
+      }
+      rpActiveRewriteIndex =
+        typeof data.rpActiveRewriteIndex === "number"
+          ? data.rpActiveRewriteIndex
+          : -1;
+      fmtShortcut = data.fmtShortcut || "m";
+      fmtNoTrackerShortcut = data.fmtNoTrackerShortcut || "m";
+    });
   }
 
   loadSettings();
 
   // Re-load if settings change (e.g. user saves options)
-  chrome.storage.onChanged.addListener(() => loadSettings());
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== "sync" || !changes) return;
+    const hasRelevantChange = Object.keys(changes).some((key) =>
+      SYNC_SETTINGS_KEY_SET.has(key),
+    );
+    if (hasRelevantChange) scheduleSettingsReload();
+  });
 
   // ─── Overlay / indicator helpers ───────────────────────────────────────────
 
