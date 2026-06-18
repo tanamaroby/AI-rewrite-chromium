@@ -288,8 +288,14 @@
         const partyParts = party.map((m) => {
           const name = String(m?.name || "").trim() || "(unnamed)";
           const notes = String(m?.notes || "").trim();
-          return notes
-            ? `${name} (${formatPartyStatusLabel(m?.status)}; ${notes})`
+          const equipment = String(m?.equipment || "").trim();
+          const affiliation = String(m?.affiliation || "").trim();
+          const details = [];
+          if (notes) details.push(`Notes: ${notes}`);
+          if (equipment) details.push(`Equipment: ${equipment}`);
+          if (affiliation) details.push(`Affiliation: ${affiliation}`);
+          return details.length
+            ? `${name} (${formatPartyStatusLabel(m?.status)}; ${details.join("; ")})`
             : `${name} (${formatPartyStatusLabel(m?.status)})`;
         });
         lines.push(`Party: ${partyParts.join(" | ")}`);

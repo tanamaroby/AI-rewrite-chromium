@@ -923,11 +923,16 @@
       if (!raw || typeof raw !== "object") return null;
       const name = typeof raw.name === "string" ? raw.name : "";
       const notes = typeof raw.notes === "string" ? raw.notes : "";
+      const equipment = typeof raw.equipment === "string" ? raw.equipment : "";
+      const affiliation =
+        typeof raw.affiliation === "string" ? raw.affiliation : "";
       const status = normalizePartyStatus(raw.status);
       return {
         id: normalizeId(raw.id, idx),
         name,
         notes,
+        equipment,
+        affiliation,
         status,
       };
     }
@@ -1107,6 +1112,8 @@
             id: m.id,
             name: m.name,
             notes: m.notes,
+            equipment: m.equipment,
+            affiliation: m.affiliation,
             status: m.status,
           },
           idx,

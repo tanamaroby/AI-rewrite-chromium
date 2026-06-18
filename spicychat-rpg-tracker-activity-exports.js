@@ -114,8 +114,12 @@
       const party = deps.getParty();
       if (!party.length) return "[Party: none]";
       const parts = party.map((m) => {
-        const note = m.notes ? ` (${m.notes})` : "";
-        return `${m.name || "(unnamed)"} \u2014 ${m.status}${note}`;
+        const details = [];
+        if (m.notes) details.push(`Notes: ${m.notes}`);
+        if (m.equipment) details.push(`Equipment: ${m.equipment}`);
+        if (m.affiliation) details.push(`Affiliation: ${m.affiliation}`);
+        const suffix = details.length ? ` (${details.join("; ")})` : "";
+        return `${m.name || "(unnamed)"} \u2014 ${m.status}${suffix}`;
       });
       return `[Party: ${parts.join(" | ")}]`;
     }

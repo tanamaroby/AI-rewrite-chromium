@@ -701,8 +701,26 @@
         id: Date.now() + Math.random(),
         name: "",
         notes: "",
+        equipment: "",
+        affiliation: "",
         status: defaultStatus,
       };
+    }
+
+    function getPartyDetailsParts(member) {
+      const parts = [];
+      const notes = String(member?.notes || "").trim();
+      const equipment = String(member?.equipment || "").trim();
+      const affiliation = String(member?.affiliation || "").trim();
+      if (notes) parts.push(`Notes: ${notes}`);
+      if (equipment) parts.push(`Equipment: ${equipment}`);
+      if (affiliation) parts.push(`Affiliation: ${affiliation}`);
+      return parts;
+    }
+
+    function getPartyDetailsSuffix(member) {
+      const parts = getPartyDetailsParts(member);
+      return parts.length ? ` (${parts.join("; ")})` : "";
     }
 
     function save() {
@@ -752,7 +770,7 @@
         });
         const notesSpan = document.createElement("div");
         notesSpan.className = "item-disp-note";
-        notesSpan.textContent = m.notes || "";
+        notesSpan.textContent = m.notes ? `Notes: ${m.notes}` : "";
         notesSpan.style.display = m.notes ? "" : "none";
         const notesEditIn = document.createElement("input");
         notesEditIn.type = "text";
@@ -763,6 +781,42 @@
         notesEditIn.setAttribute("data-ai-rewriter-ignore", "1");
         notesEditIn.addEventListener("input", () => {
           m.notes = notesEditIn.value;
+          scheduleSave();
+        });
+        const equipmentSpan = document.createElement("div");
+        equipmentSpan.className = "item-disp-note";
+        equipmentSpan.textContent = m.equipment
+          ? `Equipment: ${m.equipment}`
+          : "";
+        equipmentSpan.style.display = m.equipment ? "" : "none";
+        const equipmentEditIn = document.createElement("input");
+        equipmentEditIn.type = "text";
+        equipmentEditIn.className = "party-note-input";
+        equipmentEditIn.value = m.equipment || "";
+        equipmentEditIn.placeholder = "Equipment (optional)…";
+        equipmentEditIn.maxLength = 120;
+        equipmentEditIn.style.display = "none";
+        equipmentEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+        equipmentEditIn.addEventListener("input", () => {
+          m.equipment = equipmentEditIn.value;
+          scheduleSave();
+        });
+        const affiliationSpan = document.createElement("div");
+        affiliationSpan.className = "item-disp-note";
+        affiliationSpan.textContent = m.affiliation
+          ? `Affiliation: ${m.affiliation}`
+          : "";
+        affiliationSpan.style.display = m.affiliation ? "" : "none";
+        const affiliationEditIn = document.createElement("input");
+        affiliationEditIn.type = "text";
+        affiliationEditIn.className = "party-note-input";
+        affiliationEditIn.value = m.affiliation || "";
+        affiliationEditIn.placeholder = "Affiliation (optional)…";
+        affiliationEditIn.maxLength = 120;
+        affiliationEditIn.style.display = "none";
+        affiliationEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+        affiliationEditIn.addEventListener("input", () => {
+          m.affiliation = affiliationEditIn.value;
           scheduleSave();
         });
         const statusEditIn = document.createElement("input");
@@ -792,12 +846,18 @@
             statusEditIn.style.display = "";
             notesSpan.style.display = "none";
             notesEditIn.style.display = "";
+            equipmentSpan.style.display = "none";
+            equipmentEditIn.style.display = "";
+            affiliationSpan.style.display = "none";
+            affiliationEditIn.style.display = "";
             toggleBtn.className = "item-toggle-btn save";
             toggleBtn.textContent = "✓ Save";
             nameEditIn.value = m.name;
             statusBeforeEdit = normalizePartyStatus(m.status);
             statusEditIn.value = statusBeforeEdit;
             notesEditIn.value = m.notes || "";
+            equipmentEditIn.value = m.equipment || "";
+            affiliationEditIn.value = m.affiliation || "";
             nameEditIn.focus();
           } else {
             m.status = normalizePartyStatus(statusEditIn.value);
@@ -810,16 +870,25 @@
             statusPill.textContent = normalizePartyStatus(m.status);
             statusPill.style.display = "";
             notesEditIn.style.display = "none";
-            notesSpan.textContent = m.notes || "";
+            notesSpan.textContent = m.notes ? `Notes: ${m.notes}` : "";
             notesSpan.style.display = m.notes ? "" : "none";
+            equipmentEditIn.style.display = "none";
+            equipmentSpan.textContent = m.equipment
+              ? `Equipment: ${m.equipment}`
+              : "";
+            equipmentSpan.style.display = m.equipment ? "" : "none";
+            affiliationEditIn.style.display = "none";
+            affiliationSpan.textContent = m.affiliation
+              ? `Affiliation: ${m.affiliation}`
+              : "";
+            affiliationSpan.style.display = m.affiliation ? "" : "none";
             toggleBtn.className = "item-toggle-btn edit";
             toggleBtn.textContent = "✎";
             nameSpan.textContent = m.name || "(unnamed)";
             const statusAfterEdit = normalizePartyStatus(m.status);
             if (statusAfterEdit !== statusBeforeEdit) {
-              const notesPart = m.notes ? ` — ${m.notes}` : "";
               addLog(
-                `[Party: ${m.name || "(unnamed)"} status ${statusBeforeEdit} → ${statusAfterEdit}${notesPart}]`,
+                `[Party: ${m.name || "(unnamed)"} status ${statusBeforeEdit} → ${statusAfterEdit}${getPartyDetailsSuffix(m)}]`,
               );
             }
           }
@@ -829,8 +898,9 @@
         delBtn.title = "Remove";
         delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
         delBtn.addEventListener("click", () => {
-          const notesPart = m.notes ? ` — ${m.notes}` : "";
-          addLog(`[Party: ${m.name || "(unnamed)"} removed${notesPart}]`);
+          addLog(
+            `[Party: ${m.name || "(unnamed)"} removed${getPartyDetailsSuffix(m)}]`,
+          );
           party.splice(idx, 1);
           save();
           render();
@@ -843,7 +913,15 @@
           toggleBtn,
           delBtn,
         );
-        row.append(top, notesSpan, notesEditIn);
+        row.append(
+          top,
+          notesSpan,
+          equipmentSpan,
+          affiliationSpan,
+          notesEditIn,
+          equipmentEditIn,
+          affiliationEditIn,
+        );
         partyListEl.appendChild(row);
       });
     }
@@ -879,13 +957,25 @@
       notesIn.className = "af-input";
       notesIn.placeholder = "Notes (optional)…";
       notesIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const equipmentIn = document.createElement("input");
+      equipmentIn.type = "text";
+      equipmentIn.className = "af-input";
+      equipmentIn.placeholder = "Equipment (optional)…";
+      equipmentIn.maxLength = 120;
+      equipmentIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const affiliationIn = document.createElement("input");
+      affiliationIn.type = "text";
+      affiliationIn.className = "af-input";
+      affiliationIn.placeholder = "Affiliation (optional)…";
+      affiliationIn.maxLength = 120;
+      affiliationIn.setAttribute("data-ai-rewriter-ignore", "1");
       const submitBtn = document.createElement("button");
       submitBtn.className = "af-submit";
       submitBtn.textContent = "+ Add";
       const row = document.createElement("div");
       row.className = "af-row";
       row.append(nameIn, statusIn, submitBtn);
-      form.append(row, notesIn);
+      form.append(row, notesIn, equipmentIn, affiliationIn);
       form.appendChild(statusList);
       partyListEl.parentNode.insertBefore(form, partyListEl);
       const doAdd = () => {
@@ -893,20 +983,25 @@
         const name = nameIn.value.trim();
         const status = normalizePartyStatus(statusIn.value);
         const notes = notesIn.value.trim();
+        const equipment = equipmentIn.value.trim();
+        const affiliation = affiliationIn.value.trim();
         const member = newPartyMember();
         member.name = name;
         member.status = status;
         member.notes = notes;
+        member.equipment = equipment;
+        member.affiliation = affiliation;
         party.push(member);
         save();
         render();
-        const notesPart = notes ? ` — ${notes}` : "";
         addLog(
-          `[Party: ${name || "(unnamed)"} joined — ${status}${notesPart}]`,
+          `[Party: ${name || "(unnamed)"} joined — ${status}${getPartyDetailsSuffix(member)}]`,
         );
         nameIn.value = "";
         statusIn.value = defaultStatus;
         notesIn.value = "";
+        equipmentIn.value = "";
+        affiliationIn.value = "";
         nameIn.focus();
       };
       submitBtn.addEventListener("click", doAdd);
@@ -935,8 +1030,7 @@
       const party = getParty();
       if (!party.length) return "[Party: none]";
       const parts = party.map((m) => {
-        const note = m.notes ? ` (${m.notes})` : "";
-        return `${m.name || "(unnamed)"} — ${m.status}${note}`;
+        return `${m.name || "(unnamed)"} — ${m.status}${getPartyDetailsSuffix(m)}`;
       });
       return `[Party: ${parts.join(" | ")}]`;
     }
