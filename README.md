@@ -20,6 +20,7 @@ AI-assisted rewriting for SpicyChat plus a local text formatter for any textbox.
 - Formatter pipeline in content script (no AI call required)
 - OpenRouter model selection (default openrouter/free)
 - Retry with exponential backoff for API calls in the service worker
+- In-memory runtime diagnostics in the service worker for troubleshooting retry/timeout/rate-limit behavior
 
 ## Installation
 
@@ -56,7 +57,8 @@ Core files:
 
 - manifest.json
 - background.js (OpenRouter calls)
-- content.js (formatter + SpicyChat rewrite orchestration)
+- content-utils.js (pure formatter + rewrite prompt composition helpers)
+- content.js (runtime orchestration, events, keyboard shortcuts)
 - spicychat-rpg-tracker-layout.js
 - spicychat-rpg-tracker-sections.js
 - spicychat-rpg-tracker-activity-exports.js
@@ -70,6 +72,17 @@ Core files:
 - Extension API key is stored in chrome.storage.sync
 - AI text is sent to OpenRouter only when you trigger rewrite
 - No analytics/telemetry are implemented
+
+## Runtime diagnostics
+
+The background service worker keeps lightweight in-memory counters and recent events for rewrite reliability troubleshooting.
+
+- Query diagnostics:
+   `chrome.runtime.sendMessage({ type: "GET_RUNTIME_DIAGNOSTICS" }, console.log)`
+- Reset diagnostics:
+   `chrome.runtime.sendMessage({ type: "RESET_RUNTIME_DIAGNOSTICS" }, console.log)`
+
+These diagnostics are ephemeral and reset when the service worker is restarted.
 
 ## License
 

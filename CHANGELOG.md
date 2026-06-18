@@ -18,6 +18,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - WIP: Improved runtime performance and resiliency by reloading content-script settings only when relevant sync keys change, and by hardening service-worker rewrite requests with explicit timeout handling plus retries for transient network/server failures.
 - WIP: Added lightweight in-memory runtime diagnostics in the service worker (request/success/failure/retry/timeout/rate-limit counters plus recent events) with message endpoints to query and reset diagnostics during troubleshooting.
 - WIP: Phase 4 refactor started by extracting pure formatter and rewrite-prompt composition utilities into a dedicated shared module, and wiring content runtime paths to use those pure functions for cleaner structure and easier targeted testing.
+- WIP: Synced project documentation and instruction files to current architecture/behavior (content-utils module, runtime diagnostics endpoints, and mobile Userscripts API-key storage flow).
 
 ## [2.0.0] - 2026-06-14
 

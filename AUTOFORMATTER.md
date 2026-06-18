@@ -1,6 +1,6 @@
 # Autoformatter
 
-A non-AI text formatter built into the extension. It cleans up roleplay/chat text instantly (no API calls, no latency) and wraps narration in asterisks while leaving dialogue and brackets alone. Implemented in [content.js](content.js) (`formatText()`, around [content.js:307](content.js#L307)), configured via [options.html](options.html) and [options.js](options.js).
+A non-AI text formatter built into the extension. It cleans up roleplay/chat text instantly (no API calls, no latency) and wraps narration in asterisks while leaving dialogue and brackets alone. Implemented as a pure utility in [content-utils.js](content-utils.js) (`formatText(text, opts)`), orchestrated by [content.js](content.js), and configured via [options.html](options.html) and [options.js](options.js).
 
 ## How it's triggered
 
@@ -14,7 +14,7 @@ A master "Enable formatter" toggle gates all of the above.
 
 ## What it does
 
-`formatText()` runs a configurable pipeline of regex-based passes, each independently toggleable in Settings. Order matters — later passes (like asterisk wrapping) see the output of earlier ones.
+`formatText(text, opts)` runs a configurable pipeline of regex-based passes, each independently toggleable in Settings. Order matters — later passes (like asterisk wrapping) see the output of earlier ones.
 
 ### Normalisation
 - **Strip existing asterisks** — removes all `*` before reformatting, for a clean slate.
@@ -45,4 +45,4 @@ When formatting via the main shortcut (not the "no tracker" variant), the extens
 
 ## Settings
 
-All toggles live in the extension's options page under the **Formatter** section, grouped into *Normalisation*, *Wrapping*, and *Roleplay*. Each setting is persisted via `chrome.storage` and read live by [content.js](content.js) on load.
+All toggles live in the extension's options page under the **Formatter** section, grouped into *Normalisation*, *Wrapping*, and *Roleplay*. Each setting is persisted via `chrome.storage`, read live by [content.js](content.js), and passed as options into the pure formatter utility in [content-utils.js](content-utils.js).

@@ -10,7 +10,8 @@ This is a **Chromium MV3 browser extension** for AI-assisted rewriting and rolep
 ── Chrome extension (load this folder in Chrome) ──────────────────────────────
 manifest.json              MV3 manifest — permissions, content scripts, service worker
 background.js              Service worker — all OpenRouter API calls happen here (keeps key off content pages)
-content.js                 Injected into every page — runs the local formatter everywhere; AI Rewrites + SpicyChat RP events are gated to spicychat.ai
+content-utils.js           Pure utilities — formatter pipeline + rewrite prompt composition helpers
+content.js                 Injected into every page — runtime orchestration; local formatter everywhere; AI Rewrites + SpicyChat RP events gated to spicychat.ai
 content.css                Styles for loading overlay, formatter overlay, toast notifications
 popup.html/css/js          Toolbar popup — API key status, model pill, Rewrites list, quick toggles
 options.html/css/js        Settings page — sidebar nav: API Key, Model, SpicyChat RPG Tracker, Formatter
@@ -31,7 +32,7 @@ deploy-mobile.sh           Bumps @version in the userscript and copies it to iCl
 
 > **Chrome extension isolation**: `manifest.json` only references explicitly named JS/CSS files. `mobile/` files are never loaded by the extension. The release zip also excludes them (hardcoded file list in `release.yml`).
 
-> **API key warning**: `mobile/ai-rewriter-mobile.user.js` contains a hardcoded `API_KEY`. Never commit this file to a public repo without scrubbing the key first.
+> **Mobile API key behavior**: `mobile/ai-rewriter-mobile.user.js` stores the API key in Userscripts runtime storage (`GM.setValue` / `GM.getValue`) via the toolbar settings sheet. Source should keep `DEFAULT_API_KEY = ""`.
 
 ## Key conventions
 
@@ -41,6 +42,7 @@ deploy-mobile.sh           Bumps @version in the userscript and copies it to iCl
   - `chrome.storage.sync`: `apiKey`, `model`, all formatter settings (`fmt*`), `formatterEnabled`, `autoFormatAfterRewrite`, `fmtShortcut`, `fmtNoTrackerShortcut`, `rpRewrites[]` (5 × `{name,prompt}`), `rpActiveRewriteIndex`, `rpPersonas[]` (10 × `{label,name,description,personality}`), `rpActivePersonaIndex`, `spicychatNotesEnabled`
   - `chrome.storage.local`: RPG tracker data keyed as `sc_quests_v1_<chatId>`, `sc_res_v1_<chatId>`, `sc_abl_v1_<chatId>`, `sc_party_v1_<chatId>`, `sc_npc_v1_<chatId>`, `sc_rumour_v1_<chatId>`, `sc_dice_mod_v1_<chatId>`; `sc_rpctx_v1_<chatId>` (Scene Context: `{context,location,clothes,status,dialogueStyle}`); `sc_last_rewrite` (last rewrite for undo); `sc_note_width_v1` (drawer width)
 - **Retry logic**: `MAX_RETRIES = 3`, `RETRY_DELAY_MS = 2000`, exponential backoff, honors `Retry-After` header
+- **Runtime diagnostics** (`background.js`): in-memory counters/events for requests, retries, timeouts, rate limits, etc., exposed via runtime messages: `GET_RUNTIME_DIAGNOSTICS` and `RESET_RUNTIME_DIAGNOSTICS`
 - **Default model**: `openrouter/free` — auto-routes to any available free model
 - **No build tools** — no npm, no bundler, no TypeScript. Keep it plain JS
 
@@ -64,7 +66,7 @@ The local formatter works on every page; AI Rewrites and RP behaviours are gated
 
 ## Local text formatter (no AI)
 
-Runs entirely in `content.js` — no API call. Controlled by `formatterEnabled` + individual toggles stored in sync storage:
+Pure formatter logic lives in `content-utils.js` (`formatText(text, opts)`) and is called from `content.js` (no API call). Controlled by `formatterEnabled` + individual toggles stored in sync storage:
 
 - `fmtStripAsterisks` — removes all `*`
 - `fmtNormaliseQuotes` / `fmtNormaliseApostrophes` — curly → straight
@@ -81,11 +83,11 @@ Runs entirely in `content.js` — no API call. Controlled by `formatterEnabled` 
 
 ## Rewrites & Scene Context (SpicyChat AI)
 
-AI Rewrites are SpicyChat-only and composed in `content.js`:
+AI Rewrites are SpicyChat-only and orchestrated in `content.js`; rewrite prompt composition is handled by `content-utils.js`:
 
 - **Rewrites presets** — `rpRewrites[]` (5 slots of `{name,prompt}`) + `rpActiveRewriteIndex`, managed in the drawer's RP Tools tab. `runRewrite(index)` validates the preset/focus/non-empty input, builds the prompt, sends `REWRITE_TEXT`, optionally auto-formats, stores `sc_last_rewrite`, and dispatches `sc-rp-rewrite-done` + `sc-rp-rewrite-result`.
 - **Scene Context** — `getSceneContext()` reads `sc_rpctx_v1_<chatId>` → `{context,location,clothes,status,dialogueStyle}` (per-chat).
-- `buildRewritePrompt(presetPrompt)` composes (joined by blank lines): persona block (name + description + personality, `{{user}}`→name) → current-situation block (context) → scene block (location/clothes/status) → dialogue-style block → the preset prompt.
+- `composeRewritePrompt({ presetPrompt, persona, sceneContext })` composes (joined by blank lines): persona block (name + description + personality, `{{user}}`→name) → current-situation block (context) → scene block (location/clothes/status) → dialogue-style block → the preset prompt.
 
 ## SpicyChat features
 
@@ -167,7 +169,7 @@ All "Add" actions log **on blur** (after the user fills in the name/text), so th
 
 ### RP Persona (SpicyChat only)
 
-`buildRewritePrompt(presetPrompt)` in `content.js` prepends persona + scene context when on SpicyChat:
+`composeRewritePrompt(...)` in `content-utils.js` prepends persona + scene context when on SpicyChat:
 
 1. If the active persona (`rpActivePersonaIndex` of `rpPersonas[]`) has a `description` or `personality`: prepends a character-context block (resolves `{{user}}` → the persona `name`), description first then personality
 2. Prepends the current-situation block (`context`), the Scene Context block (location, clothes, status) and a dialogue-style block when those fields are set
@@ -210,9 +212,9 @@ Completely independent from the Chrome extension. Runs via the **Userscripts** a
 - **Format** button pinned on the left (full toolbar height) — most-used action, instant/no AI call
 - AI command buttons in a single scrollable row to the right of Format
 - Calls OpenRouter directly via `GM.xmlHttpRequest` (no service worker needed)
-- API key hardcoded as `API_KEY` constant at the top of the file
-- Local `formatText()` / `wrapOutside()` functions mirror the logic in `content.js`
-- `MODEL` constant at top — currently `xiaomi/mimo-v2.5`
+- API key stored in Userscripts runtime storage and managed via toolbar Settings (`GM.setValue` / `GM.getValue`)
+- Local formatter logic is implemented in userscript and tracks extension formatter behavior
+- `MODEL` constant at top — currently `google/gemini-3.1-flash-lite`
 - `isTablet` detection for iPadOS (checks `maxTouchPoints` to catch iPadOS 13+ Macintosh UA)
 - Visual Viewport API used to keep toolbar pinned when the soft keyboard opens
 
