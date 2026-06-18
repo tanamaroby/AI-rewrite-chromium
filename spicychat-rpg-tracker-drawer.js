@@ -2647,9 +2647,29 @@
 
     /* ════════════════ QUEST LOG ════════════════ */
     const QUEST_STATES = ["active", "done", "failed"];
+    const RES_KEY = STORAGE_KEYS.resources;
+    const ABL_KEY = STORAGE_KEYS.abilities;
+    const PARTY_KEY = STORAGE_KEYS.party;
+    const NPC_KEY = STORAGE_KEYS.npcs;
+    const RUMOUR_KEY = STORAGE_KEYS.rumours;
+    const DEFAULT_PARTY_STATUS = "Healthy";
+    const PARTY_STATUS_PRESETS = ["Healthy", "Downed", "Dead", "Absent"];
+    const NPC_DISPS = ["friendly", "neutral", "hostile"];
+
     let quests = [];
+    let resources = [];
+    let abilities = [];
+    let party = [];
+    let npcs = [];
+    let rumours = [];
     let questSaveTimer = null;
     let questSheetStatusTimer = null;
+
+    let resourcesSection = null;
+    let abilitiesSection = null;
+    let partySection = null;
+    let npcsSection = null;
+    let rumoursSection = null;
 
     function newQuest() {
       return {
@@ -2686,6 +2706,119 @@
         questSheetStatusEl.textContent = "";
         questSheetStatusEl.classList.remove("ok", "err");
       }, 3200);
+    }
+
+    function saveRes() {
+      if (resourcesSection) {
+        resourcesSection.save();
+        return;
+      }
+      chrome.storage.local.set({ [RES_KEY]: resources });
+    }
+
+    function renderRes() {
+      if (resourcesSection) resourcesSection.render();
+    }
+
+    function loadRes() {
+      if (resourcesSection) {
+        resourcesSection.load();
+        return;
+      }
+      chrome.storage.local.get(RES_KEY, (d) => {
+        resources = Array.isArray(d[RES_KEY]) ? d[RES_KEY] : [];
+      });
+    }
+
+    function saveAbl() {
+      if (abilitiesSection) {
+        abilitiesSection.save();
+        return;
+      }
+      chrome.storage.local.set({ [ABL_KEY]: abilities });
+    }
+
+    function renderAbl() {
+      if (abilitiesSection) abilitiesSection.render();
+    }
+
+    function loadAbl() {
+      if (abilitiesSection) {
+        abilitiesSection.load();
+        return;
+      }
+      chrome.storage.local.get(ABL_KEY, (d) => {
+        abilities = Array.isArray(d[ABL_KEY]) ? d[ABL_KEY] : [];
+      });
+    }
+
+    function saveParty() {
+      if (partySection) {
+        partySection.save();
+        return;
+      }
+      chrome.storage.local.set({ [PARTY_KEY]: party });
+    }
+
+    function renderParty() {
+      if (partySection) partySection.render();
+    }
+
+    function loadParty() {
+      if (partySection) {
+        partySection.load();
+        return;
+      }
+      chrome.storage.local.get(PARTY_KEY, (d) => {
+        const incoming = Array.isArray(d[PARTY_KEY]) ? d[PARTY_KEY] : [];
+        party = incoming
+          .map((member, idx) => normalizeImportedPartyMember(member, idx))
+          .filter(Boolean);
+      });
+    }
+
+    function saveNpcs() {
+      if (npcsSection) {
+        npcsSection.save();
+        return;
+      }
+      chrome.storage.local.set({ [NPC_KEY]: npcs });
+    }
+
+    function renderNpcs() {
+      if (npcsSection) npcsSection.render();
+    }
+
+    function loadNpcs() {
+      if (npcsSection) {
+        npcsSection.load();
+        return;
+      }
+      chrome.storage.local.get(NPC_KEY, (d) => {
+        npcs = Array.isArray(d[NPC_KEY]) ? d[NPC_KEY] : [];
+      });
+    }
+
+    function saveRumours() {
+      if (rumoursSection) {
+        rumoursSection.save();
+        return;
+      }
+      chrome.storage.local.set({ [RUMOUR_KEY]: rumours });
+    }
+
+    function renderRumours() {
+      if (rumoursSection) rumoursSection.render();
+    }
+
+    function loadRumours() {
+      if (rumoursSection) {
+        rumoursSection.load();
+        return;
+      }
+      chrome.storage.local.get(RUMOUR_KEY, (d) => {
+        rumours = Array.isArray(d[RUMOUR_KEY]) ? d[RUMOUR_KEY] : [];
+      });
     }
 
     function normalizeId(rawId, idx) {
@@ -3598,1165 +3731,69 @@
       });
     });
 
-    /* ════════════════ RESOURCE COUNTERS ════════════════ */
-    const RES_KEY = STORAGE_KEYS.resources;
-    let resources = [];
-    let resSaveTimer = null;
-    const resListEl = document.getElementById("sc-np-res-list");
-
-    function newRes() {
-      return { id: Date.now() + Math.random(), name: "", value: 0, notes: "" };
-    }
-    function saveRes() {
-      chrome.storage.local.set({ [RES_KEY]: resources });
-    }
-    function scheduleResSave() {
-      clearTimeout(resSaveTimer);
-      resSaveTimer = setTimeout(saveRes, 500);
+    /* ════════════════ MODULAR TRACKER SECTIONS ════════════════ */
+    const sectionFactory = window.SCRPGTrackerSections || {};
+    if (
+      typeof sectionFactory.createResourcesSection !== "function" ||
+      typeof sectionFactory.createAbilitiesSection !== "function" ||
+      typeof sectionFactory.createPartySection !== "function" ||
+      typeof sectionFactory.createNpcsSection !== "function" ||
+      typeof sectionFactory.createRumoursSection !== "function"
+    ) {
+      throw new Error("RPG tracker section modules failed to load.");
     }
 
-    const resSelectEl = document.getElementById("sc-np-res-select");
-    const resAmountEl = document.getElementById("sc-np-res-amount");
-    const resAdjustPanel = document.getElementById("sc-np-res-adjust");
-    const resFbEl = document.getElementById("sc-np-res-fb");
-    let resFbTimer = null;
-
-    function showResFeedback(msg) {
-      resFbEl.textContent = msg;
-      resFbEl.classList.add("visible");
-      clearTimeout(resFbTimer);
-      resFbTimer = setTimeout(() => resFbEl.classList.remove("visible"), 1600);
-    }
-
-    function rebuildResSelect(keepId) {
-      const prev = keepId ?? resSelectEl.value;
-      resSelectEl.innerHTML = "<option value=''>Select resource\u2026</option>";
-      resources.forEach((r) => {
-        const opt = document.createElement("option");
-        opt.value = r.id;
-        opt.textContent =
-          (r.name.trim() || "(unnamed)") + "  \u2014  " + r.value;
-        resSelectEl.appendChild(opt);
-      });
-      if (prev) resSelectEl.value = prev;
-      resAdjustPanel.style.display = resources.length ? "" : "none";
-    }
-
-    function renderRes() {
-      resListEl.innerHTML = "";
-      if (!resources.length) {
-        const e = document.createElement("div");
-        e.className = "ql-empty-state";
-        e.style.padding = "6px 0";
-        e.textContent = "No resources yet.";
-        resListEl.appendChild(e);
-        rebuildResSelect();
-        return;
-      }
-      resources.forEach((r, idx) => {
-        const row = document.createElement("div");
-        row.className = "res-item";
-        row.dataset.resId = r.id;
-
-        // Top row: display name / edit input + value (always) + toggle + delete
-        const topRow = document.createElement("div");
-        topRow.className = "res-item-top";
-
-        const nameSpan = document.createElement("span");
-        nameSpan.className = "item-disp-name";
-        nameSpan.textContent = r.name || "(unnamed)";
-
-        const nameEditIn = document.createElement("input");
-        nameEditIn.type = "text";
-        nameEditIn.className = "af-input";
-        nameEditIn.value = r.name;
-        nameEditIn.placeholder = "Resource name\u2026";
-        nameEditIn.maxLength = 40;
-        nameEditIn.style.display = "none";
-        nameEditIn.setAttribute("data-ai-rewriter-ignore", "1");
-        nameEditIn.addEventListener("input", () => {
-          r.name = nameEditIn.value;
-          scheduleResSave();
-          rebuildResSelect(r.id);
-        });
-
-        const valEl = document.createElement("span");
-        valEl.className = "res-value";
-        valEl.textContent = r.value;
-        row._valEl = valEl;
-
-        const toggleBtn = document.createElement("button");
-        toggleBtn.className = "item-toggle-btn edit";
-        toggleBtn.textContent = "\u270e";
-        let isEditing = false;
-
-        const delBtn = document.createElement("button");
-        delBtn.className = "res-delete-btn";
-        delBtn.title = "Remove";
-        delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-        delBtn.addEventListener("click", () => {
-          addLog(`[Resource removed: ${r.name || "(unnamed)"}]`);
-          resources.splice(idx, 1);
-          saveRes();
-          renderRes();
-        });
-
-        topRow.append(nameSpan, nameEditIn, valEl, toggleBtn, delBtn);
-
-        // Notes below: display span / edit input
-        const notesSpan = document.createElement("div");
-        notesSpan.className = "item-disp-note";
-        notesSpan.textContent = r.notes;
-        notesSpan.style.display = r.notes ? "" : "none";
-
-        const notesEditIn = document.createElement("input");
-        notesEditIn.type = "text";
-        notesEditIn.className = "af-input";
-        notesEditIn.value = r.notes || "";
-        notesEditIn.style.display = "none";
-        notesEditIn.placeholder = "Notes\u2026 e.g. used for healing, max 100";
-        notesEditIn.maxLength = 80;
-        notesEditIn.setAttribute("data-ai-rewriter-ignore", "1");
-        notesEditIn.addEventListener("input", () => {
-          r.notes = notesEditIn.value;
-          scheduleResSave();
-        });
-
-        toggleBtn.addEventListener("click", () => {
-          isEditing = !isEditing;
-          if (isEditing) {
-            nameSpan.style.display = "none";
-            nameEditIn.style.display = "";
-            notesSpan.style.display = "none";
-            notesEditIn.style.display = "";
-            toggleBtn.className = "item-toggle-btn save";
-            toggleBtn.textContent = "\u2713 Save";
-            nameEditIn.value = r.name;
-            notesEditIn.value = r.notes || "";
-            nameEditIn.focus();
-          } else {
-            nameEditIn.style.display = "none";
-            nameSpan.style.display = "";
-            notesEditIn.style.display = "none";
-            toggleBtn.className = "item-toggle-btn edit";
-            toggleBtn.textContent = "\u270e";
-            nameSpan.textContent = r.name || "(unnamed)";
-            notesSpan.textContent = r.notes;
-            notesSpan.style.display = r.notes ? "" : "none";
-          }
-        });
-
-        row.append(topRow, notesSpan, notesEditIn);
-        resListEl.appendChild(row);
-      });
-      rebuildResSelect();
-    }
-
-    // Resource add form (inserted before list)
-    (function () {
-      const form = document.createElement("div");
-      form.className = "af-form";
-      const nameIn = document.createElement("input");
-      nameIn.type = "text";
-      nameIn.className = "af-input";
-      nameIn.placeholder = "Resource name\u2026";
-      nameIn.maxLength = 40;
-      nameIn.setAttribute("data-ai-rewriter-ignore", "1");
-      const valIn = document.createElement("input");
-      valIn.type = "number";
-      valIn.className = "af-number";
-      valIn.value = "0";
-      valIn.min = "0";
-      valIn.setAttribute("data-ai-rewriter-ignore", "1");
-      const notesIn = document.createElement("input");
-      notesIn.type = "text";
-      notesIn.className = "af-input";
-      notesIn.placeholder = "Notes (optional)\u2026";
-      notesIn.maxLength = 80;
-      notesIn.setAttribute("data-ai-rewriter-ignore", "1");
-      const submitBtn = document.createElement("button");
-      submitBtn.className = "af-submit";
-      submitBtn.textContent = "+ Add Resource";
-      const row1 = document.createElement("div");
-      row1.className = "af-row";
-      row1.append(nameIn, valIn, submitBtn);
-      form.append(row1, notesIn);
-      resListEl.parentNode.insertBefore(form, resListEl);
-      const doAdd = () => {
-        const name = nameIn.value.trim();
-        const value = parseInt(valIn.value, 10) || 0;
-        const notes = notesIn.value.trim();
-        const r = newRes();
-        r.name = name;
-        r.value = value;
-        r.notes = notes;
-        resources.push(r);
-        saveRes();
-        renderRes();
-        const notesPart = notes ? ` \u2014 ${notes}` : "";
-        addLog(
-          `[Resource added: ${name || "(unnamed)"}${notesPart} (value: ${value})]`,
-        );
-        nameIn.value = "";
-        valIn.value = "0";
-        notesIn.value = "";
-        nameIn.focus();
-      };
-      submitBtn.addEventListener("click", doAdd);
-      nameIn.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          doAdd();
-        }
-      });
-    })();
-
-    function applyResOp(op) {
-      const id = resSelectEl.value;
-      if (!id) {
-        showResFeedback("Pick a resource first.");
-        return;
-      }
-      const amount = Math.max(0, parseInt(resAmountEl.value, 10) || 0);
-      const r = resources.find((x) => String(x.id) === id);
-      if (!r) return;
-      const before = r.value;
-      if (op === "add") r.value += amount;
-      else if (op === "sub") r.value = Math.max(0, r.value - amount);
-      else if (op === "set") r.value = amount;
-      // Update the value display in the list without full re-render
-      const row = resListEl.querySelector(`[data-res-id="${id}"]`);
-      if (row && row._valEl) row._valEl.textContent = r.value;
-      rebuildResSelect(id);
-      saveRes();
-      const notePart = r.notes ? ` (${r.notes})` : "";
-      let logMsg;
-      if (op === "add") {
-        logMsg = `[${r.name || "Resource"}: gained ${amount}, ${before} \u2192 ${r.value} total${notePart}]`;
-      } else if (op === "sub") {
-        logMsg = `[${r.name || "Resource"}: used ${amount}, ${before} \u2192 ${r.value} left${notePart}]`;
-      } else {
-        logMsg = `[${r.name || "Resource"}: set to ${r.value}${notePart}]`;
-      }
-      showResFeedback(
-        op === "set"
-          ? `= ${r.value}`
-          : `${op === "add" ? "+" : "-"}${amount} \u2192 ${r.value}`,
-      );
-      addLog(logMsg);
-    }
-
-    document
-      .getElementById("sc-np-res-op-add")
-      .addEventListener("click", () => applyResOp("add"));
-    document
-      .getElementById("sc-np-res-op-sub")
-      .addEventListener("click", () => applyResOp("sub"));
-    document
-      .getElementById("sc-np-res-op-set")
-      .addEventListener("click", () => applyResOp("set"));
-
-    function loadRes() {
-      chrome.storage.local.get(RES_KEY, (d) => {
-        resources = Array.isArray(d[RES_KEY]) ? d[RES_KEY] : [];
-        renderRes();
-      });
-    }
-
-    /* ════════════════ ABILITY USES ════════════════ */
-    const ABL_KEY = STORAGE_KEYS.abilities;
-    let abilities = [];
-    let ablSaveTimer = null;
-    const ablListEl = document.getElementById("sc-np-abl-list");
-    const ablRestBtn = document.getElementById("sc-np-abl-rest-btn");
-    const ablRestNotesEl = document.getElementById("sc-np-abl-rest-notes");
-
-    function newAbl() {
-      return {
-        id: Date.now() + Math.random(),
-        name: "",
-        notes: "",
-        current: 3,
-        max: 3,
-      };
-    }
-    function saveAbl() {
-      chrome.storage.local.set({ [ABL_KEY]: abilities });
-    }
-    function scheduleAblSave() {
-      clearTimeout(ablSaveTimer);
-      ablSaveTimer = setTimeout(saveAbl, 500);
-    }
-
-    function formatAbilityRestLogLine(changes, note) {
-      const restoredCount = changes.filter(
-        (change) => change.before !== change.after,
-      ).length;
-      const summary = changes.length
-        ? changes
-            .map((change) => {
-              const label = change.name || "(unnamed)";
-              if (change.before === change.after) {
-                return `${label} ${change.after}/${change.max}`;
-              }
-              return `${label} ${change.before}/${change.max} → ${change.after}/${change.max}`;
-            })
-            .join(" | ")
-        : "No abilities tracked";
-      const notePart = note ? ` — Notes: ${note}` : "";
-      return `[Rest: ${restoredCount} restored — ${summary}${notePart}]`;
-    }
-
-    function applyAbilityRest() {
-      const note = (ablRestNotesEl?.value || "").trim();
-      if (!abilities.length) {
-        addLog(
-          `[Rest: no abilities tracked${note ? ` — Notes: ${note}` : ""}]`,
-        );
-        if (ablRestNotesEl) {
-          ablRestNotesEl.value = "";
-          autoResizeTextarea(ablRestNotesEl);
-        }
-        return;
-      }
-
-      const changes = abilities.map((a) => {
-        const before = Math.max(0, Number(a.current) || 0);
-        const max = Math.max(1, Number(a.max) || 1);
-        a.current = max;
-        return {
-          name: (a.name || "").trim(),
-          before,
-          after: max,
-          max,
-        };
-      });
-
-      saveAbl();
-      addLog(formatAbilityRestLogLine(changes, note));
-      if (ablRestNotesEl) {
-        ablRestNotesEl.value = "";
-        autoResizeTextarea(ablRestNotesEl);
-      }
-      renderAbl();
-    }
-
-    function renderAbl() {
-      if (ablRestBtn) {
-        ablRestBtn.disabled = abilities.length === 0;
-        ablRestBtn.textContent = abilities.length ? "Take Rest" : "No Rest";
-      }
-      ablListEl.innerHTML = "";
-      if (!abilities.length) {
-        const e = document.createElement("div");
-        e.className = "ql-empty-state";
-        e.style.padding = "6px 0";
-        e.textContent = "No abilities yet.";
-        ablListEl.appendChild(e);
-        return;
-      }
-      abilities.forEach((a, idx) => {
-        const wrapper = document.createElement("div");
-        wrapper.style.cssText =
-          "display:flex;flex-direction:column;gap:4px;padding:5px 0;border-bottom:1px solid rgba(108,99,255,0.07);";
-        if (idx === abilities.length - 1) wrapper.style.borderBottom = "none";
-
-        // Top row: name (display/edit) + cur/max + RST + toggle + delete
-        const topRow = document.createElement("div");
-        topRow.className = "abl-item";
-
-        const nameSpan = document.createElement("span");
-        nameSpan.className = "item-disp-name";
-        nameSpan.style.fontSize = "12px";
-        nameSpan.textContent = a.name || "(unnamed)";
-
-        const nameEditIn = document.createElement("input");
-        nameEditIn.type = "text";
-        nameEditIn.className = "af-input";
-        nameEditIn.value = a.name;
-        nameEditIn.placeholder = "Ability name\u2026";
-        nameEditIn.maxLength = 40;
-        nameEditIn.style.display = "none";
-        nameEditIn.setAttribute("data-ai-rewriter-ignore", "1");
-        nameEditIn.addEventListener("input", () => {
-          a.name = nameEditIn.value;
-          scheduleAblSave();
-        });
-
-        const curEl = document.createElement("span");
-        curEl.className = "abl-cur";
-        curEl.textContent = a.current;
-        curEl.style.opacity = a.current === 0 ? "0.35" : "1";
-
-        const sep = document.createElement("span");
-        sep.className = "abl-sep";
-        sep.textContent = "/";
-
-        // Max: static display by default, editable only in edit mode
-        const maxSpan = document.createElement("span");
-        maxSpan.className = "abl-sep";
-        maxSpan.textContent = a.max;
-
-        const maxEditIn = document.createElement("input");
-        maxEditIn.type = "number";
-        maxEditIn.className = "abl-max-input";
-        maxEditIn.value = a.max;
-        maxEditIn.min = 1;
-        maxEditIn.max = 99;
-        maxEditIn.style.display = "none";
-        maxEditIn.setAttribute("data-ai-rewriter-ignore", "1");
-        maxEditIn.addEventListener("input", () => {
-          a.max = Math.max(1, parseInt(maxEditIn.value, 10) || 1);
-          scheduleAblSave();
-        });
-
-        const resetBtn = document.createElement("button");
-        resetBtn.className = "abl-reset-btn";
-        resetBtn.textContent = "RST";
-        resetBtn.addEventListener("click", () => {
-          a.current = a.max;
-          saveAbl();
-          const notesPart = a.notes ? ` (${a.notes})` : "";
-          addLog(
-            `[${a.name || "Ability"} restored \u2014 ${a.current}/${a.max}${notesPart}]`,
-          );
-          renderAbl();
-        });
-
-        const toggleBtn = document.createElement("button");
-        toggleBtn.className = "item-toggle-btn edit";
-        toggleBtn.textContent = "\u270e";
-        let isEditing = false;
-
-        const delBtn = document.createElement("button");
-        delBtn.className = "abl-delete-btn";
-        delBtn.title = "Remove";
-        delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-        delBtn.addEventListener("click", () => {
-          const notesPart = a.notes ? ` (${a.notes})` : "";
-          addLog(`[Ability removed: ${a.name || "(unnamed)"}${notesPart}]`);
-          abilities.splice(idx, 1);
-          saveAbl();
-          renderAbl();
-        });
-
-        topRow.append(
-          nameSpan,
-          nameEditIn,
-          curEl,
-          sep,
-          maxSpan,
-          maxEditIn,
-          resetBtn,
-          toggleBtn,
-          delBtn,
-        );
-
-        // Notes: display span / edit textarea
-        const notesSpan = document.createElement("div");
-        notesSpan.className = "item-disp-note";
-        notesSpan.textContent = a.notes;
-        notesSpan.style.display = a.notes ? "" : "none";
-
-        const notesEditIn = document.createElement("textarea");
-        notesEditIn.className = "af-textarea";
-        notesEditIn.value = a.notes || "";
-        notesEditIn.placeholder =
-          "Describe this ability, its effect, duration\u2026";
-        notesEditIn.rows = 1;
-        notesEditIn.style.display = "none";
-        notesEditIn.setAttribute("data-ai-rewriter-ignore", "1");
-        notesEditIn.addEventListener("input", () => {
-          a.notes = notesEditIn.value;
-          autoResizeTextarea(notesEditIn);
-          scheduleAblSave();
-        });
-
-        toggleBtn.addEventListener("click", () => {
-          isEditing = !isEditing;
-          if (isEditing) {
-            nameSpan.style.display = "none";
-            nameEditIn.style.display = "";
-            maxSpan.style.display = "none";
-            maxEditIn.style.display = "";
-            notesSpan.style.display = "none";
-            notesEditIn.style.display = "";
-            toggleBtn.className = "item-toggle-btn save";
-            toggleBtn.textContent = "\u2713 Save";
-            nameEditIn.value = a.name;
-            maxEditIn.value = a.max;
-            notesEditIn.value = a.notes || "";
-            setTimeout(() => autoResizeTextarea(notesEditIn), 0);
-            nameEditIn.focus();
-          } else {
-            nameEditIn.style.display = "none";
-            nameSpan.style.display = "";
-            maxEditIn.style.display = "none";
-            maxSpan.style.display = "";
-            notesEditIn.style.display = "none";
-            toggleBtn.className = "item-toggle-btn edit";
-            toggleBtn.textContent = "\u270e";
-            nameSpan.textContent = a.name || "(unnamed)";
-            maxSpan.textContent = a.max;
-            notesSpan.textContent = a.notes;
-            notesSpan.style.display = a.notes ? "" : "none";
-          }
-        });
-
-        // Use buttons row (always visible)
-        const useRow = document.createElement("div");
-        useRow.style.cssText = "display:flex;flex-wrap:wrap;gap:4px;";
-        const useCount = Math.min(a.max, 10);
-        for (let i = 0; i < useCount; i++) {
-          const btn = document.createElement("button");
-          btn.style.cssText =
-            "flex:1;min-width:28px;padding:4px 0;border-radius:5px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;border:1px solid;transition:background 0.12s,opacity 0.12s;";
-          const used = i >= a.current;
-          btn.style.background = used
-            ? "rgba(108,99,255,0.04)"
-            : "rgba(108,99,255,0.15)";
-          btn.style.borderColor = used
-            ? "rgba(108,99,255,0.1)"
-            : "rgba(108,99,255,0.4)";
-          btn.style.color = used ? "#334155" : "#a78bfa";
-          btn.style.opacity = used ? "0.4" : "1";
-          btn.textContent = "Use";
-          btn.disabled = a.current === 0;
-          btn.addEventListener("click", () => {
-            if (a.current <= 0) return;
-            a.current--;
-            curEl.textContent = a.current;
-            curEl.style.opacity = a.current === 0 ? "0.35" : "1";
-            saveAbl();
-            const notesPart = a.notes ? ` \u2014 ${a.notes}` : "";
-            addLog(
-              `[${a.name || "Ability"} used \u2014 ${a.current}/${a.max} remaining${notesPart}]`,
-            );
-            renderAbl();
-          });
-          useRow.appendChild(btn);
-        }
-        if (a.max > 10) {
-          const more = document.createElement("span");
-          more.style.cssText =
-            "font-size:9.5px;color:#334155;align-self:center;padding:0 4px;";
-          more.textContent = `+${a.max - 10} more`;
-          useRow.appendChild(more);
-        }
-
-        wrapper.append(topRow, notesSpan, notesEditIn, useRow);
-        ablListEl.appendChild(wrapper);
-      });
-    }
-
-    // Ability add form (inserted before list)
-    (function () {
-      const form = document.createElement("div");
-      form.className = "af-form";
-      const nameIn = document.createElement("input");
-      nameIn.type = "text";
-      nameIn.className = "af-input";
-      nameIn.placeholder = "Ability name\u2026";
-      nameIn.maxLength = 40;
-      nameIn.setAttribute("data-ai-rewriter-ignore", "1");
-      const maxIn = document.createElement("input");
-      maxIn.type = "number";
-      maxIn.className = "af-number";
-      maxIn.value = "3";
-      maxIn.min = "1";
-      maxIn.max = "99";
-      maxIn.setAttribute("data-ai-rewriter-ignore", "1");
-      const notesIn = document.createElement("textarea");
-      notesIn.className = "af-textarea";
-      notesIn.rows = 1;
-      notesIn.placeholder = "Description, effect, duration (optional)\u2026";
-      notesIn.setAttribute("data-ai-rewriter-ignore", "1");
-      const submitBtn = document.createElement("button");
-      submitBtn.className = "af-submit";
-      submitBtn.textContent = "+ Add Ability";
-      const row = document.createElement("div");
-      row.className = "af-row";
-      row.append(nameIn, maxIn, submitBtn);
-      form.append(row, notesIn);
-      ablListEl.parentNode.insertBefore(form, ablListEl);
-      const doAdd = () => {
-        const name = nameIn.value.trim();
-        const max = Math.max(1, parseInt(maxIn.value, 10) || 3);
-        const notes = notesIn.value.trim();
-        const abl = newAbl();
-        abl.name = name;
-        abl.max = max;
-        abl.current = max;
-        abl.notes = notes;
-        abilities.push(abl);
-        saveAbl();
-        renderAbl();
-        const notesPart = notes ? ` \u2014 ${notes}` : "";
-        addLog(
-          `[Ability added: ${name || "(unnamed)"}${notesPart} (${max}/${max} uses)]`,
-        );
-        nameIn.value = "";
-        maxIn.value = "3";
-        notesIn.value = "";
-        autoResizeTextarea(notesIn);
-        nameIn.focus();
-      };
-      submitBtn.addEventListener("click", doAdd);
-      nameIn.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          doAdd();
-        }
-      });
-      notesIn.addEventListener("input", () => autoResizeTextarea(notesIn));
-    })();
-
-    ablRestBtn.addEventListener("click", applyAbilityRest);
-    ablRestNotesEl.addEventListener("input", () =>
-      autoResizeTextarea(ablRestNotesEl),
-    );
-
-    function loadAbl() {
-      chrome.storage.local.get(ABL_KEY, (d) => {
-        abilities = Array.isArray(d[ABL_KEY]) ? d[ABL_KEY] : [];
-        renderAbl();
-      });
-    }
-
-    /* ════════════════ PARTY TRACKER ════════════════ */
-    const PARTY_KEY = STORAGE_KEYS.party;
-    const DEFAULT_PARTY_STATUS = "Healthy";
-    const PARTY_STATUS_PRESETS = ["Healthy", "Downed", "Dead", "Absent"];
-    let party = [];
-    let partySaveTimer = null;
-    const partyListEl = document.getElementById("sc-np-party-list");
-
-    function newPartyMember() {
-      return {
-        id: Date.now() + Math.random(),
-        name: "",
-        notes: "",
-        status: DEFAULT_PARTY_STATUS,
-      };
-    }
-    function saveParty() {
-      chrome.storage.local.set({ [PARTY_KEY]: party });
-    }
-    function schedulePartySave() {
-      clearTimeout(partySaveTimer);
-      partySaveTimer = setTimeout(saveParty, 500);
-    }
-
-    function renderParty() {
-      partyListEl.innerHTML = "";
-      if (!party.length) {
-        const e = document.createElement("div");
-        e.className = "ql-empty-state";
-        e.style.padding = "6px 0";
-        e.textContent = "No party members yet.";
-        partyListEl.appendChild(e);
-        return;
-      }
-      party.forEach((m, idx) => {
-        const row = document.createElement("div");
-        row.className = "party-item";
-        const top = document.createElement("div");
-        top.className = "party-top";
-        const statusPill = document.createElement("span");
-        statusPill.className =
-          "party-status-pill party-status-" + partyStatusToneClass(m.status);
-        statusPill.textContent = normalizePartyStatus(m.status);
-        const nameSpan = document.createElement("span");
-        nameSpan.className = "item-disp-name";
-        nameSpan.textContent = m.name || "(unnamed)";
-        const nameEditIn = document.createElement("input");
-        nameEditIn.type = "text";
-        nameEditIn.className = "af-input";
-        nameEditIn.value = m.name;
-        nameEditIn.placeholder = "Name\u2026";
-        nameEditIn.maxLength = 40;
-        nameEditIn.style.display = "none";
-        nameEditIn.setAttribute("data-ai-rewriter-ignore", "1");
-        nameEditIn.addEventListener("input", () => {
-          m.name = nameEditIn.value;
-          schedulePartySave();
-        });
-        const notesSpan = document.createElement("div");
-        notesSpan.className = "item-disp-note";
-        notesSpan.textContent = m.notes || "";
-        notesSpan.style.display = m.notes ? "" : "none";
-        const notesEditIn = document.createElement("input");
-        notesEditIn.type = "text";
-        notesEditIn.className = "party-note-input";
-        notesEditIn.value = m.notes || "";
-        notesEditIn.placeholder = "Notes (optional)…";
-        notesEditIn.style.display = "none";
-        notesEditIn.setAttribute("data-ai-rewriter-ignore", "1");
-        notesEditIn.addEventListener("input", () => {
-          m.notes = notesEditIn.value;
-          schedulePartySave();
-        });
-        const statusEditIn = document.createElement("input");
-        statusEditIn.type = "text";
-        statusEditIn.className = "party-status-input";
-        statusEditIn.value = normalizePartyStatus(m.status);
-        statusEditIn.placeholder = "Status…";
-        statusEditIn.maxLength = 40;
-        statusEditIn.style.display = "none";
-        statusEditIn.setAttribute("data-ai-rewriter-ignore", "1");
-        statusEditIn.setAttribute("list", "sc-np-party-status-list");
-        statusEditIn.addEventListener("input", () => {
-          m.status = normalizePartyStatus(statusEditIn.value);
-          schedulePartySave();
-        });
-        const toggleBtn = document.createElement("button");
-        toggleBtn.className = "item-toggle-btn edit";
-        toggleBtn.textContent = "✎";
-        let isEditing = false;
-        let statusBeforeEdit = normalizePartyStatus(m.status);
-        toggleBtn.addEventListener("click", () => {
-          isEditing = !isEditing;
-          if (isEditing) {
-            nameSpan.style.display = "none";
-            nameEditIn.style.display = "";
-            statusPill.style.display = "none";
-            statusEditIn.style.display = "";
-            notesSpan.style.display = "none";
-            notesEditIn.style.display = "";
-            toggleBtn.className = "item-toggle-btn save";
-            toggleBtn.textContent = "✓ Save";
-            nameEditIn.value = m.name;
-            statusBeforeEdit = normalizePartyStatus(m.status);
-            statusEditIn.value = statusBeforeEdit;
-            notesEditIn.value = m.notes || "";
-            nameEditIn.focus();
-          } else {
-            m.status = normalizePartyStatus(statusEditIn.value);
-            nameEditIn.style.display = "none";
-            nameSpan.style.display = "";
-            statusEditIn.style.display = "none";
-            statusPill.className =
-              "party-status-pill party-status-" +
-              partyStatusToneClass(m.status);
-            statusPill.textContent = normalizePartyStatus(m.status);
-            statusPill.style.display = "";
-            notesEditIn.style.display = "none";
-            notesSpan.textContent = m.notes || "";
-            notesSpan.style.display = m.notes ? "" : "none";
-            toggleBtn.className = "item-toggle-btn edit";
-            toggleBtn.textContent = "✎";
-            nameSpan.textContent = m.name || "(unnamed)";
-            const statusAfterEdit = normalizePartyStatus(m.status);
-            if (statusAfterEdit !== statusBeforeEdit) {
-              const notesPart = m.notes ? ` — ${m.notes}` : "";
-              addLog(
-                `[Party: ${m.name || "(unnamed)"} status ${statusBeforeEdit} → ${statusAfterEdit}${notesPart}]`,
-              );
-            }
-          }
-        });
-        const delBtn = document.createElement("button");
-        delBtn.className = "party-delete-btn";
-        delBtn.title = "Remove";
-        delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-        delBtn.addEventListener("click", () => {
-          const notesPart = m.notes ? ` — ${m.notes}` : "";
-          addLog(`[Party: ${m.name || "(unnamed)"} removed${notesPart}]`);
-          party.splice(idx, 1);
-          saveParty();
-          renderParty();
-        });
-        top.append(
-          statusPill,
-          nameSpan,
-          nameEditIn,
-          statusEditIn,
-          toggleBtn,
-          delBtn,
-        );
-        row.append(top, notesSpan, notesEditIn);
-        partyListEl.appendChild(row);
-      });
-    }
-
-    // Party add form
-    (function () {
-      const form = document.createElement("div");
-      form.className = "af-form";
-      const nameIn = document.createElement("input");
-      nameIn.type = "text";
-      nameIn.className = "af-input";
-      nameIn.placeholder = "Member name\u2026";
-      nameIn.maxLength = 40;
-      nameIn.setAttribute("data-ai-rewriter-ignore", "1");
-      const statusIn = document.createElement("input");
-      statusIn.type = "text";
-      statusIn.className = "af-input";
-      statusIn.placeholder = "Status…";
-      statusIn.maxLength = 40;
-      statusIn.style.maxWidth = "120px";
-      statusIn.value = DEFAULT_PARTY_STATUS;
-      statusIn.setAttribute("data-ai-rewriter-ignore", "1");
-      statusIn.setAttribute("list", "sc-np-party-status-list");
-      const statusList = document.createElement("datalist");
-      statusList.id = "sc-np-party-status-list";
-      PARTY_STATUS_PRESETS.forEach((status) => {
-        const opt = document.createElement("option");
-        opt.value = status;
-        statusList.appendChild(opt);
-      });
-      const notesIn = document.createElement("input");
-      notesIn.type = "text";
-      notesIn.className = "af-input";
-      notesIn.placeholder = "Notes (optional)…";
-      notesIn.setAttribute("data-ai-rewriter-ignore", "1");
-      const submitBtn = document.createElement("button");
-      submitBtn.className = "af-submit";
-      submitBtn.textContent = "+ Add";
-      const row = document.createElement("div");
-      row.className = "af-row";
-      row.append(nameIn, statusIn, submitBtn);
-      form.append(row, notesIn);
-      form.appendChild(statusList);
-      partyListEl.parentNode.insertBefore(form, partyListEl);
-      const doAdd = () => {
-        const name = nameIn.value.trim();
-        const status = normalizePartyStatus(statusIn.value);
-        const notes = notesIn.value.trim();
-        const member = newPartyMember();
-        member.name = name;
-        member.status = status;
-        member.notes = notes;
-        party.push(member);
-        saveParty();
-        renderParty();
-        const notesPart = notes ? ` — ${notes}` : "";
-        addLog(
-          `[Party: ${name || "(unnamed)"} joined — ${status}${notesPart}]`,
-        );
-        nameIn.value = "";
-        statusIn.value = DEFAULT_PARTY_STATUS;
-        notesIn.value = "";
-        nameIn.focus();
-      };
-      submitBtn.addEventListener("click", doAdd);
-      nameIn.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          doAdd();
-        }
-      });
-    })();
-
-    function loadParty() {
-      chrome.storage.local.get(PARTY_KEY, (d) => {
-        const incoming = Array.isArray(d[PARTY_KEY]) ? d[PARTY_KEY] : [];
-        party = incoming
-          .map((member, idx) => normalizeImportedPartyMember(member, idx))
-          .filter(Boolean);
-        const migrated = JSON.stringify(incoming) !== JSON.stringify(party);
-        if (migrated) saveParty();
-        renderParty();
-      });
-    }
-
-    /* ════════════════ NPC TRACKER ════════════════ */
-    const NPC_KEY = STORAGE_KEYS.npcs;
-    const NPC_DISPS = ["friendly", "neutral", "hostile"];
-    const DISP_LABELS = {
-      friendly: "Friendly",
-      neutral: "Neutral",
-      hostile: "Hostile",
-    };
-    let npcs = [];
-    let npcSaveTimer = null;
-    const npcListEl = document.getElementById("sc-np-npc-list");
-
-    function newNpc() {
-      return {
-        id: Date.now() + Math.random(),
-        name: "",
-        note: "",
-        disp: "neutral",
-      };
-    }
-    function saveNpcs() {
-      chrome.storage.local.set({ [NPC_KEY]: npcs });
-    }
-    function scheduleNpcSave() {
-      clearTimeout(npcSaveTimer);
-      npcSaveTimer = setTimeout(saveNpcs, 500);
-    }
-
-    function renderNpcs() {
-      npcListEl.innerHTML = "";
-      if (!npcs.length) {
-        const e = document.createElement("div");
-        e.className = "ql-empty-state";
-        e.style.padding = "6px 0";
-        e.textContent = "No NPCs yet.";
-        npcListEl.appendChild(e);
-        return;
-      }
-      npcs.forEach((n, idx) => {
-        const card = document.createElement("div");
-        card.className = "npc-item";
-        const top = document.createElement("div");
-        top.className = "npc-top";
-        const dispBtn = document.createElement("button");
-        dispBtn.className = "npc-disp-btn npc-disp-" + n.disp;
-        dispBtn.textContent = DISP_LABELS[n.disp];
-        dispBtn.title = "Click to cycle disposition";
-        dispBtn.addEventListener("click", () => {
-          const cur = NPC_DISPS.indexOf(n.disp);
-          n.disp = NPC_DISPS[(cur + 1) % NPC_DISPS.length];
-          dispBtn.className = "npc-disp-btn npc-disp-" + n.disp;
-          dispBtn.textContent = DISP_LABELS[n.disp];
-          addLog(`[NPC ${n.name || "(unnamed)"} \u2192 ${n.disp}]`);
-          saveNpcs();
-        });
-        // Name: display / edit
-        const nameSpan = document.createElement("span");
-        nameSpan.className = "item-disp-name";
-        nameSpan.textContent = n.name || "(unnamed)";
-        const nameEditIn = document.createElement("input");
-        nameEditIn.type = "text";
-        nameEditIn.className = "af-input";
-        nameEditIn.value = n.name;
-        nameEditIn.placeholder = "NPC name\u2026";
-        nameEditIn.maxLength = 40;
-        nameEditIn.style.display = "none";
-        nameEditIn.setAttribute("data-ai-rewriter-ignore", "1");
-        nameEditIn.addEventListener("input", () => {
-          n.name = nameEditIn.value;
-          scheduleNpcSave();
-        });
-        const toggleBtn = document.createElement("button");
-        toggleBtn.className = "item-toggle-btn edit";
-        toggleBtn.textContent = "✎";
-        let isEditing = false;
-        const delBtn = document.createElement("button");
-        delBtn.className = "npc-delete-btn";
-        delBtn.title = "Remove";
-        delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-        delBtn.addEventListener("click", () => {
-          addLog(`[NPC removed: ${n.name || "(unnamed)"}]`);
-          npcs.splice(idx, 1);
-          saveNpcs();
-          renderNpcs();
-        });
-        top.append(dispBtn, nameSpan, nameEditIn, toggleBtn, delBtn);
-        // Note: display / edit
-        const noteSpan = document.createElement("div");
-        noteSpan.style.cssText =
-          "color:#64748b;font-size:11.5px;font-family:inherit;padding:2px 0;";
-        noteSpan.textContent = n.note;
-        noteSpan.style.display = n.note ? "" : "none";
-        const noteEditIn = document.createElement("input");
-        noteEditIn.type = "text";
-        noteEditIn.className = "af-input";
-        noteEditIn.value = n.note;
-        noteEditIn.placeholder = "Short note\u2026";
-        noteEditIn.maxLength = 80;
-        noteEditIn.style.display = "none";
-        noteEditIn.setAttribute("data-ai-rewriter-ignore", "1");
-        noteEditIn.addEventListener("input", () => {
-          n.note = noteEditIn.value;
-          scheduleNpcSave();
-        });
-        toggleBtn.addEventListener("click", () => {
-          isEditing = !isEditing;
-          if (isEditing) {
-            nameSpan.style.display = "none";
-            nameEditIn.style.display = "";
-            noteSpan.style.display = "none";
-            noteEditIn.style.display = "";
-            toggleBtn.className = "item-toggle-btn save";
-            toggleBtn.textContent = "✓ Save";
-            nameEditIn.value = n.name;
-            noteEditIn.value = n.note;
-            nameEditIn.focus();
-          } else {
-            nameEditIn.style.display = "none";
-            noteEditIn.style.display = "none";
-            toggleBtn.className = "item-toggle-btn edit";
-            toggleBtn.textContent = "✎";
-            nameSpan.style.display = "";
-            nameSpan.textContent = n.name || "(unnamed)";
-            noteSpan.textContent = n.note;
-            noteSpan.style.display = n.note ? "" : "none";
-          }
-        });
-        card.append(top, noteSpan, noteEditIn);
-        npcListEl.appendChild(card);
-      });
-    }
-
-    // NPC add form
-    (function () {
-      const form = document.createElement("div");
-      form.className = "af-form";
-      const nameIn = document.createElement("input");
-      nameIn.type = "text";
-      nameIn.className = "af-input";
-      nameIn.placeholder = "NPC name\u2026";
-      nameIn.maxLength = 40;
-      nameIn.setAttribute("data-ai-rewriter-ignore", "1");
-      const noteIn = document.createElement("input");
-      noteIn.type = "text";
-      noteIn.className = "af-input";
-      noteIn.placeholder = "Note (optional)\u2026";
-      noteIn.maxLength = 80;
-      noteIn.setAttribute("data-ai-rewriter-ignore", "1");
-      const dispSel = document.createElement("select");
-      dispSel.className = "af-select";
-      dispSel.style.maxWidth = "90px";
-      dispSel.setAttribute("data-ai-rewriter-ignore", "1");
-      NPC_DISPS.forEach((d) => {
-        const opt = document.createElement("option");
-        opt.value = d;
-        opt.textContent = DISP_LABELS[d];
-        dispSel.appendChild(opt);
-      });
-      dispSel.value = "neutral";
-      const submitBtn = document.createElement("button");
-      submitBtn.className = "af-submit";
-      submitBtn.textContent = "+ Add NPC";
-      const row1 = document.createElement("div");
-      row1.className = "af-row";
-      row1.append(nameIn, dispSel, submitBtn);
-      form.append(row1, noteIn);
-      npcListEl.parentNode.insertBefore(form, npcListEl);
-      const doAdd = () => {
-        const name = nameIn.value.trim();
-        const note = noteIn.value.trim();
-        const disp = dispSel.value || "neutral";
-        const npc = newNpc();
-        npc.name = name;
-        npc.note = note;
-        npc.disp = disp;
-        npcs.push(npc);
-        saveNpcs();
-        renderNpcs();
-        const notePart = note ? ` \u2014 ${note}` : "";
-        addLog(`[NPC met: ${name || "(unnamed)"} (${disp})${notePart}]`);
-        nameIn.value = "";
-        noteIn.value = "";
-        dispSel.value = "neutral";
-        nameIn.focus();
-      };
-      submitBtn.addEventListener("click", doAdd);
-      nameIn.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          doAdd();
-        }
-      });
-    })();
-
-    function loadNpcs() {
-      chrome.storage.local.get(NPC_KEY, (d) => {
-        npcs = Array.isArray(d[NPC_KEY]) ? d[NPC_KEY] : [];
-        renderNpcs();
-      });
-    }
-
-    /* ════════════════ RUMOURS BOARD ════════════════ */
-    const RUMOUR_KEY = STORAGE_KEYS.rumours;
-    let rumours = [];
-    let rumourSaveTimer = null;
-    const rumourListEl = document.getElementById("sc-np-rumour-list");
-    const rumourAddBtn = document.getElementById("sc-np-rumour-add");
-
-    function newRumour() {
-      return { id: Date.now() + Math.random(), text: "", done: false };
-    }
-    function saveRumours() {
-      chrome.storage.local.set({ [RUMOUR_KEY]: rumours });
-    }
-    function scheduleRumourSave() {
-      clearTimeout(rumourSaveTimer);
-      rumourSaveTimer = setTimeout(saveRumours, 500);
-    }
-
-    function renderRumours() {
-      rumourListEl.innerHTML = "";
-      if (!rumours.length) {
-        const e = document.createElement("div");
-        e.className = "ql-empty-state";
-        e.style.padding = "6px 0";
-        e.textContent = "No rumours yet.";
-        rumourListEl.appendChild(e);
-        return;
-      }
-      rumours.forEach((r, idx) => {
-        const row = document.createElement("div");
-        row.className = "rumour-item" + (r.done ? " rumour-done" : "");
-        const check = document.createElement("div");
-        check.className = "rumour-check";
-        check.title = "Mark as followed up";
-        if (r.done)
-          check.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-        check.addEventListener("click", () => {
-          r.done = !r.done;
-          addLog(
-            `[Rumour ${r.done ? "followed up" : "reopened"}: "${(r.text || "(empty)").slice(0, 60)}"]`,
-          );
-          saveRumours();
-          renderRumours();
-        });
-        const textIn = document.createElement("textarea");
-        textIn.className = "rumour-text-input";
-        textIn.value = r.text;
-        textIn.placeholder = "Rumour or lead\u2026";
-        textIn.rows = 1;
-        textIn.setAttribute("data-ai-rewriter-ignore", "1");
-        textIn.addEventListener("input", () => {
-          r.text = textIn.value;
-          autoResizeTextarea(textIn);
-          scheduleRumourSave();
-        });
-        setTimeout(() => autoResizeTextarea(textIn), 0);
-        const delBtn = document.createElement("button");
-        delBtn.className = "rumour-delete-btn";
-        delBtn.title = "Remove";
-        delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-        delBtn.addEventListener("click", () => {
-          addLog(`[Rumour removed: "${(r.text || "(empty)").slice(0, 60)}"]`);
-          rumours.splice(idx, 1);
-          saveRumours();
-          renderRumours();
-        });
-        row.append(check, textIn, delBtn);
-        rumourListEl.appendChild(row);
-      });
-    }
-
-    rumourAddBtn.addEventListener("click", () => {
-      const rumour = newRumour();
-      rumours.push(rumour);
-      saveRumours();
-      renderRumours();
-      const inputs = rumourListEl.querySelectorAll(".rumour-text-input");
-      if (inputs.length) {
-        const lastInput = inputs[inputs.length - 1];
-        lastInput.focus();
-        const logOnBlur = () => {
-          lastInput.removeEventListener("blur", logOnBlur);
-          if (rumour.text.trim())
-            addLog(`[Rumour added: "${rumour.text.slice(0, 60)}"]`);
-        };
-        lastInput.addEventListener("blur", logOnBlur);
-      }
+    resourcesSection = sectionFactory.createResourcesSection({
+      storageKey: RES_KEY,
+      addLog,
+      getResources: () => resources,
+      setResources: (next) => {
+        resources = Array.isArray(next) ? next : [];
+      },
     });
 
-    function loadRumours() {
-      chrome.storage.local.get(RUMOUR_KEY, (d) => {
-        rumours = Array.isArray(d[RUMOUR_KEY]) ? d[RUMOUR_KEY] : [];
-        renderRumours();
-      });
-    }
+    abilitiesSection = sectionFactory.createAbilitiesSection({
+      storageKey: ABL_KEY,
+      addLog,
+      autoResizeTextarea,
+      getAbilities: () => abilities,
+      setAbilities: (next) => {
+        abilities = Array.isArray(next) ? next : [];
+      },
+    });
 
+    partySection = sectionFactory.createPartySection({
+      storageKey: PARTY_KEY,
+      addLog,
+      getParty: () => party,
+      setParty: (next) => {
+        party = Array.isArray(next) ? next : [];
+      },
+      normalizePartyStatus,
+      partyStatusToneClass,
+      normalizeImportedPartyMember,
+      defaultStatus: DEFAULT_PARTY_STATUS,
+      statusPresets: PARTY_STATUS_PRESETS,
+    });
+
+    npcsSection = sectionFactory.createNpcsSection({
+      storageKey: NPC_KEY,
+      addLog,
+      getNpcs: () => npcs,
+      setNpcs: (next) => {
+        npcs = Array.isArray(next) ? next : [];
+      },
+    });
+
+    rumoursSection = sectionFactory.createRumoursSection({
+      storageKey: RUMOUR_KEY,
+      addLog,
+      autoResizeTextarea,
+      getRumours: () => rumours,
+      setRumours: (next) => {
+        rumours = Array.isArray(next) ? next : [];
+      },
+    });
     /* ── Open / close ── */
     function setOpen(val) {
       isOpen = val;

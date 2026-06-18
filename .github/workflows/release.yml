@@ -52,6 +52,7 @@ jobs:
             options.html \
             options.css \
             options.js \
+            spicychat-rpg-tracker-sections.js \
             icons/
 
       - name: Create GitHub Release
