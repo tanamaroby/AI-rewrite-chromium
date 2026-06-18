@@ -14,6 +14,7 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Party default status is now **Healthy** (legacy `active` values are migrated to `Healthy`).
 - WIP: Mobile userscript no longer requires embedding an API key in source; API key is now saved in userscript runtime storage via settings UI.
 - WIP: Updated project docs and in-product copy to match current behavior (no keyword triggers, SpicyChat-only AI rewrites, formatter shortcuts).
+- WIP: Unified RPG tracker storage key handling in options data management so saved-chat list, export/import, and delete-all operations stay consistent with current keys (including Dice Mods and Scene Context) while cleaning legacy inventory keys on delete.
 
 ## [2.0.0] - 2026-06-14
 
