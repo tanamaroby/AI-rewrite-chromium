@@ -12,6 +12,8 @@ Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Renamed the SpicyChat tracker content script file to `spicychat-rpg-tracker-drawer.js` to remove legacy "memory drawer" naming.
 - Party tracker status editing now uses a freeform text field (with suggested defaults) instead of click-to-cycle, preventing multi-step status-change logs.
 - Party default status is now **Healthy** (legacy `active` values are migrated to `Healthy`).
+- WIP: Mobile userscript no longer requires embedding an API key in source; API key is now saved in userscript runtime storage via settings UI.
+- WIP: Updated project docs and in-product copy to match current behavior (no keyword triggers, SpicyChat-only AI rewrites, formatter shortcuts).
 
 ## [2.0.0] - 2026-06-14
 

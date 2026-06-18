@@ -1,5 +1,5 @@
 // content.js — Injected into every page
-// Watches textareas/contenteditable elements for rewrite keywords
+// Runs local formatter everywhere; AI rewrites are gated to SpicyChat only
 
 (function () {
   "use strict";

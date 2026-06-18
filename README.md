@@ -1,127 +1,75 @@
-# AI Rewriter — Chrome Extension
+# AI Rewriter - Chrome Extension
 
-Rewrite text in **any textbox** on any website using AI. Type a keyword shortcut at the end of your text and the extension replaces it with a rewritten version powered by [OpenRouter](https://openrouter.ai).
+AI-assisted rewriting for SpicyChat plus a local text formatter for any textbox.
 
-No Chrome Web Store required. Load it directly in Chrome in under a minute.
+## Current behavior
 
----
+- AI rewrites run only on spicychat.ai
+- The local formatter runs on any website
+- No keyword triggers are used
+- Rewrites are run from the SpicyChat drawer RP Tools tab or Ctrl+N
+- Formatting runs with Ctrl+M and no-tracker formatting runs with Ctrl+Shift+M
 
 ## Features
 
-- **Keyword shortcuts** — type `//re`, `//bt`, `//slime` (or any custom trigger) at the end of your text
-- **Works everywhere** — `<textarea>`, `<input>`, and `contenteditable` elements (Gmail, Notion, Twitter, etc.)
-- **Fully customizable** — add, edit, or remove keywords and their AI prompts in the options page
-- **Any OpenRouter model** — defaults to `openrouter/free` (auto-routes to whichever free model is available), or set a paid model like `thedrummer/cydonia-24b-v4.1` for uncensored rewrites
-- **Loading overlay** — glass-morphism spinner while the AI is thinking
-- **Retry with backoff** — automatically retries up to 3× on transient errors
-
----
+- Rewrites presets: 5 saved presets (name + prompt), one active at a time
+- Scene Context: per-chat context, location, clothes, status, dialogue style
+- Persona slots: 10 saved personas with description and personality fields
+- RPG session tracker drawer on SpicyChat chat pages:
+   quest log, resources, abilities, party, NPCs, rumours, dice tools
+- Formatter pipeline in content script (no AI call required)
+- OpenRouter model selection (default openrouter/free)
+- Retry with exponential backoff for API calls in the service worker
 
 ## Installation
 
-### One-time setup
+1. Download the latest release zip from ../../releases/latest
+2. Unzip to a permanent folder
+3. Open chrome://extensions
+4. Enable Developer mode
+5. Click Load unpacked and select the folder
 
-1. **[Download the latest release zip](../../releases/latest)** (`ai-rewriter-vX.X.X.zip`)
-2. Unzip it to a **permanent location** — Chrome loads the extension live from this folder, so don't delete or move it later
-   ```
-   ~/Extensions/ai-rewriter/
-   ```
-3. Open Chrome and go to `chrome://extensions`
-4. Enable **Developer mode** (toggle in the top-right corner)
-5. Click **Load unpacked** → select the unzipped folder
-6. The AI Rewriter icon appears in your toolbar
+## Setup
 
-### Configure your API key
-
-1. Click the extension icon → **Open Settings** (or right-click → *Options*)
-2. Go to the **API Key** tab
-3. Get a free key at [openrouter.ai/settings/keys](https://openrouter.ai/settings/keys) (no credit card required for free models)
-4. Paste the key and click **Save API Key**
-
----
+1. Open extension settings
+2. Add your OpenRouter API key in API Key section
+3. Choose a model in Model section (default: openrouter/free)
 
 ## Usage
 
-Type your text in any textbox, then append a keyword shortcut at the very end:
+### On SpicyChat
 
-| You type | Result |
-|---|---|
-| `My email draft here //re` | Rewrites the text professionally |
-| `Rough notes //bt` | Makes it better / more polished |
-| `Story intro //slime` | Rewrites in a slime-character voice |
+- Open the right-side RPG tracker drawer
+- In RP Tools, choose an active Rewrite preset
+- Run rewrite from the drawer or press Ctrl+N in a focused input
 
-The keyword and original text are replaced by the AI output in place.
+### Anywhere
 
-### Default shortcuts
-
-| Keyword | Prompt |
-|---|---|
-| `//re` | Rewrite this text to be clear, concise, and professional |
-| `//bt` | Make this text better — improve flow, clarity, and tone |
-| `//slime` | Rewrite this as a cheerful slime character from an RPG |
-
-All shortcuts are editable in **Options → Keywords**.
-
----
-
-## Models
-
-The default model is `openrouter/free`, which automatically routes to whatever free model is available at the time of your request — no rate limit headaches.
-
-### Recommended alternatives
-
-| Model | Cost | Notes |
-|---|---|---|
-| `openrouter/free` | Free | Auto-routes to any available free model. **Default.** |
-| `google/gemma-3-27b-it:free` | Free | Solid quality, unmoderated |
-| `google/gemma-4-31b-it:free` | Free | Larger, 262K context |
-| `thedrummer/cydonia-24b-v4.1` | ~$0.30/M in, $0.50/M out | Uncensored, no safety filters, Mistral Small 3.2 base. ~$1 = 7,000 rewrites |
-
-Change the model in **Options → Model**.
-
----
-
-## Updating
-
-When a new release is available:
-
-1. Download the new zip from [Releases](../../releases)
-2. Unzip **into the same folder** (overwrite files)
-3. Go to `chrome://extensions` → click the **↻ reload** button on the AI Rewriter card
-
----
+- Press Ctrl+M to run the local formatter
+- Press Ctrl+Shift+M to format without tracker summary
 
 ## Development
 
-No build step. Pure HTML/CSS/JS — edit and reload.
+No build step. Plain HTML/CSS/JS.
 
-```
-ai-rewriter/
-├── manifest.json       # MV3 manifest
-├── background.js       # Service worker — handles OpenRouter API calls
-├── content.js          # Injected into every page — detects keywords, shows overlay
-├── content.css         # Overlay + toast styles
-├── popup.html/css/js   # Toolbar popup
-├── options.html/css/js # Settings page (API key, keywords, model)
-└── icons/              # PNG icons (16, 32, 48, 128)
-```
+Core files:
 
-To release a new version:
-
-1. Bump `"version"` in `manifest.json`
-2. Commit and push
-3. Create a git tag: `git tag v1.1.0 && git push origin v1.1.0`
-4. GitHub Actions builds the zip and creates the release automatically
-
----
+- manifest.json
+- background.js (OpenRouter calls)
+- content.js (formatter + SpicyChat rewrite orchestration)
+- spicychat-rpg-tracker-layout.js
+- spicychat-rpg-tracker-sections.js
+- spicychat-rpg-tracker-activity-exports.js
+- spicychat-rpg-tracker-rp-tools.js
+- spicychat-rpg-tracker-drawer.js
+- popup.html/css/js
+- options.html/css/js
 
 ## Privacy
 
-- Your API key is stored locally in `chrome.storage.sync` (synced to your Google account, never sent anywhere except OpenRouter)
-- Text is sent to [OpenRouter](https://openrouter.ai) only when you trigger a rewrite
-- No analytics, no telemetry
-
----
+- Extension API key is stored in chrome.storage.sync
+- AI text is sent to OpenRouter only when you trigger rewrite
+- No analytics/telemetry are implemented
 
 ## License
 
