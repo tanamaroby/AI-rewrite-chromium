@@ -306,12 +306,22 @@ html.sc-inject-brackets-hidden .ai-bracket-scene {
 
 /* ── Full-width chat bubbles ──────────────────────────────────────────────── */
 
-/* Target AI and user bubble containers by their unique border-radius Tailwind
-   class. !important overrides both the Tailwind utility cap and React's inline
-   style="max-width: 800px" on each bubble. */
+/* The chat layout has two levels of max-width: 800px — one on the bubble div
+   itself, and one on the flex row container that wraps it. :has() lets us
+   target the row container without touching React-managed node identity. */
+
+/* 1. Remove the outer row container's 800 px cap and add side padding */
+html.sc-full-width-bubbles div[id^="message-"] div:has(> [class*="rounded-[4px_20px_20px_20px]"]),
+html.sc-full-width-bubbles div[id^="message-"] div:has(> [class*="rounded-[20px_4px_20px_20px]"]) {
+  max-width: none !important;
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+/* 2. Expand the bubble itself to fill the now-uncapped row */
 html.sc-full-width-bubbles div[id^="message-"] [class*="rounded-[4px_20px_20px_20px]"],
 html.sc-full-width-bubbles div[id^="message-"] [class*="rounded-[20px_4px_20px_20px]"] {
-  max-width: 100% !important;
+  max-width: none !important;
   width: 100% !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
