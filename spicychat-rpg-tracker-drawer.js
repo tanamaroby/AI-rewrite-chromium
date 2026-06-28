@@ -2226,6 +2226,7 @@
       "scActionStyle",
       "scDialogueStyle",
       "scBoldStyle",
+      "scBulletStyle",
     ];
 
     // Each entry describes one injectable style feature and maps to a storage key.
@@ -2261,6 +2262,12 @@
         name: "Bold Glow",
         description:
           "Adds a soft ambient purple glow to **bold** text, making emphasis feel refined rather than blunt.",
+      },
+      {
+        key: "scBulletStyle",
+        name: "Bullet Style",
+        description:
+          "Replaces plain list bullets with a small glowing lavender diamond ◆, matching the extension's visual palette.",
       },
     ];
 

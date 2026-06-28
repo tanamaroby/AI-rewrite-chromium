@@ -303,6 +303,34 @@ html.sc-style-dialogue div[id^="message-"] q {
     0 0 28px rgba(220, 210, 255, 0.1);
 }
 
+/* Bullet points — custom glowing diamond marker */
+html.sc-style-bullets div[id^="message-"] ul {
+  list-style: none;
+  padding-left: 1.4em;
+  margin: 6px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+html.sc-style-bullets div[id^="message-"] ul li {
+  position: relative;
+  padding-left: 0.4em;
+  line-height: 1.6;
+}
+
+html.sc-style-bullets div[id^="message-"] ul li::before {
+  content: "\25C6"; /* ◆ */
+  position: absolute;
+  left: -1.1em;
+  top: 0.38em;
+  font-size: 0.5em;
+  color: #a78bfa;
+  text-shadow:
+    0 0 6px rgba(167, 139, 250, 0.9),
+    0 0 14px rgba(139, 92, 246, 0.5);
+}
+
 /* Bold — soft ambient purple glow */
 html.sc-style-bold div[id^="message-"] strong {
   color: #ede9fe !important;
