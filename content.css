@@ -294,10 +294,13 @@ html.sc-style-actions div[id^="message-"] em {
   color: #b8aee8 !important;
 }
 
-/* Dialogue — slightly larger to give "quoted speech" visual presence */
+/* Dialogue — slightly larger with a soft warm glow */
 html.sc-style-dialogue div[id^="message-"] q {
   font-size: 1.04em;
   line-height: inherit;
+  text-shadow:
+    0 0 12px rgba(255, 255, 255, 0.18),
+    0 0 28px rgba(220, 210, 255, 0.1);
 }
 
 /* Bold — soft ambient purple glow */
