@@ -1615,6 +1615,26 @@
     #sc-np-fmt-panel::-webkit-scrollbar { width: 5px; }
     #sc-np-fmt-panel::-webkit-scrollbar-track { background: transparent; }
     #sc-np-fmt-panel::-webkit-scrollbar-thumb { background: rgba(108,99,255,0.3); border-radius: 3px; }
+
+    /* ── Style injection panel ── */
+    #sc-np-style-panel {
+      position: absolute; inset: 0; overflow-y: auto;
+      padding: 14px; box-sizing: border-box;
+      display: none; flex-direction: column; gap: 10px;
+    }
+    #sc-np-style-panel.visible { display: flex; }
+    #sc-np-style-panel::-webkit-scrollbar { width: 5px; }
+    #sc-np-style-panel::-webkit-scrollbar-track { background: transparent; }
+    #sc-np-style-panel::-webkit-scrollbar-thumb { background: rgba(108,99,255,0.3); border-radius: 3px; }
+    .style-feature-row {
+      display: flex; flex-direction: column; gap: 6px;
+      padding: 10px 0; border-bottom: 1px solid rgba(108,99,255,0.07);
+    }
+    .style-feature-row:last-child { border-bottom: none; }
+    .style-feature-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .style-feature-name { font-size: 12.5px; font-weight: 600; color: #cbd5e1; }
+    .style-feature-desc { font-size: 11px; color: #475569; line-height: 1.5; }
+    .style-feature-note { font-size: 10px; color: #334155; font-style: italic; }
     .fmt-master-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .fmt-master-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 100px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; }
     .fmt-master-badge.on { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
@@ -1645,6 +1665,7 @@
           <button class="sc-np-tab-pill active" data-tab="quests">Quest Log</button>
           <button class="sc-np-tab-pill" data-tab="rp">RP Tools</button>
           <button class="sc-np-tab-pill" data-tab="fmt">Formatter</button>
+          <button class="sc-np-tab-pill" data-tab="style">Style</button>
         </div>
         <button id="sc-np-btn-close" title="Close (Esc)">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -1991,6 +2012,7 @@
           </div>
         </div>
         <div id="sc-np-fmt-panel"></div>
+        <div id="sc-np-style-panel"></div>
       </div>
     `;
   }

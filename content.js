@@ -39,6 +39,8 @@
   let lastFocusedEl = null; // last focused SpicyChat input
   let fmtShortcut = "m"; // keyboard shortcut key for format (Ctrl+key)
   let fmtNoTrackerShortcut = "m"; // keyboard shortcut key for no-tracker format (Ctrl+Shift+key)
+  let scMdTables = true;
+  let scBracketEmphasis = true;
   const isSpicyChat = location.hostname.includes("spicychat.ai");
   const REWRITE_SHORTCUT_KEY = "n";
   const SYNC_SETTINGS_KEYS = [
@@ -73,6 +75,8 @@
     "rpActiveRewriteIndex",
     "fmtShortcut",
     "fmtNoTrackerShortcut",
+    "scMdTables",
+    "scBracketEmphasis",
   ];
   const SYNC_SETTINGS_KEY_SET = new Set(SYNC_SETTINGS_KEYS);
   let settingsReloadTimer = null;
@@ -151,6 +155,16 @@
           : -1;
       fmtShortcut = data.fmtShortcut || "m";
       fmtNoTrackerShortcut = data.fmtNoTrackerShortcut || "m";
+      scMdTables = data.scMdTables !== false;
+      scBracketEmphasis = data.scBracketEmphasis !== false;
+      if (isSpicyChat) {
+        document.documentElement.classList.toggle(
+          "sc-inject-brackets-hidden",
+          !scBracketEmphasis,
+        );
+        if (scMdTables) mountAiMessageMarkdown();
+        if (scBracketEmphasis) mountAiMessageBrackets();
+      }
     });
   }
 
@@ -836,6 +850,178 @@
     return hasVoiceBtn && hasBotLink;
   }
 
+  // ─── Markdown rendering in AI messages ─────────────────────────────────────
+
+  function escapeHtml(s) {
+    return s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function buildMarkdownTable(lines) {
+    const rows = [];
+    let pastSeparator = false;
+
+    for (const line of lines) {
+      const t = line.trim();
+      if (!t.startsWith("|")) continue;
+      if (/^\|[\s\-:|]+\|$/.test(t)) {
+        pastSeparator = true;
+        continue;
+      }
+      const cells = t
+        .replace(/^\|/, "")
+        .replace(/\|$/, "")
+        .split("|")
+        .map((c) => c.trim());
+      rows.push({ cells, isHead: !pastSeparator });
+    }
+
+    if (rows.length < 2) return null;
+
+    const heads = rows.filter((r) => r.isHead);
+    const body = rows.filter((r) => !r.isHead);
+
+    let html = '<table class="ai-md-table">';
+    if (heads.length) {
+      html +=
+        "<thead><tr>" +
+        heads[0].cells.map((c) => `<th>${escapeHtml(c)}</th>`).join("") +
+        "</tr></thead>";
+    }
+    if (body.length) {
+      html +=
+        "<tbody>" +
+        body
+          .map(
+            (r) =>
+              "<tr>" +
+              r.cells.map((c) => `<td>${escapeHtml(c)}</td>`).join("") +
+              "</tr>",
+          )
+          .join("") +
+        "</tbody>";
+    }
+    html += "</table>";
+    return html;
+  }
+
+  function processAiMessageMarkdown(messageRoot) {
+    if (!isAiMessageBlock(messageRoot)) return;
+
+    messageRoot
+      .querySelectorAll("span.leading-6:not([data-ai-md])")
+      .forEach((span) => {
+        span.dataset.aiMd = "1";
+
+        if (!span.isConnected) return;
+
+        const lines = span.innerHTML
+          .split(/<br\s*\/?>/gi)
+          .map((l) => {
+            const tmp = document.createElement("span");
+            tmp.innerHTML = l;
+            return tmp.textContent;
+          });
+
+        const pipeCount = lines.filter((l) => l.trim().startsWith("|")).length;
+        const hasSep = lines.some((l) => /^\s*\|[\s\-:|]+\|\s*$/.test(l));
+        if (pipeCount < 2 || !hasSep) return;
+
+        const tableHtml = buildMarkdownTable(lines);
+        if (!tableHtml) return;
+
+        // Mutate the span's children rather than replacing the span node itself.
+        // SpicyChat is a React app — removing a React-owned element node causes
+        // its reconciler to throw "removeChild: node is not a child" when it
+        // later tries to clean up the same node from its virtual DOM. Clearing
+        // innerHTML and appending inside keeps the span reference intact.
+        const wrapper = document.createElement("div");
+        wrapper.className = "ai-md-table-wrapper";
+        wrapper.innerHTML = tableHtml;
+        try {
+          span.innerHTML = "";
+          span.appendChild(wrapper);
+          span.dataset.aiMdTable = "1";
+        } catch {
+          span.dataset.aiMd = "0"; // allow retry on next scan
+        }
+      });
+  }
+
+  function mountAiMessageMarkdown() {
+    if (!scMdTables) return;
+    document
+      .querySelectorAll('div[id^="message-"]')
+      .forEach(processAiMessageMarkdown);
+  }
+
+  // ─── Bracket emphasis in AI messages ───────────────────────────────────────
+
+  // Walks text nodes inside an element and wraps [bracket] content in a span.
+  // Skips em/q/strong to avoid double-styling SpicyChat's own markdown.
+  function wrapBracketsInNode(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent;
+      if (!text.includes("[")) return;
+      const re = /\[([^\[\]]+)\]/g;
+      if (!re.test(text)) return;
+      re.lastIndex = 0;
+
+      const frag = document.createDocumentFragment();
+      let last = 0;
+      let m;
+      while ((m = re.exec(text)) !== null) {
+        if (m.index > last)
+          frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        const span = document.createElement("span");
+        span.className = "ai-bracket-scene";
+        span.textContent = m[0];
+        frag.appendChild(span);
+        last = m.index + m[0].length;
+      }
+      if (last < text.length)
+        frag.appendChild(document.createTextNode(text.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+      return;
+    }
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const tag = node.tagName;
+      if (
+        tag === "EM" ||
+        tag === "Q" ||
+        tag === "STRONG" ||
+        node.classList.contains("ai-bracket-scene")
+      )
+        return;
+      Array.from(node.childNodes).forEach(wrapBracketsInNode);
+    }
+  }
+
+  function processAiMessageBrackets(messageRoot) {
+    if (!isAiMessageBlock(messageRoot)) return;
+
+    messageRoot
+      .querySelectorAll("span.leading-6:not([data-ai-bracket])")
+      .forEach((span) => {
+        span.dataset.aiBracket = "1";
+        if (!span.isConnected || !span.parentNode) return;
+        try {
+          wrapBracketsInNode(span);
+        } catch {
+          // Span may be detached mid-stream
+        }
+      });
+  }
+
+  function mountAiMessageBrackets() {
+    if (!scBracketEmphasis) return;
+    document
+      .querySelectorAll('div[id^="message-"]')
+      .forEach(processAiMessageBrackets);
+  }
+
   async function onSceneFillButtonClick(messageRoot) {
     const sceneText = getMessageTextForScene(messageRoot);
     if (!sceneText) {
@@ -897,10 +1083,14 @@
       requestAnimationFrame(() => {
         mountQueued = false;
         mountSceneFillButtons();
+        mountAiMessageMarkdown();
+        mountAiMessageBrackets();
       });
     };
 
     mountSceneFillButtons();
+    mountAiMessageMarkdown();
+    mountAiMessageBrackets();
     const obs = new MutationObserver(scheduleMount);
     obs.observe(document.body, { childList: true, subtree: true });
   }

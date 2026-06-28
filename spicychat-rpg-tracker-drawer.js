@@ -582,6 +582,7 @@
     const diceHistoryEl = document.getElementById("sc-np-dice-history");
     const rpPanel = document.getElementById("sc-np-rp-panel");
     const fmtPanel = document.getElementById("sc-np-fmt-panel");
+    const stylePanel = document.getElementById("sc-np-style-panel");
     const rpPersonaPillsEl = document.getElementById("sc-rp-persona-pills");
     const rpPersonaEditorEl = document.getElementById("sc-rp-persona-editor");
     const rpPersonaLabelInput = document.getElementById("sc-rp-persona-label");
@@ -1851,7 +1852,9 @@
       questsPanel.classList.toggle("sc-np-hidden", t !== "quests");
       rpPanel.classList.toggle("visible", t === "rp");
       fmtPanel.classList.toggle("visible", t === "fmt");
+      stylePanel.classList.toggle("visible", t === "style");
       if (t === "fmt") loadFormatterPanel();
+      if (t === "style") loadStylePanel();
     }
 
     document.querySelectorAll(".sc-np-tab-pill").forEach((btn) => {
@@ -2212,6 +2215,114 @@
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area === "sync" && FMT_KEYS_TO_WATCH.some((k) => k in changes)) {
         if (activeTab === "fmt") loadFormatterPanel();
+      }
+    });
+
+    /* ════════════════ STYLE INJECTION PANEL ════════════════ */
+
+    const STYLE_KEYS_TO_WATCH = ["scMdTables", "scBracketEmphasis"];
+
+    // Each entry describes one injectable style feature and maps to a storage key.
+    const STYLE_FEATURES = [
+      {
+        key: "scMdTables",
+        name: "Markdown Tables",
+        description:
+          "Renders pipe-delimited tables in AI responses as styled HTML tables with a header row and striped body.",
+        note: "Tables already rendered in this session stay rendered if the toggle is turned off.",
+      },
+      {
+        key: "scBracketEmphasis",
+        name: "Bracket Emphasis",
+        description:
+          "Highlights [scene bracket] content — location, outfit, time, status — with a distinct visual treatment that reads as a system annotation.",
+        note: "Toggling off instantly collapses existing brackets back to plain text via CSS.",
+      },
+    ];
+
+    function renderStylePanel(d) {
+      stylePanel.innerHTML = "";
+
+      // ── Header card ──
+      const hCard = document.createElement("div");
+      hCard.className = "rp-card";
+      hCard.style.cssText = "padding:10px 14px;gap:8px;";
+      hCard.innerHTML = `
+        <div class="fmt-master-row">
+          <span style="font-size:12px;font-weight:600;color:#cbd5e1;">Chat Injection</span>
+        </div>
+        <div style="font-size:11px;color:#475569;line-height:1.55;">
+          Enhances SpicyChat AI messages in-place with rendering and visual styling
+          the platform doesn't provide by default. Features apply to new messages
+          automatically; bracket toggling is instant on all existing messages.
+        </div>`;
+      stylePanel.appendChild(hCard);
+
+      // ── Feature rows ──
+      const sec = document.createElement("div");
+      sec.className = "rp-section-label";
+      sec.textContent = "FEATURES";
+      stylePanel.appendChild(sec);
+
+      const card = document.createElement("div");
+      card.className = "rp-card";
+      card.style.padding = "4px 14px";
+
+      STYLE_FEATURES.forEach(({ key, name, description, note }) => {
+        const on = d[key] !== false;
+
+        const row = document.createElement("div");
+        row.className = "style-feature-row";
+
+        const top = document.createElement("div");
+        top.className = "style-feature-top";
+
+        const nameEl = document.createElement("span");
+        nameEl.className = "style-feature-name";
+        nameEl.textContent = name;
+
+        const toggle = document.createElement("label");
+        toggle.className = "rp-toggle";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = on;
+        checkbox.setAttribute("data-ai-rewriter-ignore", "1");
+        checkbox.addEventListener("change", () => {
+          chrome.storage.sync.set({ [key]: checkbox.checked });
+        });
+        const track = document.createElement("span");
+        track.className = "rp-toggle-track";
+        toggle.append(checkbox, track);
+
+        top.append(nameEl, toggle);
+
+        const desc = document.createElement("span");
+        desc.className = "style-feature-desc";
+        desc.textContent = description;
+
+        row.append(top, desc);
+
+        if (note) {
+          const noteEl = document.createElement("span");
+          noteEl.className = "style-feature-note";
+          noteEl.textContent = note;
+          row.appendChild(noteEl);
+        }
+
+        card.appendChild(row);
+      });
+
+      stylePanel.appendChild(card);
+    }
+
+    function loadStylePanel() {
+      chrome.storage.sync.get(STYLE_KEYS_TO_WATCH, renderStylePanel);
+    }
+
+    // Live-reload when settings change while Style tab is active
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === "sync" && STYLE_KEYS_TO_WATCH.some((k) => k in changes)) {
+        if (activeTab === "style") loadStylePanel();
       }
     });
 

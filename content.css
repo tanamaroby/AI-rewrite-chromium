@@ -217,3 +217,80 @@
 .ai-scene-fill-btn:active {
   transform: translateY(0) scale(0.97);
 }
+
+/* ── Markdown table rendering in AI messages ──────────────────────────────── */
+
+.ai-md-table-wrapper {
+  overflow-x: auto;
+  margin: 4px 0;
+  border-radius: 6px;
+}
+
+.ai-md-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.875em;
+  border: 1px solid rgba(108, 99, 255, 0.25);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.ai-md-table th,
+.ai-md-table td {
+  padding: 6px 14px;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  white-space: nowrap;
+}
+
+.ai-md-table thead tr {
+  background: rgba(108, 99, 255, 0.2);
+  color: #ddd6fe;
+  font-weight: 600;
+}
+
+.ai-md-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.ai-md-table tbody tr:hover {
+  background: rgba(108, 99, 255, 0.1);
+  transition: background 0.12s ease;
+}
+
+/* ── Bracket emphasis in AI messages ─────────────────────────────────────── */
+
+/* Span containing a rendered table needs block layout since <table> is block */
+span.leading-6[data-ai-md-table] {
+  display: block;
+}
+
+/* [Scene bracket] styling — location, outfit, time, status — system message */
+.ai-bracket-scene {
+  display: inline;
+  padding: 2px 9px;
+  border-radius: 3px;
+  background: rgba(6, 18, 14, 0.78);
+  border: 1px solid rgba(52, 211, 153, 0.18);
+  color: #34d399;
+  font-size: 0.8em;
+  font-family: ui-monospace, "Cascadia Code", "JetBrains Mono", monospace;
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: 0.03em;
+  text-shadow: 0 0 8px rgba(52, 211, 153, 0.22);
+}
+
+/* When bracket emphasis is disabled, collapse spans to plain text instantly */
+html.sc-inject-brackets-hidden .ai-bracket-scene {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  color: inherit !important;
+  font-style: inherit !important;
+  font-weight: inherit !important;
+  font-size: inherit !important;
+  font-family: inherit !important;
+  letter-spacing: inherit !important;
+  text-shadow: none !important;
+}
