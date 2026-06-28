@@ -41,6 +41,9 @@
   let fmtNoTrackerShortcut = "m"; // keyboard shortcut key for no-tracker format (Ctrl+Shift+key)
   let scMdTables = true;
   let scBracketEmphasis = true;
+  let scActionStyle = true;
+  let scDialogueStyle = true;
+  let scBoldStyle = true;
   const isSpicyChat = location.hostname.includes("spicychat.ai");
   const REWRITE_SHORTCUT_KEY = "n";
   const SYNC_SETTINGS_KEYS = [
@@ -77,6 +80,9 @@
     "fmtNoTrackerShortcut",
     "scMdTables",
     "scBracketEmphasis",
+    "scActionStyle",
+    "scDialogueStyle",
+    "scBoldStyle",
   ];
   const SYNC_SETTINGS_KEY_SET = new Set(SYNC_SETTINGS_KEYS);
   let settingsReloadTimer = null;
@@ -157,11 +163,17 @@
       fmtNoTrackerShortcut = data.fmtNoTrackerShortcut || "m";
       scMdTables = data.scMdTables !== false;
       scBracketEmphasis = data.scBracketEmphasis !== false;
+      scActionStyle = data.scActionStyle !== false;
+      scDialogueStyle = data.scDialogueStyle !== false;
+      scBoldStyle = data.scBoldStyle !== false;
       if (isSpicyChat) {
         document.documentElement.classList.toggle(
           "sc-inject-brackets-hidden",
           !scBracketEmphasis,
         );
+        document.documentElement.classList.toggle("sc-style-actions", scActionStyle);
+        document.documentElement.classList.toggle("sc-style-dialogue", scDialogueStyle);
+        document.documentElement.classList.toggle("sc-style-bold", scBoldStyle);
         if (scMdTables) mountAiMessageMarkdown();
         if (scBracketEmphasis) mountAiMessageBrackets();
       }
@@ -977,7 +989,7 @@
           frag.appendChild(document.createTextNode(text.slice(last, m.index)));
         const span = document.createElement("span");
         span.className = "ai-bracket-scene";
-        span.textContent = m[0];
+        span.textContent = m[1]; // strip the surrounding [ ]
         frag.appendChild(span);
         last = m.index + m[0].length;
       }

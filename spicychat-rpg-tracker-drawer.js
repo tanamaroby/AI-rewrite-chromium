@@ -2220,7 +2220,13 @@
 
     /* ════════════════ STYLE INJECTION PANEL ════════════════ */
 
-    const STYLE_KEYS_TO_WATCH = ["scMdTables", "scBracketEmphasis"];
+    const STYLE_KEYS_TO_WATCH = [
+      "scMdTables",
+      "scBracketEmphasis",
+      "scActionStyle",
+      "scDialogueStyle",
+      "scBoldStyle",
+    ];
 
     // Each entry describes one injectable style feature and maps to a storage key.
     const STYLE_FEATURES = [
@@ -2237,6 +2243,24 @@
         description:
           "Highlights [scene bracket] content — location, outfit, time, status — with a distinct visual treatment that reads as a system annotation.",
         note: "Toggling off instantly collapses existing brackets back to plain text via CSS.",
+      },
+      {
+        key: "scActionStyle",
+        name: "Action Text Colour",
+        description:
+          "Replaces SpicyChat's sky-blue italic for *action* narration with muted lavender — softer and easier to read across long passages.",
+      },
+      {
+        key: "scDialogueStyle",
+        name: "Dialogue Size",
+        description:
+          "Slightly increases the font size of \"quoted dialogue\" (rendered by SpicyChat as <q> elements) to give spoken lines a touch more visual presence.",
+      },
+      {
+        key: "scBoldStyle",
+        name: "Bold Glow",
+        description:
+          "Adds a soft ambient purple glow to **bold** text, making emphasis feel refined rather than blunt.",
       },
     ];
 
