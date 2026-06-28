@@ -294,8 +294,9 @@ html.sc-style-actions div[id^="message-"] em {
   color: #86efac !important;
 }
 
-/* Dialogue — slightly larger with a faint green terminal glow */
+/* Dialogue — serif font, slightly larger, with a faint green terminal glow */
 html.sc-style-dialogue div[id^="message-"] q {
+  font-family: Georgia, "Palatino Linotype", ui-serif, serif;
   font-size: 1.04em;
   line-height: inherit;
   text-shadow:
