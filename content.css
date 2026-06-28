@@ -289,18 +289,18 @@ span.leading-6[data-ai-md-table] {
 
 /* ── Chat text style overrides ───────────────────────────────────────────── */
 
-/* Action / narration — muted lavender replaces SpicyChat's sky blue */
+/* Action / narration — soft green replaces SpicyChat's sky blue */
 html.sc-style-actions div[id^="message-"] em {
-  color: #b8aee8 !important;
+  color: #86efac !important;
 }
 
-/* Dialogue — slightly larger with a soft warm glow */
+/* Dialogue — slightly larger with a faint green terminal glow */
 html.sc-style-dialogue div[id^="message-"] q {
   font-size: 1.04em;
   line-height: inherit;
   text-shadow:
-    0 0 12px rgba(255, 255, 255, 0.18),
-    0 0 28px rgba(220, 210, 255, 0.1);
+    0 0 12px rgba(52, 211, 153, 0.18),
+    0 0 28px rgba(16, 185, 129, 0.09);
 }
 
 /* Bullet points — custom glowing diamond marker */
@@ -325,18 +325,18 @@ html.sc-style-bullets div[id^="message-"] ul li::before {
   left: -1.1em;
   top: 0.38em;
   font-size: 0.5em;
-  color: #a78bfa;
+  color: #34d399;
   text-shadow:
-    0 0 6px rgba(167, 139, 250, 0.9),
-    0 0 14px rgba(139, 92, 246, 0.5);
+    0 0 6px rgba(52, 211, 153, 0.9),
+    0 0 14px rgba(16, 185, 129, 0.5);
 }
 
-/* Bold — soft ambient purple glow */
+/* Bold — bright near-white with a strong green ambient glow */
 html.sc-style-bold div[id^="message-"] strong {
-  color: #ede9fe !important;
+  color: #d1fae5 !important;
   text-shadow:
-    0 0 10px rgba(167, 139, 250, 0.55),
-    0 0 26px rgba(139, 92, 246, 0.28);
+    0 0 10px rgba(52, 211, 153, 0.65),
+    0 0 26px rgba(16, 185, 129, 0.32);
 }
 
 /* When bracket emphasis is disabled, collapse spans to plain text instantly */
