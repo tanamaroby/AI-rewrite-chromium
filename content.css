@@ -267,22 +267,29 @@ span.leading-6[data-ai-md-table] {
 
 /* [Scene bracket] styling — location, outfit, time, status — system message */
 .ai-bracket-scene {
-  display: inline;
-  padding: 2px 9px;
-  border-radius: 3px;
-  background: rgba(6, 18, 14, 0.78);
-  border: 1px solid rgba(52, 211, 153, 0.18);
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 5px 12px 5px 14px;
+  border-radius: 4px;
+  background: rgba(6, 18, 14, 0.85);
+  border-left: 2px solid rgba(52, 211, 153, 0.55);
+  border-top: 1px solid rgba(52, 211, 153, 0.1);
+  border-bottom: 1px solid rgba(52, 211, 153, 0.1);
+  border-right: 1px solid rgba(52, 211, 153, 0.07);
   color: #34d399;
-  font-size: 0.8em;
+  font-size: 0.78em;
   font-family: ui-monospace, "Cascadia Code", "JetBrains Mono", monospace;
   font-weight: 400;
   font-style: normal;
   letter-spacing: 0.03em;
-  text-shadow: 0 0 8px rgba(52, 211, 153, 0.22);
+  line-height: 1.6;
+  text-shadow: 0 0 8px rgba(52, 211, 153, 0.18);
 }
 
 /* When bracket emphasis is disabled, collapse spans to plain text instantly */
 html.sc-inject-brackets-hidden .ai-bracket-scene {
+  display: inline !important;
   background: none !important;
   border: none !important;
   padding: 0 !important;
@@ -292,5 +299,20 @@ html.sc-inject-brackets-hidden .ai-bracket-scene {
   font-size: inherit !important;
   font-family: inherit !important;
   letter-spacing: inherit !important;
+  line-height: inherit !important;
   text-shadow: none !important;
+  width: auto !important;
+}
+
+/* ── Full-width chat bubbles ──────────────────────────────────────────────── */
+
+/* Target AI and user bubble containers by their unique border-radius Tailwind
+   class. !important overrides both the Tailwind utility cap and React's inline
+   style="max-width: 800px" on each bubble. */
+html.sc-full-width-bubbles div[id^="message-"] [class*="rounded-[4px_20px_20px_20px]"],
+html.sc-full-width-bubbles div[id^="message-"] [class*="rounded-[20px_4px_20px_20px]"] {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }

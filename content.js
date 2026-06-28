@@ -41,6 +41,7 @@
   let fmtNoTrackerShortcut = "m"; // keyboard shortcut key for no-tracker format (Ctrl+Shift+key)
   let scMdTables = true;
   let scBracketEmphasis = true;
+  let scFullWidthBubbles = false;
   const isSpicyChat = location.hostname.includes("spicychat.ai");
   const REWRITE_SHORTCUT_KEY = "n";
   const SYNC_SETTINGS_KEYS = [
@@ -77,6 +78,7 @@
     "fmtNoTrackerShortcut",
     "scMdTables",
     "scBracketEmphasis",
+    "scFullWidthBubbles",
   ];
   const SYNC_SETTINGS_KEY_SET = new Set(SYNC_SETTINGS_KEYS);
   let settingsReloadTimer = null;
@@ -157,10 +159,15 @@
       fmtNoTrackerShortcut = data.fmtNoTrackerShortcut || "m";
       scMdTables = data.scMdTables !== false;
       scBracketEmphasis = data.scBracketEmphasis !== false;
+      scFullWidthBubbles = data.scFullWidthBubbles === true;
       if (isSpicyChat) {
         document.documentElement.classList.toggle(
           "sc-inject-brackets-hidden",
           !scBracketEmphasis,
+        );
+        document.documentElement.classList.toggle(
+          "sc-full-width-bubbles",
+          scFullWidthBubbles,
         );
         if (scMdTables) mountAiMessageMarkdown();
         if (scBracketEmphasis) mountAiMessageBrackets();

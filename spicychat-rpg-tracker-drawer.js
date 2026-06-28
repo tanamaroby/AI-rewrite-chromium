@@ -2220,7 +2220,7 @@
 
     /* ════════════════ STYLE INJECTION PANEL ════════════════ */
 
-    const STYLE_KEYS_TO_WATCH = ["scMdTables", "scBracketEmphasis"];
+    const STYLE_KEYS_TO_WATCH = ["scMdTables", "scBracketEmphasis", "scFullWidthBubbles"];
 
     // Each entry describes one injectable style feature and maps to a storage key.
     const STYLE_FEATURES = [
@@ -2237,6 +2237,13 @@
         description:
           "Highlights [scene bracket] content — location, outfit, time, status — with a distinct visual treatment that reads as a system annotation.",
         note: "Toggling off instantly collapses existing brackets back to plain text via CSS.",
+      },
+      {
+        key: "scFullWidthBubbles",
+        name: "Full-Width Bubbles",
+        description:
+          "Expands both AI and user chat bubbles to fill the full width of the chat container instead of the default 650 px cap.",
+        note: "Takes effect instantly on all visible messages. Off by default.",
       },
     ];
 
