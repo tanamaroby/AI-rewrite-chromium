@@ -289,10 +289,9 @@ span.leading-6[data-ai-md-table] {
 
 /* ── Chat text style overrides ───────────────────────────────────────────── */
 
-/* Action / narration — muted lavender with airy letter-spacing */
+/* Action / narration — muted lavender */
 html.sc-style-actions div[id^="message-"] em {
   color: #c4b5fd !important;
-  letter-spacing: 0.022em;
 }
 
 /* Dialogue — modern geometric font, slightly larger, with a soft purple glow */
