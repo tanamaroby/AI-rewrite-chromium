@@ -306,6 +306,7 @@
 
   function getSpicyChatStorageKeys(chatId) {
     return {
+      stats: "sc_stats_v1_" + chatId,
       party: "sc_party_v1_" + chatId,
       resources: "sc_res_v1_" + chatId,
       rewriteCtx: "sc_rpctx_v1_" + chatId,
@@ -345,12 +346,21 @@
     }
 
     const keys = getSpicyChatStorageKeys(chatId);
-    chrome.storage.local.get([keys.party, keys.resources], (data) => {
+    chrome.storage.local.get([keys.stats, keys.party, keys.resources], (data) => {
+      const stats = Array.isArray(data[keys.stats]) ? data[keys.stats] : [];
       const party = Array.isArray(data[keys.party]) ? data[keys.party] : [];
       const resources = Array.isArray(data[keys.resources])
         ? data[keys.resources]
         : [];
       const parts = [];
+
+      // Stats — first, name: value (notes)
+      stats.forEach((s) => {
+        const name = String(s?.name || "").trim() || "(unnamed)";
+        const value = String(s?.value ?? "").trim() || "—";
+        const notes = String(s?.notes || "").trim();
+        parts.push(notes ? `${name}: ${value} (${notes})` : `${name}: ${value}`);
+      });
 
       // Party members — all fields packed into parentheses, pipe-separated
       party.forEach((m) => {
