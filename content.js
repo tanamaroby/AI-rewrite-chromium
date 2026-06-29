@@ -1122,6 +1122,26 @@
     let mountQueued = false;
     const changedRoots = new Set();
 
+    let chatScroller = null;
+    function getChatScroller() {
+      if (chatScroller?.isConnected) return chatScroller;
+      const msg = document.querySelector('div[id^="message-"]');
+      if (!msg) return null;
+      let el = msg.parentElement;
+      while (el && el !== document.body) {
+        const style = getComputedStyle(el);
+        if (
+          el.scrollHeight > el.clientHeight &&
+          (style.overflowY === "auto" || style.overflowY === "scroll")
+        ) {
+          chatScroller = el;
+          return el;
+        }
+        el = el.parentElement;
+      }
+      return null;
+    }
+
     const scheduleMount = (mutations) => {
       // Collect the specific message containers that actually mutated so
       // downstream processors only touch changed nodes rather than rescanning
@@ -1151,9 +1171,17 @@
         mountQueued = false;
         const roots = changedRoots.size ? [...changedRoots] : null;
         changedRoots.clear();
+
+        const scroller = getChatScroller();
+        const atBottom =
+          scroller &&
+          scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 80;
+
         mountSceneFillButtons();
         mountAiMessageMarkdown(roots);
         mountAiMessageBrackets(roots);
+
+        if (atBottom && scroller) scroller.scrollTop = scroller.scrollHeight;
       });
     };
 
