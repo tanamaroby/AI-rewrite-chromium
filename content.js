@@ -306,8 +306,8 @@
 
   function hasTrackerHeaderAtTop(text) {
     if (!text) return false;
-    // Ignore leading whitespace/newlines and check if top header is exactly [TRACKER]
-    return /^\s*\[TRACKER\](?:\r?\n|$)/.test(String(text));
+    // Matches both legacy multi-line [TRACKER] and new single-line [TRACKER | ...]
+    return /^\s*\[TRACKER(?:\]|\s*\|)/.test(String(text));
   }
 
   function buildTrackerSummaryForFormat(done) {
@@ -322,45 +322,37 @@
     }
 
     const keys = getSpicyChatStorageKeys(chatId);
-    const partyKey = keys.party;
-    const resourcesKey = keys.resources;
-    chrome.storage.local.get([partyKey, resourcesKey], (data) => {
-      const party = Array.isArray(data[partyKey]) ? data[partyKey] : [];
-      const resources = Array.isArray(data[resourcesKey])
-        ? data[resourcesKey]
+    chrome.storage.local.get([keys.party, keys.resources], (data) => {
+      const party = Array.isArray(data[keys.party]) ? data[keys.party] : [];
+      const resources = Array.isArray(data[keys.resources])
+        ? data[keys.resources]
         : [];
-      const lines = [];
+      const parts = [];
 
-      if (party.length) {
-        const partyParts = party.map((m) => {
-          const name = String(m?.name || "").trim() || "(unnamed)";
-          const notes = String(m?.notes || "").trim();
-          const equipment = String(m?.equipment || "").trim();
-          const affiliation = String(m?.affiliation || "").trim();
-          const details = [];
-          if (notes) details.push(`Notes: ${notes}`);
-          if (equipment) details.push(`Equipment: ${equipment}`);
-          if (affiliation) details.push(`Affiliation: ${affiliation}`);
-          return details.length
-            ? `${name} (${formatPartyStatusLabel(m?.status)}; ${details.join("; ")})`
-            : `${name} (${formatPartyStatusLabel(m?.status)})`;
-        });
-        lines.push(`Party: ${partyParts.join(" | ")}`);
-      }
+      // Party members — all fields packed into parentheses, pipe-separated
+      party.forEach((m) => {
+        const name = String(m?.name || "").trim() || "(unnamed)";
+        const notes = String(m?.notes || "").trim();
+        const equipment = String(m?.equipment || "").trim();
+        const affiliation = String(m?.affiliation || "").trim();
+        const detail = [formatPartyStatusLabel(m?.status)];
+        if (equipment) detail.push(`equip: ${equipment}`);
+        if (affiliation) detail.push(`aff: ${affiliation}`);
+        if (notes) detail.push(notes);
+        parts.push(`${name} (${detail.join("; ")})`);
+      });
 
-      if (resources.length) {
-        const resourceParts = resources.map((r) => {
-          const name = String(r?.name || "").trim() || "(unnamed)";
-          const value = Number.isFinite(Number(r?.value))
-            ? Number(r.value)
-            : String(r?.value || "0").trim() || "0";
-          const notes = String(r?.notes || "").trim();
-          return notes ? `${name}: ${value} (${notes})` : `${name}: ${value}`;
-        });
-        lines.push(`Resources: ${resourceParts.join(" | ")}`);
-      }
+      // Resources — name, value, and notes in parentheses if present
+      resources.forEach((r) => {
+        const name = String(r?.name || "").trim() || "(unnamed)";
+        const value = Number.isFinite(Number(r?.value))
+          ? Number(r.value)
+          : String(r?.value || "0").trim() || "0";
+        const notes = String(r?.notes || "").trim();
+        parts.push(notes ? `${name}: ${value} (${notes})` : `${name}: ${value}`);
+      });
 
-      done(lines.length ? `[TRACKER]\n${lines.join("\n")}` : "");
+      done(parts.length ? `[TRACKER | ${parts.join(" | ")}]` : "");
     });
   }
 
@@ -970,10 +962,9 @@
       });
   }
 
-  function mountAiMessageMarkdown() {
+  function mountAiMessageMarkdown(roots) {
     if (!scMdTables) return;
-    document
-      .querySelectorAll('div[id^="message-"]')
+    (roots ?? document.querySelectorAll('div[id^="message-"]'))
       .forEach(processAiMessageMarkdown);
   }
 
@@ -1020,7 +1011,7 @@
   }
 
   function processAiMessageBrackets(messageRoot) {
-    if (!isAiMessageBlock(messageRoot)) return;
+    if (!messageRoot) return;
 
     messageRoot
       .querySelectorAll("span.leading-6:not([data-ai-bracket])")
@@ -1035,10 +1026,9 @@
       });
   }
 
-  function mountAiMessageBrackets() {
+  function mountAiMessageBrackets(roots) {
     if (!scBracketEmphasis) return;
-    document
-      .querySelectorAll('div[id^="message-"]')
+    (roots ?? document.querySelectorAll('div[id^="message-"]'))
       .forEach(processAiMessageBrackets);
   }
 
@@ -1097,14 +1087,40 @@
 
   if (isSpicyChat) {
     let mountQueued = false;
-    const scheduleMount = () => {
+    const changedRoots = new Set();
+
+    const scheduleMount = (mutations) => {
+      // Collect the specific message containers that actually mutated so
+      // downstream processors only touch changed nodes rather than rescanning
+      // the entire conversation on every streaming tick.
+      for (const m of mutations) {
+        // Target's ancestor — covers mutations inside an existing message node
+        const root = m.target.closest('div[id^="message-"]');
+        if (root) changedRoots.add(root);
+
+        // Added nodes — catches SpicyChat replacing the pending user message
+        // node with its confirmed version after the AI responds. The mutation
+        // target in that case is the parent container, so closest() above
+        // misses the freshly inserted child.
+        for (const node of m.addedNodes) {
+          if (node.nodeType !== Node.ELEMENT_NODE) continue;
+          if (/^message-/.test(node.id)) {
+            changedRoots.add(node);
+          } else {
+            const r = node.closest?.('div[id^="message-"]');
+            if (r) changedRoots.add(r);
+          }
+        }
+      }
       if (mountQueued) return;
       mountQueued = true;
       requestAnimationFrame(() => {
         mountQueued = false;
+        const roots = changedRoots.size ? [...changedRoots] : null;
+        changedRoots.clear();
         mountSceneFillButtons();
-        mountAiMessageMarkdown();
-        mountAiMessageBrackets();
+        mountAiMessageMarkdown(roots);
+        mountAiMessageBrackets(roots);
       });
     };
 
