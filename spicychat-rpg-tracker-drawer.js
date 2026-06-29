@@ -2231,6 +2231,7 @@
     const STYLE_KEYS_TO_WATCH = [
       "scMdTables",
       "scBracketEmphasis",
+      "scBracketPipeNewline",
       "scActionStyle",
       "scDialogueStyle",
       "scBoldStyle",
@@ -2255,6 +2256,13 @@
         description:
           "Highlights [scene bracket] content — location, outfit, time, status — with a distinct visual treatment that reads as a system annotation.",
         note: "Toggling off instantly collapses existing brackets back to plain text via CSS.",
+      },
+      {
+        key: "scBracketPipeNewline",
+        name: "Expand pipes as lines",
+        description:
+          "Renders \" | \" separators inside brackets as newlines so [TRACKER | Dani | Mimi] displays as a multi-line block instead of a single dense line.",
+        subOf: "scBracketEmphasis",
       },
       {
         key: "scActionStyle",
@@ -2328,11 +2336,17 @@
       card.className = "rp-card";
       card.style.padding = "4px 14px";
 
-      STYLE_FEATURES.forEach(({ key, name, description, note }) => {
+      STYLE_FEATURES.forEach(({ key, name, description, note, subOf }) => {
         const on = d[key] !== false;
+        const parentOn = subOf ? d[subOf] !== false : true;
 
         const row = document.createElement("div");
         row.className = "style-feature-row";
+        if (subOf) {
+          row.style.cssText =
+            "margin-left:14px;padding-left:10px;border-left:2px solid rgba(139,92,246,0.22);" +
+            (parentOn ? "" : "opacity:0.45;pointer-events:none;");
+        }
 
         const top = document.createElement("div");
         top.className = "style-feature-top";
@@ -2346,6 +2360,7 @@
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
         checkbox.checked = on;
+        checkbox.disabled = subOf ? !parentOn : false;
         checkbox.setAttribute("data-ai-rewriter-ignore", "1");
         checkbox.addEventListener("change", () => {
           chrome.storage.sync.set({ [key]: checkbox.checked });

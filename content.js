@@ -42,6 +42,7 @@
   let fmtNoTrackerShortcut = "m"; // keyboard shortcut key for no-tracker format (Ctrl+Shift+key)
   let scMdTables = true;
   let scBracketEmphasis = true;
+  let scBracketPipeNewline = true;
   let scActionStyle = true;
   let scDialogueStyle = true;
   let scBoldStyle = true;
@@ -86,6 +87,7 @@
     "fmtNoTrackerShortcut",
     "scMdTables",
     "scBracketEmphasis",
+    "scBracketPipeNewline",
     "scActionStyle",
     "scDialogueStyle",
     "scBoldStyle",
@@ -174,6 +176,12 @@
       fmtNoTrackerShortcut = data.fmtNoTrackerShortcut || "m";
       scMdTables = data.scMdTables !== false;
       scBracketEmphasis = data.scBracketEmphasis !== false;
+      scBracketPipeNewline = data.scBracketPipeNewline !== false;
+      document.querySelectorAll(".ai-bracket-scene[data-bracket-raw]").forEach((s) => {
+        s.textContent = scBracketPipeNewline
+          ? s.dataset.bracketRaw.replace(/ \| /g, "\n")
+          : s.dataset.bracketRaw;
+      });
       scActionStyle = data.scActionStyle !== false;
       scDialogueStyle = data.scDialogueStyle !== false;
       scBoldStyle = data.scBoldStyle !== false;
@@ -1002,7 +1010,8 @@
           frag.appendChild(document.createTextNode(text.slice(last, m.index)));
         const span = document.createElement("span");
         span.className = "ai-bracket-scene";
-        span.textContent = m[1]; // strip the surrounding [ ]
+        span.dataset.bracketRaw = m[1];
+        span.textContent = scBracketPipeNewline ? m[1].replace(/ \| /g, "\n") : m[1];
         frag.appendChild(span);
         last = m.index + m[0].length;
       }
