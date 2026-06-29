@@ -2227,6 +2227,7 @@
       "scDialogueStyle",
       "scBoldStyle",
       "scBulletStyle",
+      "scBlockquoteStyle",
     ];
 
     // Each entry describes one injectable style feature and maps to a storage key.
@@ -2268,6 +2269,12 @@
         name: "Bullet Style",
         description:
           "Replaces plain list bullets with a small glowing lavender diamond ◆, matching the extension's visual palette.",
+      },
+      {
+        key: "scBlockquoteStyle",
+        name: "Blockquote Style",
+        description:
+          "Styles > blockquotes as an incoming transmission feed — monospace, dark purple background, glowing ▶ marker — for system updates and log entries.",
       },
     ];
 

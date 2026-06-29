@@ -45,6 +45,7 @@
   let scDialogueStyle = true;
   let scBoldStyle = true;
   let scBulletStyle = true;
+  let scBlockquoteStyle = true;
   const isSpicyChat = location.hostname.includes("spicychat.ai");
   const REWRITE_SHORTCUT_KEY = "n";
   const SYNC_SETTINGS_KEYS = [
@@ -85,6 +86,7 @@
     "scDialogueStyle",
     "scBoldStyle",
     "scBulletStyle",
+    "scBlockquoteStyle",
   ];
   const SYNC_SETTINGS_KEY_SET = new Set(SYNC_SETTINGS_KEYS);
   let settingsReloadTimer = null;
@@ -169,6 +171,7 @@
       scDialogueStyle = data.scDialogueStyle !== false;
       scBoldStyle = data.scBoldStyle !== false;
       scBulletStyle = data.scBulletStyle !== false;
+      scBlockquoteStyle = data.scBlockquoteStyle !== false;
       if (isSpicyChat) {
         document.documentElement.classList.toggle(
           "sc-inject-brackets-hidden",
@@ -178,6 +181,7 @@
         document.documentElement.classList.toggle("sc-style-dialogue", scDialogueStyle);
         document.documentElement.classList.toggle("sc-style-bold", scBoldStyle);
         document.documentElement.classList.toggle("sc-style-bullets", scBulletStyle);
+        document.documentElement.classList.toggle("sc-style-blockquote", scBlockquoteStyle);
         if (scMdTables) mountAiMessageMarkdown();
         if (scBracketEmphasis) mountAiMessageBrackets();
       }
