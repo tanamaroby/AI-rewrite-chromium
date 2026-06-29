@@ -2228,6 +2228,8 @@
       "scBoldStyle",
       "scBulletStyle",
       "scBlockquoteStyle",
+      "scNumberedListStyle",
+      "scSeparatorStyle",
     ];
 
     // Each entry describes one injectable style feature and maps to a storage key.
@@ -2275,6 +2277,18 @@
         name: "Blockquote Style",
         description:
           "Styles > blockquotes as an incoming transmission feed — monospace, dark purple background, glowing ▶ marker — for system updates and log entries.",
+      },
+      {
+        key: "scNumberedListStyle",
+        name: "Numbered List Style",
+        description:
+          "Replaces plain 1. 2. 3. counters with glowing monospace [01] [02] [03] brackets, matching the extension's terminal aesthetic.",
+      },
+      {
+        key: "scSeparatorStyle",
+        name: "Separator Style",
+        description:
+          "Renders --- dividers as a glowing purple gradient rule instead of the blank space SpicyChat shows by default.",
       },
     ];
 

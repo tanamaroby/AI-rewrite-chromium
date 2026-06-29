@@ -372,6 +372,41 @@ html.sc-style-bullets div[id^="message-"] ul li::before {
     0 0 14px rgba(139, 92, 246, 0.5);
 }
 
+/* Numbered list — monospace bracketed counter [01], [02]… */
+html.sc-style-numbered div[id^="message-"] ol {
+  list-style: none !important;
+  padding-left: 2.6em;
+  margin: 6px 0;
+  counter-reset: sc-ol;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+html.sc-style-numbered div[id^="message-"] ol li {
+  position: relative;
+  padding-left: 0.4em;
+  counter-increment: sc-ol;
+  line-height: 1.6;
+  list-style: none !important;
+}
+
+html.sc-style-numbered div[id^="message-"] ol li::before {
+  content: "[" counter(sc-ol, decimal-leading-zero) "]";
+  position: absolute;
+  left: -2.4em;
+  top: 0;
+  font-family: ui-monospace, "Cascadia Code", "JetBrains Mono", monospace;
+  font-size: 0.7em;
+  font-weight: 600;
+  color: #a78bfa;
+  text-shadow:
+    0 0 6px rgba(167, 139, 250, 0.9),
+    0 0 16px rgba(139, 92, 246, 0.5);
+  letter-spacing: 0.04em;
+  line-height: 2.3;
+}
+
 /* Bold — bright near-white with a strong purple ambient glow */
 html.sc-style-bold div[id^="message-"] strong {
   color: #ede9fe !important;
@@ -381,7 +416,7 @@ html.sc-style-bold div[id^="message-"] strong {
 }
 
 /* Horizontal rule — restore --- which SpicyChat hides */
-div[id^="message-"] hr {
+html.sc-style-separator div[id^="message-"] hr {
   display: block !important;
   border: none !important;
   height: 1px;
