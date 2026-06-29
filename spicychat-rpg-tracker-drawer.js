@@ -23,7 +23,7 @@
       party: "sc_party_v1_" + chatId,
       npcs: "sc_npc_v1_" + chatId,
       rumours: "sc_rumour_v1_" + chatId,
-      diceMod: "sc_dice_mod_v1_" + chatId,
+      stats: "sc_stats_v1_" + chatId,
     };
   }
 
@@ -125,461 +125,6 @@
     const questSheetStatusEl = document.getElementById(
       "sc-np-quest-sheet-status",
     );
-    const diceCountInput = document.getElementById("sc-np-dice-count");
-    const diceLabelEl = document.getElementById("sc-np-dice-label");
-    const diceRollBtn = document.getElementById("sc-np-dice-roll");
-    const diceContextInput = document.getElementById("sc-np-dice-context");
-    const diceModDisplayEl = document.getElementById("sc-np-dice-mod-display");
-    const diceTargetListEl = document.getElementById("sc-np-dice-target-list");
-    const diceTargetAddBtn = document.getElementById("sc-np-dice-target-add");
-    const diceTargetClearBtn = document.getElementById(
-      "sc-np-dice-target-clear",
-    );
-    const dmodListEl = document.getElementById("sc-np-dmod-list");
-    const dmodTotalEl = document.getElementById("sc-np-dmod-total");
-    const DICE_MOD_KEY = STORAGE_KEYS.diceMod;
-    let diceModifiers = [];
-    let diceTargets = [];
-
-    function newDiceTarget(copyFrom) {
-      return {
-        id: Date.now() + Math.random(),
-        name:
-          copyFrom && typeof copyFrom.name === "string" ? copyFrom.name : "",
-        kind:
-          copyFrom && copyFrom.kind === "AC"
-            ? "AC"
-            : copyFrom && copyFrom.kind === "DC"
-              ? "DC"
-              : "DC",
-        value:
-          copyFrom && isFinite(parseInt(copyFrom.value, 10))
-            ? Math.max(1, Math.min(99, parseInt(copyFrom.value, 10)))
-            : 10,
-        notes:
-          copyFrom && typeof copyFrom.notes === "string" ? copyFrom.notes : "",
-      };
-    }
-
-    function renderDiceTargets() {
-      diceTargetListEl.innerHTML = "";
-      if (!diceTargets.length) {
-        const empty = document.createElement("div");
-        empty.className = "dice-targets-empty";
-        empty.textContent =
-          "No targets yet. Add DC/AC checks and every roll will auto-evaluate.";
-        diceTargetListEl.appendChild(empty);
-        return;
-      }
-
-      diceTargets.forEach((t, idx) => {
-        const row = document.createElement("div");
-        row.className = "dice-target-row";
-
-        const top = document.createElement("div");
-        top.className = "dice-target-top";
-
-        const nameIn = document.createElement("input");
-        nameIn.type = "text";
-        nameIn.className = "dice-target-input";
-        nameIn.placeholder = "Target name… e.g. Old lock, Bandit captain";
-        nameIn.maxLength = 50;
-        nameIn.value = t.name;
-        nameIn.setAttribute("data-ai-rewriter-ignore", "1");
-        nameIn.addEventListener("input", () => {
-          t.name = nameIn.value;
-        });
-
-        const typeSel = document.createElement("select");
-        typeSel.className = "dice-target-type";
-        typeSel.setAttribute("data-ai-rewriter-ignore", "1");
-        typeSel.innerHTML =
-          "<option value='DC'>DC</option><option value='AC'>AC</option>";
-        typeSel.value = t.kind === "AC" ? "AC" : "DC";
-        typeSel.addEventListener("change", () => {
-          t.kind = typeSel.value === "AC" ? "AC" : "DC";
-        });
-
-        const valueIn = document.createElement("input");
-        valueIn.type = "number";
-        valueIn.className = "dice-target-value";
-        valueIn.min = "1";
-        valueIn.max = "99";
-        valueIn.value = String(t.value);
-        valueIn.setAttribute("data-ai-rewriter-ignore", "1");
-        valueIn.addEventListener("input", () => {
-          const parsed = parseInt(valueIn.value, 10);
-          t.value = isFinite(parsed) ? Math.max(1, Math.min(99, parsed)) : 1;
-        });
-
-        const dupBtn = document.createElement("button");
-        dupBtn.className = "dice-target-icon-btn";
-        dupBtn.title = "Duplicate";
-        dupBtn.innerHTML = "⎘";
-        dupBtn.addEventListener("click", () => {
-          diceTargets.splice(idx + 1, 0, newDiceTarget(t));
-          renderDiceTargets();
-        });
-
-        const delBtn = document.createElement("button");
-        delBtn.className = "dice-target-icon-btn delete";
-        delBtn.title = "Remove";
-        delBtn.innerHTML = "×";
-        delBtn.addEventListener("click", () => {
-          diceTargets.splice(idx, 1);
-          renderDiceTargets();
-        });
-
-        top.append(nameIn, typeSel, valueIn, dupBtn, delBtn);
-
-        const notesIn = document.createElement("input");
-        notesIn.type = "text";
-        notesIn.className = "dice-target-notes";
-        notesIn.placeholder = "Optional notes… e.g. heavy rain, partial cover";
-        notesIn.maxLength = 80;
-        notesIn.value = t.notes;
-        notesIn.setAttribute("data-ai-rewriter-ignore", "1");
-        notesIn.addEventListener("input", () => {
-          t.notes = notesIn.value;
-        });
-
-        row.append(top, notesIn);
-        diceTargetListEl.appendChild(row);
-      });
-    }
-
-    function evaluateDiceTargets(total) {
-      return diceTargets.map((t) => {
-        const targetValue = Math.max(
-          1,
-          Math.min(99, parseInt(t.value, 10) || 1),
-        );
-        const passed = total >= targetValue;
-        return {
-          kind: t.kind === "AC" ? "AC" : "DC",
-          value: targetValue,
-          name: t.name.trim(),
-          notes: t.notes.trim(),
-          passed,
-          reason: `${total}${passed ? " >= " : " < "}${targetValue}`,
-        };
-      });
-    }
-
-    function renderDiceTargetOutcomes(checks) {
-      diceTargetOutcomesEl.innerHTML = "";
-      checks.forEach((c) => {
-        const chip = document.createElement("span");
-        chip.className = "dice-target-chip " + (c.passed ? "pass" : "fail");
-        const label = c.name || "Target";
-        chip.textContent = `${label} ${c.kind}: ${c.value} ${c.passed ? "PASS" : "FAIL"}`;
-        if (c.notes) {
-          chip.title = `${c.kind}: ${c.value} — ${c.reason} — ${c.notes}`;
-        } else {
-          chip.title = `${c.kind}: ${c.value} — ${c.reason}`;
-        }
-        diceTargetOutcomesEl.appendChild(chip);
-      });
-    }
-
-    function buildDiceTargetLogPart(checks) {
-      if (!checks.length) return "";
-      const segs = checks.map((c) => {
-        const label = c.name || "Target";
-        const parts = [
-          `${label} ${c.kind}: ${c.value}`,
-          c.passed ? "PASS" : "FAIL",
-          c.reason,
-        ];
-        if (c.notes) parts.push(c.notes);
-        return parts.join(" — ");
-      });
-      return ` — Targets: ${segs.join(" | ")}`;
-    }
-
-    diceTargetAddBtn.addEventListener("click", () => {
-      diceTargets.push(newDiceTarget());
-      renderDiceTargets();
-      const lastInput = diceTargetListEl.querySelector(
-        ".dice-target-row:last-child .dice-target-input",
-      );
-      if (lastInput) lastInput.focus();
-    });
-
-    diceTargetClearBtn.addEventListener("click", () => {
-      if (!diceTargets.length) return;
-      diceTargets = [];
-      renderDiceTargets();
-      renderDiceTargetOutcomes([]);
-    });
-
-    function newDiceMod() {
-      return {
-        id: Date.now() + Math.random(),
-        name: "",
-        value: 0,
-        notes: "",
-        enabled: true,
-      };
-    }
-    function saveDiceMods() {
-      chrome.storage.local.set({ [DICE_MOD_KEY]: diceModifiers });
-    }
-    function computeDiceMod() {
-      return diceModifiers.reduce(
-        (s, m) => (m.enabled !== false ? s + (m.value || 0) : s),
-        0,
-      );
-    }
-    function renderDiceMods() {
-      dmodListEl.innerHTML = "";
-      if (!diceModifiers.length) {
-        const e = document.createElement("div");
-        e.className = "dmod-empty";
-        e.textContent =
-          "No modifiers yet \u2014 add status effects, items, bonuses\u2026";
-        dmodListEl.appendChild(e);
-      } else {
-        diceModifiers.forEach((m, idx) => {
-          const item = document.createElement("div");
-          item.className = "dmod-item";
-          if (m.enabled === false) item.style.opacity = "0.45";
-          const top = document.createElement("div");
-          top.className = "dmod-top";
-          // Per-modifier include checkbox
-          const inclChk = document.createElement("input");
-          inclChk.type = "checkbox";
-          inclChk.checked = m.enabled !== false;
-          inclChk.title = "Include in roll total";
-          inclChk.style.cssText =
-            "accent-color:#6c63ff;cursor:pointer;flex-shrink:0;margin:0;";
-          inclChk.setAttribute("data-ai-rewriter-ignore", "1");
-          inclChk.addEventListener("change", () => {
-            m.enabled = inclChk.checked;
-            item.style.opacity = m.enabled ? "" : "0.45";
-            saveDiceMods();
-            // refresh total pill without full re-render
-            const t = computeDiceMod();
-            const sg = t > 0 ? "+" : "";
-            dmodTotalEl.textContent = sg + t;
-            dmodTotalEl.className =
-              "dmod-total-pill" +
-              (t > 0 ? " positive" : t < 0 ? " negative" : "");
-          });
-          // Name: display / edit
-          const nameSpan = document.createElement("span");
-          nameSpan.className = "item-disp-name";
-          nameSpan.textContent = m.name || "(unnamed)";
-          nameSpan.style.flex = "1";
-          const nameEditIn = document.createElement("input");
-          nameEditIn.type = "text";
-          nameEditIn.className = "af-input";
-          nameEditIn.style.flex = "1";
-          nameEditIn.style.display = "none";
-          nameEditIn.value = m.name;
-          nameEditIn.placeholder = "Name\u2026 e.g. Poisoned";
-          nameEditIn.maxLength = 50;
-          nameEditIn.setAttribute("data-ai-rewriter-ignore", "1");
-          nameEditIn.addEventListener("input", () => {
-            m.name = nameEditIn.value;
-            saveDiceMods();
-          });
-          // Value: display / edit
-          const valSign = m.value > 0 ? "+" : "";
-          const valSpan = document.createElement("span");
-          valSpan.style.cssText = `font-weight:700;min-width:28px;text-align:center;color:${m.value > 0 ? "#4ade80" : m.value < 0 ? "#f87171" : "#94a3b8"};`;
-          valSpan.textContent = valSign + m.value;
-          const valEditIn = document.createElement("input");
-          valEditIn.type = "number";
-          valEditIn.className = "af-number";
-          valEditIn.style.width = "52px";
-          valEditIn.style.display = "none";
-          valEditIn.value = m.value;
-          valEditIn.min = "-99";
-          valEditIn.max = "99";
-          valEditIn.setAttribute("data-ai-rewriter-ignore", "1");
-          valEditIn.addEventListener("input", () => {
-            m.value = parseInt(valEditIn.value, 10) || 0;
-            saveDiceMods();
-          });
-          // Toggle
-          const toggleBtn = document.createElement("button");
-          toggleBtn.className = "item-toggle-btn edit";
-          toggleBtn.textContent = "✎";
-          let isEditing = false;
-          const delBtn = document.createElement("button");
-          delBtn.className = "dmod-delete-btn";
-          delBtn.title = "Remove";
-          delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-          delBtn.addEventListener("click", () => {
-            const sign = m.value > 0 ? "+" : "";
-            addLog(
-              `[Modifier removed: ${m.name || "(unnamed)"} ${sign}${m.value}${m.notes ? " \u2014 " + m.notes : ""}]`,
-            );
-            diceModifiers.splice(idx, 1);
-            saveDiceMods();
-            renderDiceMods();
-          });
-          top.append(
-            inclChk,
-            nameSpan,
-            nameEditIn,
-            valSpan,
-            valEditIn,
-            toggleBtn,
-            delBtn,
-          );
-          // Notes: display / edit
-          const notesSpan = document.createElement("div");
-          notesSpan.style.cssText =
-            "color:#64748b;font-size:11.5px;font-family:inherit;padding:2px 0;";
-          notesSpan.textContent = m.notes;
-          notesSpan.style.display = m.notes ? "" : "none";
-          const notesEditIn = document.createElement("input");
-          notesEditIn.type = "text";
-          notesEditIn.className = "af-input";
-          notesEditIn.style.display = "none";
-          notesEditIn.value = m.notes;
-          notesEditIn.placeholder =
-            "Notes\u2026 status effect, item bonus\u2026";
-          notesEditIn.maxLength = 80;
-          notesEditIn.setAttribute("data-ai-rewriter-ignore", "1");
-          notesEditIn.addEventListener("input", () => {
-            m.notes = notesEditIn.value;
-            saveDiceMods();
-          });
-          toggleBtn.addEventListener("click", () => {
-            isEditing = !isEditing;
-            if (isEditing) {
-              nameSpan.style.display = "none";
-              nameEditIn.style.display = "";
-              valSpan.style.display = "none";
-              valEditIn.style.display = "";
-              notesSpan.style.display = "none";
-              notesEditIn.style.display = "";
-              toggleBtn.className = "item-toggle-btn save";
-              toggleBtn.textContent = "✓ Save";
-              nameEditIn.value = m.name;
-              valEditIn.value = m.value;
-              notesEditIn.value = m.notes;
-              nameEditIn.focus();
-            } else {
-              nameEditIn.style.display = "none";
-              valEditIn.style.display = "none";
-              notesEditIn.style.display = "none";
-              toggleBtn.className = "item-toggle-btn edit";
-              toggleBtn.textContent = "✎";
-              nameSpan.style.display = "";
-              nameSpan.textContent = m.name || "(unnamed)";
-              const s = m.value > 0 ? "+" : "";
-              valSpan.textContent = s + m.value;
-              valSpan.style.color =
-                m.value > 0 ? "#4ade80" : m.value < 0 ? "#f87171" : "#94a3b8";
-              valSpan.style.display = "";
-              notesSpan.textContent = m.notes;
-              notesSpan.style.display = m.notes ? "" : "none";
-              renderDiceMods(); // refresh total pill
-            }
-          });
-          item.append(top, notesSpan, notesEditIn);
-          dmodListEl.appendChild(item);
-        });
-      }
-      const total = computeDiceMod();
-      const sign = total > 0 ? "+" : "";
-      dmodTotalEl.textContent = sign + total;
-      dmodTotalEl.className =
-        "dmod-total-pill" +
-        (total > 0 ? " positive" : total < 0 ? " negative" : "");
-    }
-    function loadDiceMods() {
-      chrome.storage.local.get(DICE_MOD_KEY, (d) => {
-        const saved = d[DICE_MOD_KEY];
-        if (Array.isArray(saved)) {
-          diceModifiers = saved;
-        } else if (saved && typeof saved.mod === "number" && saved.mod !== 0) {
-          // Migrate old single-mod format
-          diceModifiers = [
-            {
-              id: Date.now(),
-              name: saved.note || "Modifier",
-              value: saved.mod,
-              notes: "",
-            },
-          ];
-          saveDiceMods();
-        }
-        renderDiceMods();
-      });
-    }
-    // Dice Mod add form (inserted before dmodListEl)
-    (function () {
-      const form = document.createElement("div");
-      form.className = "af-form dmod-form";
-      const nameIn = document.createElement("input");
-      nameIn.type = "text";
-      nameIn.className = "af-input";
-      nameIn.placeholder = "e.g. Poisoned, DEX bonus, Sword\u2026";
-      nameIn.maxLength = 50;
-      nameIn.setAttribute("data-ai-rewriter-ignore", "1");
-      const valIn = document.createElement("input");
-      valIn.type = "number";
-      valIn.className = "af-number";
-      valIn.value = "0";
-      valIn.min = "-99";
-      valIn.max = "99";
-      valIn.style.width = "60px";
-      valIn.setAttribute("data-ai-rewriter-ignore", "1");
-      const notesIn = document.createElement("input");
-      notesIn.type = "text";
-      notesIn.className = "af-input";
-      notesIn.placeholder = "Notes\u2026 status effect, lasts until rest";
-      notesIn.maxLength = 80;
-      notesIn.setAttribute("data-ai-rewriter-ignore", "1");
-      const submitBtn = document.createElement("button");
-      submitBtn.className = "af-submit";
-      submitBtn.textContent = "+ Add Modifier";
-      const row1 = document.createElement("div");
-      row1.className = "af-row";
-      row1.append(nameIn, valIn, submitBtn);
-      form.append(row1, notesIn);
-      dmodListEl.parentNode.insertBefore(form, dmodListEl);
-      const doAdd = () => {
-        const name = nameIn.value.trim();
-        const value = parseInt(valIn.value, 10) || 0;
-        const notes = notesIn.value.trim();
-        const mod = newDiceMod();
-        mod.name = name;
-        mod.value = value;
-        mod.notes = notes;
-        diceModifiers.push(mod);
-        saveDiceMods();
-        renderDiceMods();
-        const sign = value > 0 ? "+" : "";
-        const notesPart = notes ? ` \u2014 ${notes}` : "";
-        addLog(
-          `[Modifier added: ${name || "(unnamed)"} ${sign}${value}${notesPart}]`,
-        );
-        nameIn.value = "";
-        valIn.value = "0";
-        notesIn.value = "";
-        nameIn.focus();
-      };
-      submitBtn.addEventListener("click", doAdd);
-      nameIn.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          doAdd();
-        }
-      });
-    })();
-    const diceTotalEl = document.getElementById("sc-np-dice-total");
-    const diceBreakdownEl = document.getElementById("sc-np-dice-breakdown");
-    const diceNatEl = document.getElementById("sc-np-dice-nat");
-    const diceTargetOutcomesEl = document.getElementById(
-      "sc-np-dice-target-outcomes",
-    );
-    const diceHistoryEl = document.getElementById("sc-np-dice-history");
     const rpPanel = document.getElementById("sc-np-rp-panel");
     const fmtPanel = document.getElementById("sc-np-fmt-panel");
     const stylePanel = document.getElementById("sc-np-style-panel");
@@ -675,6 +220,7 @@
     const PARTY_KEY = STORAGE_KEYS.party;
     const NPC_KEY = STORAGE_KEYS.npcs;
     const RUMOUR_KEY = STORAGE_KEYS.rumours;
+    const STATS_KEY = STORAGE_KEYS.stats;
     const DEFAULT_PARTY_STATUS = "Healthy";
     const PARTY_STATUS_PRESETS = ["Healthy", "Downed", "Dead", "Absent"];
     const NPC_DISPS = ["friendly", "neutral", "hostile"];
@@ -685,6 +231,7 @@
     let party = [];
     let npcs = [];
     let rumours = [];
+    let stats = [];
     let questSaveTimer = null;
     let questSheetStatusTimer = null;
 
@@ -693,6 +240,7 @@
     let partySection = null;
     let npcsSection = null;
     let rumoursSection = null;
+    let statsSection = null;
 
     function newQuest() {
       return {
@@ -844,6 +392,28 @@
       });
     }
 
+    function saveStats() {
+      if (statsSection) {
+        statsSection.save();
+        return;
+      }
+      chrome.storage.local.set({ [STATS_KEY]: stats });
+    }
+
+    function renderStats() {
+      if (statsSection) statsSection.render();
+    }
+
+    function loadStats() {
+      if (statsSection) {
+        statsSection.load();
+        return;
+      }
+      chrome.storage.local.get(STATS_KEY, (d) => {
+        stats = Array.isArray(d[STATS_KEY]) ? d[STATS_KEY] : [];
+      });
+    }
+
     function normalizeId(rawId, idx) {
       return typeof rawId === "number" && isFinite(rawId)
         ? rawId
@@ -961,18 +531,16 @@
       };
     }
 
-    function normalizeImportedDiceModifier(raw, idx) {
+    function normalizeImportedStat(raw, idx) {
       if (!raw || typeof raw !== "object") return null;
       const name = typeof raw.name === "string" ? raw.name : "";
+      const value = typeof raw.value === "string" ? raw.value : String(raw.value ?? "");
       const notes = typeof raw.notes === "string" ? raw.notes : "";
-      const parsedValue = parseInt(raw.value, 10);
-      const value = isFinite(parsedValue) ? parsedValue : 0;
       return {
         id: normalizeId(raw.id, idx),
         name,
-        notes,
         value,
-        enabled: raw.enabled !== false,
+        notes,
       };
     }
 
@@ -1053,12 +621,9 @@
           normalizeImportedRumour,
           "rumour",
         ),
-        diceModifiers: normalizeImportedArray(
-          parsed,
-          "diceModifiers",
-          normalizeImportedDiceModifier,
-          "dice modifier",
-        ),
+        stats: Array.isArray(parsed.stats)
+          ? parsed.stats.map((s, i) => normalizeImportedStat(s, i)).filter(Boolean)
+          : [],
       };
     }
 
@@ -1149,16 +714,10 @@
       );
     }
 
-    function getCleanDiceModifiers() {
-      return diceModifiers.map((m, idx) =>
-        normalizeImportedDiceModifier(
-          {
-            id: m.id,
-            name: m.name,
-            notes: m.notes,
-            value: m.value,
-            enabled: m.enabled,
-          },
+    function getCleanStats() {
+      return stats.map((s, idx) =>
+        normalizeImportedStat(
+          { id: s.id, name: s.name, value: s.value, notes: s.notes },
           idx,
         ),
       );
@@ -1171,7 +730,7 @@
       const cleanedParty = getCleanParty();
       const cleanedNpcs = getCleanNpcs();
       const cleanedRumours = getCleanRumours();
-      const cleanedDiceMods = getCleanDiceModifiers();
+      const cleanedStats = getCleanStats();
       return {
         type: "sc-rpg-sheet",
         version: 2,
@@ -1184,7 +743,7 @@
           party: cleanedParty.length,
           npcs: cleanedNpcs.length,
           rumours: cleanedRumours.length,
-          diceModifiers: cleanedDiceMods.length,
+          stats: cleanedStats.length,
         },
         quests: cleanedQuests,
         resources: cleanedResources,
@@ -1192,7 +751,7 @@
         party: cleanedParty,
         npcs: cleanedNpcs,
         rumours: cleanedRumours,
-        diceModifiers: cleanedDiceMods,
+        stats: cleanedStats,
       };
     }
 
@@ -1241,7 +800,7 @@
       party = imported.party;
       npcs = imported.npcs;
       rumours = imported.rumours;
-      diceModifiers = imported.diceModifiers;
+      stats = imported.stats;
 
       saveQuests();
       saveRes();
@@ -1249,7 +808,7 @@
       saveParty();
       saveNpcs();
       saveRumours();
-      saveDiceMods();
+      saveStats();
 
       renderQuests();
       renderRes();
@@ -1257,10 +816,10 @@
       renderParty();
       renderNpcs();
       renderRumours();
-      renderDiceMods();
+      renderStats();
 
       addLog(
-        `[RPG sheet imported: ${quests.length} quests, ${resources.length} resources, ${abilities.length} abilities, ${party.length} party, ${npcs.length} NPCs, ${rumours.length} rumours, ${diceModifiers.length} modifiers]`,
+        `[RPG sheet imported: ${quests.length} quests, ${resources.length} resources, ${abilities.length} abilities, ${party.length} party, ${npcs.length} NPCs, ${rumours.length} rumours, ${stats.length} stats]`,
       );
       setQuestSheetStatus("Imported full RPG sheet.", "ok");
     }
@@ -1593,163 +1152,6 @@
       });
     }
 
-    /* ════════════════ DICE ROLLER ════════════════ */
-    let selectedFaces = new Set([20]);
-    let diceHistory = [];
-    const MAX_HIST = 8;
-
-    // Allow multiple dice faces selected at once
-    document.querySelectorAll(".dice-face-btn").forEach((btn) => {
-      // default: only d20 starts active
-      const f = parseInt(btn.dataset.faces, 10);
-      if (f !== 20) btn.classList.remove("active");
-      btn.addEventListener("click", () => {
-        btn.classList.toggle("active");
-        if (btn.classList.contains("active")) {
-          selectedFaces.add(f);
-        } else {
-          selectedFaces.delete(f);
-          if (!selectedFaces.size) {
-            selectedFaces.add(f);
-            btn.classList.add("active");
-          }
-        }
-        updateDiceLabel();
-      });
-    });
-
-    function updateDiceLabel() {
-      const sorted = [...selectedFaces].sort((a, b) => a - b);
-      const count = Math.min(
-        20,
-        Math.max(1, parseInt(diceCountInput.value, 10) || 1),
-      );
-      const n = sorted.length === 1 ? count + "×" : count + "×(";
-      const faces = sorted.map((f) => "d" + f).join("+");
-      diceLabelEl.textContent = n + faces + (sorted.length > 1 ? ")" : "");
-    }
-
-    diceCountInput.addEventListener("input", updateDiceLabel);
-
-    diceRollBtn.addEventListener("click", () => {
-      const count = Math.min(
-        20,
-        Math.max(1, parseInt(diceCountInput.value, 10) || 1),
-      );
-      const faceArr = [...selectedFaces].sort((a, b) => a - b);
-
-      const allRolls = [];
-      const perDie = {};
-      faceArr.forEach((f) => {
-        perDie[f] = [];
-        for (let i = 0; i < count; i++) {
-          const r = Math.floor(Math.random() * f) + 1;
-          perDie[f].push(r);
-          allRolls.push(r);
-        }
-      });
-
-      const rawTotal = allRolls.reduce((a, b) => a + b, 0);
-      const mod = computeDiceMod();
-      const total = rawTotal + mod;
-      const targetChecks = evaluateDiceTargets(total);
-
-      // Breakdown text
-      let breakdown = "";
-      if (allRolls.length > 1) {
-        if (faceArr.length === 1) {
-          breakdown = "Multiple roll values: " + perDie[faceArr[0]].join(" — ");
-        } else {
-          breakdown = faceArr
-            .map((f) => "d" + f + ": " + perDie[f].join(" — "))
-            .join("  ");
-          breakdown = "Multiple roll values: " + breakdown;
-        }
-      }
-
-      // Nat 20/1 detection — only for single d20
-      let natMsg = "";
-      let natClass = "";
-      if (faceArr.length === 1 && faceArr[0] === 20 && count === 1) {
-        if (allRolls[0] === 20) {
-          natMsg = "Natural 20!";
-          natClass = "nat20";
-        } else if (allRolls[0] === 1) {
-          natMsg = "Critical Fail!";
-          natClass = "nat1";
-        }
-      }
-
-      // Animate
-      diceTotalEl.classList.remove("rolling", "nat20", "nat1");
-      void diceTotalEl.offsetWidth; // reflow
-      diceTotalEl.classList.add("rolling");
-      if (natClass) diceTotalEl.classList.add(natClass);
-      diceTotalEl.textContent = total;
-      diceBreakdownEl.textContent = breakdown;
-      diceNatEl.textContent = natMsg;
-      diceNatEl.className =
-        "dice-result-nat" + (natClass ? " " + natClass : "");
-      if (mod !== 0) {
-        const sign = mod > 0 ? "+" : "";
-        const parts = diceModifiers
-          .filter((mx) => mx.value !== 0 && mx.enabled !== false)
-          .map((mx) =>
-            `${mx.value > 0 ? "+" : ""}${mx.value} ${mx.name || "?"}`.trim(),
-          )
-          .join(", ");
-        diceModDisplayEl.textContent = `${sign}${mod} mod${rawTotal !== total ? " (" + rawTotal + " raw)" : ""}${parts ? " \u2014 " + parts : ""}`;
-      } else {
-        diceModDisplayEl.textContent = "";
-      }
-      renderDiceTargetOutcomes(targetChecks);
-
-      // History chip
-      const label = faceArr.map((f) => count + "d" + f).join("+");
-      const modSuffix = mod !== 0 ? (mod > 0 ? "+" + mod : String(mod)) : "";
-      const chipLabel = modSuffix ? `${label}${modSuffix}` : label;
-      diceHistory.unshift({ label: chipLabel, total, natClass });
-      if (diceHistory.length > MAX_HIST) diceHistory.pop();
-      diceHistoryEl.innerHTML = "";
-      diceHistory.forEach((h) => {
-        const chip = document.createElement("span");
-        chip.className =
-          "dice-history-chip" + (h.natClass ? " " + h.natClass : "");
-        chip.textContent = h.label + ": " + h.total;
-        diceHistoryEl.appendChild(chip);
-      });
-
-      // Log the roll
-      const ctx = diceContextInput.value.trim();
-      let modPart = "";
-      if (mod !== 0) {
-        const modSign = mod > 0 ? "+" : "";
-        const modItems = diceModifiers
-          .filter((mx) => mx.value !== 0 && mx.enabled !== false)
-          .map(
-            (mx) => `${mx.value > 0 ? "+" : ""}${mx.value} ${mx.name || "?"}`,
-          )
-          .join(", ");
-        modPart = ` (${modSign}${mod}${modItems ? ": " + modItems : ""})`;
-      }
-      const targetPart = buildDiceTargetLogPart(targetChecks);
-      const logLine = ctx
-        ? natMsg
-          ? `[${ctx} \u2014 Roll ${chipLabel}: ${total}${modPart}${targetPart} \u2014 ${natMsg}]`
-          : breakdown
-            ? `[${ctx} \u2014 Roll ${chipLabel}: ${total}${modPart}${targetPart} \u2014 ${breakdown}]`
-            : `[${ctx} \u2014 Roll ${chipLabel}: ${total}${modPart}${targetPart}]`
-        : natMsg
-          ? `[Roll ${chipLabel}: ${total}${modPart}${targetPart} \u2014 ${natMsg}]`
-          : breakdown
-            ? `[Roll ${chipLabel}: ${total}${modPart}${targetPart} \u2014 ${breakdown}]`
-            : `[Roll ${chipLabel}: ${total}${modPart}${targetPart}]`;
-      addLog(logLine);
-    });
-
-    renderDiceTargets();
-    updateDiceLabel();
-
     /* ════════════════ COLLAPSIBLE SECTIONS ════════════════ */
     drawer.querySelectorAll(".ql-collapsible-hdr").forEach((hdr) => {
       hdr.addEventListener("click", (e) => {
@@ -1768,7 +1170,8 @@
       typeof sectionFactory.createAbilitiesSection !== "function" ||
       typeof sectionFactory.createPartySection !== "function" ||
       typeof sectionFactory.createNpcsSection !== "function" ||
-      typeof sectionFactory.createRumoursSection !== "function"
+      typeof sectionFactory.createRumoursSection !== "function" ||
+      typeof sectionFactory.createStatsSection !== "function"
     ) {
       throw new Error("RPG tracker section modules failed to load.");
     }
@@ -1824,6 +1227,16 @@
         rumours = Array.isArray(next) ? next : [];
       },
     });
+
+    statsSection = sectionFactory.createStatsSection({
+      storageKey: STATS_KEY,
+      addLog,
+      getStats: () => stats,
+      setStats: (next) => {
+        stats = Array.isArray(next) ? next : [];
+      },
+    });
+
     /* ── Open / close ── */
     function setOpen(val) {
       isOpen = val;
@@ -2415,6 +1828,7 @@
       getParty: () => party,
       getNpcs: () => npcs,
       getRumours: () => rumours,
+      getStats: () => stats,
     });
 
     function flashCopyBtnLabel(btn) {
@@ -2429,25 +1843,20 @@
       activityExports.bindExportButtons();
     }
 
-    function bindDiceExportButton() {
-      activityExports.bindDiceExportButton();
-    }
-
     function loadAllTrackerSections() {
-      loadDiceMods();
       loadQuests();
       loadRes();
       loadAbl();
       loadParty();
       loadNpcs();
       loadRumours();
+      loadStats();
     }
 
     function bootDrawerState() {
       // Erase any legacy notes storage for this chat
       chrome.storage.local.remove([STORAGE_KEYS.legacyNote]);
       bindExportButtons();
-      bindDiceExportButton();
       loadAllTrackerSections();
       setOpen(true);
     }

@@ -143,17 +143,20 @@
       return `[Rumours: ${parts.join(" | ")}]`;
     }
 
-    function exportDiceLast() {
-      if (!activityLog.length) return "[Dice: no roll yet]";
-      const diceEntry = activityLog.find(
-        (e) => e.msg.startsWith("[Roll ") || e.msg.includes(" \u2014 Roll "),
-      );
-      return diceEntry ? diceEntry.msg : "[Dice: no roll yet]";
+    function exportStats() {
+      const stats = deps.getStats();
+      if (!stats.length) return "[Stats: none]";
+      const parts = stats.map((s) => {
+        const note = s.notes ? ` (${s.notes})` : "";
+        return `${s.name || "(unnamed)"} ${s.value || "\u2014"}${note}`;
+      });
+      return `[Stats: ${parts.join(" | ")}]`;
     }
 
     function exportAll() {
       return [
         exportQuests(),
+        exportStats(),
         exportResources(),
         exportAbilities(),
         exportParty(),
@@ -175,21 +178,12 @@
     function bindExportButtons() {
       bindCopyBtn("sc-np-export-all", exportAll);
       bindCopyBtn("sc-np-quest-copy", exportQuests);
+      bindCopyBtn("sc-np-stats-copy", exportStats);
       bindCopyBtn("sc-np-res-copy", exportResources);
       bindCopyBtn("sc-np-abl-copy", exportAbilities);
       bindCopyBtn("sc-np-party-copy", exportParty);
       bindCopyBtn("sc-np-npc-copy", exportNpcs);
       bindCopyBtn("sc-np-rumour-copy", exportRumours);
-    }
-
-    function bindDiceExportButton() {
-      const btn = document.getElementById("sc-np-dice-copy");
-      if (!btn) return;
-      btn.addEventListener("click", () => {
-        const text = exportDiceLast();
-        injectLogLine(text);
-        flashCopyBtnLabel(btn);
-      });
     }
 
     if (logClearBtn) {
@@ -203,7 +197,6 @@
       addLog,
       flashCopyBtnLabel,
       bindExportButtons,
-      bindDiceExportButton,
     };
   }
 

@@ -395,672 +395,87 @@
     .ql-insert-btn:hover { color: #8a541a; background: rgba(176,132,64,0.12); }
     .ql-empty-state { text-align: center; color: #483522; font-size: 12px; padding: 16px 0; font-family: Georgia, "Times New Roman", serif; }
 
-    /* ── Dice roller (inside quests tab) ── */
-    #sc-np-dice-section {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      padding: 12px;
-      box-sizing: border-box;
-      height: auto;
-      min-height: max-content;
-      flex: 0 0 auto;
-      border: 1px solid rgba(165, 121, 55, 0.38);
-      border-radius: 12px;
-      background:
-        radial-gradient(circle at 12% 14%, rgba(255, 219, 144, 0.22), transparent 24%),
-        radial-gradient(circle at 88% 16%, rgba(255, 182, 88, 0.14), transparent 22%),
-        radial-gradient(circle at 50% 0%, rgba(255, 229, 179, 0.08), transparent 30%),
-        radial-gradient(circle at 50% 100%, rgba(94, 52, 20, 0.2), transparent 48%),
-        linear-gradient(180deg, rgba(111, 79, 39, 0.22), rgba(46, 28, 14, 0.18)),
-        linear-gradient(180deg, #3b2817 0%, #271a10 42%, #1c130d 100%);
-      box-shadow:
-        inset 0 1px 0 rgba(255, 235, 194, 0.1),
-        inset 0 0 0 1px rgba(255, 220, 156, 0.04),
-        0 12px 28px rgba(0, 0, 0, 0.3);
-      position: relative;
-      overflow: visible;
-      isolation: isolate;
+    /* ── Stat Tracker (gamified) ── */
+    .stat-item {
+      position: relative; display: flex; flex-direction: column; gap: 4px;
+      padding: 7px 9px 6px; margin-bottom: 6px; border-radius: 7px;
+      background: linear-gradient(160deg, rgba(217,164,65,0.09), rgba(20,16,10,0.32));
+      border: 1px solid rgba(217,164,65,0.22);
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
-    #sc-np-dice-section::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background:
-        radial-gradient(circle at 18% 12%, rgba(255, 239, 202, 0.1), transparent 18%),
-        radial-gradient(circle at 84% 18%, rgba(255, 199, 118, 0.08), transparent 18%),
-        radial-gradient(circle at 50% 12%, rgba(255, 215, 137, 0.07), transparent 20%),
-        linear-gradient(180deg, rgba(255, 243, 213, 0.03), transparent 24%),
-        repeating-linear-gradient(115deg, rgba(255, 244, 214, 0.018) 0 2px, transparent 2px 8px);
-      mix-blend-mode: screen;
-      opacity: 0.82;
+    .stat-item:last-child { margin-bottom: 0; }
+    .stat-item:hover { border-color: rgba(217,164,65,0.48); box-shadow: 0 3px 10px rgba(0,0,0,0.22); }
+    .stat-item-top { display: flex; align-items: center; gap: 8px; width: 100%; }
+    .stat-item .item-disp-name {
+      flex: 1; min-width: 0; font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em;
+      text-transform: uppercase; color: #d9c39c; font-family: Georgia, "Times New Roman", serif;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    #sc-np-dice-section::after {
-      content: "";
-      position: absolute;
-      inset: 6px;
-      pointer-events: none;
-      border-radius: 9px;
-      border: 1px solid rgba(241, 203, 136, 0.1);
-      background:
-        radial-gradient(circle at 0 0, rgba(243, 201, 124, 0.28) 0 10px, transparent 10px),
-        radial-gradient(circle at 100% 0, rgba(243, 201, 124, 0.28) 0 10px, transparent 10px),
-        radial-gradient(circle at 0 100%, rgba(243, 201, 124, 0.28) 0 10px, transparent 10px),
-        radial-gradient(circle at 100% 100%, rgba(243, 201, 124, 0.28) 0 10px, transparent 10px),
-        linear-gradient(90deg, transparent 14px, rgba(243, 201, 124, 0.18) 14px 15px, transparent 15px calc(100% - 15px), rgba(243, 201, 124, 0.18) calc(100% - 15px) calc(100% - 14px), transparent calc(100% - 14px)),
-        linear-gradient(180deg, transparent 14px, rgba(243, 201, 124, 0.18) 14px 15px, transparent 15px calc(100% - 15px), rgba(243, 201, 124, 0.18) calc(100% - 15px) calc(100% - 14px), transparent calc(100% - 14px));
-      box-shadow: inset 0 0 22px rgba(255, 209, 124, 0.03);
-      opacity: 0.45;
+    .stat-value {
+      text-align: right; font-size: 13px; font-weight: 800; color: #f3d8a3;
+      font-variant-numeric: tabular-nums; flex-shrink: 0; word-break: break-all;
+      padding: 2px 9px; border-radius: 999px;
+      background: linear-gradient(180deg, rgba(217,164,65,0.26), rgba(217,164,65,0.09));
+      border: 1px solid rgba(217,164,65,0.4);
     }
-    .dice-faces-row {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 6px;
-      position: relative;
-      z-index: 1;
+    .stat-val-input {
+      width: 76px; flex-shrink: 0;
     }
-    .dice-faces-row::before {
-      content: "✦  Dice of Fate  ✦";
-      grid-column: 1 / -1;
-      text-align: center;
-      color: rgba(239, 216, 173, 0.74);
-      font: 700 10px/1.1 Georgia, "Times New Roman", serif;
-      letter-spacing: 0.24em;
-      text-transform: uppercase;
-      margin-bottom: 2px;
-      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.34);
-    }
-    .dice-face-btn {
-      min-width: 0;
-      padding: 7px 4px;
-      border-radius: 9px;
-      border: 1px solid rgba(195, 150, 74, 0.42);
-      background:
-        linear-gradient(180deg, rgba(142, 106, 56, 0.22), rgba(76, 49, 23, 0.08)),
-        linear-gradient(180deg, rgba(100, 66, 28, 0.94), rgba(57, 36, 18, 0.96));
-      color: #e7d4af;
-      font-size: 11px;
-      font-weight: 700;
-      font-family: Georgia, "Times New Roman", serif;
-      letter-spacing: 0.06em;
-      cursor: pointer;
-      text-align: center;
-      white-space: nowrap;
-      text-transform: uppercase;
-      box-shadow: inset 0 1px 0 rgba(255, 235, 188, 0.13), 0 3px 10px rgba(34, 20, 7, 0.18);
-      transition: background 0.12s, border-color 0.12s, transform 0.07s, color 0.12s, box-shadow 0.12s;
-    }
-    .dice-face-btn:hover {
-      background:
-        linear-gradient(180deg, rgba(182, 132, 67, 0.24), rgba(99, 62, 27, 0.1)),
-        linear-gradient(180deg, rgba(116, 76, 33, 0.96), rgba(67, 43, 20, 0.98));
-      border-color: rgba(236, 194, 112, 0.62);
-      color: #fff1d0;
-      box-shadow: inset 0 1px 0 rgba(255, 239, 206, 0.18), 0 0 0 1px rgba(232, 188, 107, 0.1), 0 6px 14px rgba(54, 31, 10, 0.24);
-    }
-    .dice-face-btn:active { transform: scale(0.94); }
-    .dice-face-btn.active {
-      background:
-        radial-gradient(circle at top, rgba(255, 214, 134, 0.28), transparent 52%),
-        linear-gradient(180deg, rgba(195, 140, 53, 1), rgba(131, 83, 27, 1));
-      border-color: rgba(255, 225, 163, 0.82);
-      color: #fff8e4;
-      box-shadow: inset 0 1px 0 rgba(255, 244, 218, 0.28), 0 6px 18px rgba(140, 86, 24, 0.34), 0 0 18px rgba(255, 184, 76, 0.08);
-    }
-    .dice-controls-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 9px;
-      border-radius: 10px;
-      border: 1px solid rgba(176, 132, 64, 0.26);
-      background:
-        linear-gradient(180deg, rgba(255, 230, 181, 0.05), transparent 35%),
-        rgba(33, 21, 11, 0.44);
-      box-shadow: inset 0 1px 0 rgba(255, 232, 190, 0.04);
-      position: relative;
-      z-index: 1;
-    }
-    .dice-count-input {
-      width: 48px;
-      text-align: center;
-      background: rgba(17, 11, 6, 0.62);
-      border: 1px solid rgba(181, 142, 73, 0.26);
-      border-radius: 7px;
-      color: #f1e3c4;
-      font-size: 12.5px;
-      font-weight: 700;
-      font-family: Georgia, "Times New Roman", serif;
-      padding: 6px 6px;
-      outline: none;
-      transition: border-color 0.12s, box-shadow 0.12s, background 0.12s;
-    }
-    .dice-count-input:focus {
-      border-color: rgba(242, 197, 116, 0.56);
-      box-shadow: 0 0 0 2px rgba(232, 188, 107, 0.09);
-      background: rgba(27, 17, 9, 0.76);
-    }
-    .dice-count-label {
-      font-size: 11px;
-      color: #d0b88f;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      font-family: Georgia, "Times New Roman", serif;
-      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
-    }
-    .dice-context-input {
-      width: 100%;
-      box-sizing: border-box;
-      background:
-        linear-gradient(180deg, rgba(255, 235, 196, 0.06), transparent 30%),
-        rgba(33, 21, 11, 0.52);
-      border: 1px solid rgba(181, 142, 73, 0.22);
-      border-radius: 8px;
-      color: #ebdebf;
-      font-size: 11px;
-      font-family: Georgia, "Times New Roman", serif;
-      font-style: italic;
-      padding: 7px 9px;
-      outline: none;
-      transition: border-color 0.12s, background 0.12s, color 0.12s;
-      caret-color: #f5deb2;
-      position: relative;
-      z-index: 1;
-    }
-    .dice-context-input::placeholder { color: #8f7957; }
-    .dice-context-input:focus {
-      border-color: rgba(242, 197, 116, 0.5);
-      background:
-        linear-gradient(180deg, rgba(255, 235, 196, 0.08), transparent 32%),
-        rgba(42, 26, 13, 0.68);
-      color: #fff0d2;
-      font-style: normal;
-    }
-    .dice-targets-wrap {
-      margin-top: 2px;
-      padding: 10px;
-      border: 1px solid rgba(181, 138, 69, 0.28);
-      border-radius: 10px;
-      background:
-        radial-gradient(circle at top, rgba(255, 219, 149, 0.08), transparent 48%),
-        linear-gradient(180deg, rgba(83, 57, 26, 0.46), rgba(34, 22, 12, 0.4)),
-        rgba(17, 11, 7, 0.34);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      position: relative;
-      z-index: 1;
-      box-shadow: inset 0 1px 0 rgba(255, 232, 192, 0.04);
-    }
-    .dice-targets-wrap::before {
-      content: "❦";
-      position: absolute;
-      top: -8px;
-      left: 50%;
-      transform: translateX(-50%);
-      font: 700 14px/1 Georgia, "Times New Roman", serif;
-      color: rgba(240, 208, 145, 0.54);
-      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-      pointer-events: none;
-    }
-    .dice-targets-head { display: flex; align-items: center; gap: 6px; }
-    .dice-targets-title {
-      font-size: 11px;
-      color: #f0e0bd;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      flex: 1;
-      font-family: Georgia, "Times New Roman", serif;
-    }
-    .dice-targets-btn {
-      border: 1px solid rgba(196, 152, 76, 0.38);
-      background: linear-gradient(180deg, rgba(116, 79, 34, 0.92), rgba(66, 43, 20, 0.94));
-      color: #f0debc;
-      border-radius: 7px;
-      font-size: 10.5px;
-      font-weight: 700;
-      font-family: Georgia, "Times New Roman", serif;
-      letter-spacing: 0.04em;
-      padding: 4px 9px;
-      cursor: pointer;
-      transition: background 0.12s, border-color 0.12s, color 0.12s;
-    }
-    .dice-targets-btn:hover {
-      background: linear-gradient(180deg, rgba(113, 77, 30, 0.9), rgba(66, 43, 20, 0.92));
-      border-color: rgba(232, 188, 107, 0.54);
-      color: #fff0cf;
-    }
-    .dice-targets-btn.clear {
-      background: linear-gradient(180deg, rgba(69, 52, 38, 0.88), rgba(38, 28, 22, 0.92));
-      color: #cfbe9c;
-      border-color: rgba(132, 109, 82, 0.34);
-    }
-    .dice-targets-btn.clear:hover {
-      color: #ffd2c1;
-      border-color: rgba(196, 114, 94, 0.5);
-      background: linear-gradient(180deg, rgba(75, 44, 37, 0.92), rgba(47, 26, 22, 0.95));
-    }
-    .dice-targets-empty {
-      font-size: 11px;
-      color: #8f7b59;
-      text-align: center;
-      padding: 8px 6px;
-      border: 1px dashed rgba(195, 151, 77, 0.26);
-      border-radius: 7px;
-      background: rgba(30, 19, 10, 0.22);
-      font-style: italic;
-    }
-    .dice-targets-list { display: flex; flex-direction: column; gap: 7px; }
-    .dice-target-row {
-      border: 1px solid rgba(189, 146, 73, 0.26);
-      border-radius: 9px;
-      background:
-        linear-gradient(180deg, rgba(255, 231, 186, 0.03), transparent 26%),
-        linear-gradient(180deg, rgba(43, 28, 14, 0.76), rgba(24, 16, 10, 0.84));
-      padding: 7px 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      box-shadow: inset 0 1px 0 rgba(255, 230, 177, 0.03);
-    }
-    .dice-target-top { display: flex; align-items: center; gap: 5px; }
-    .dice-target-input {
-      flex: 1;
-      min-width: 0;
-      background: rgba(9, 6, 4, 0.44);
-      border: 1px solid rgba(181, 142, 73, 0.16);
-      border-radius: 6px;
-      color: #f3e6c8;
-      font-size: 11.5px;
-      font-family: Georgia, "Times New Roman", serif;
-      padding: 5px 8px;
-      outline: none;
-      transition: border-color 0.12s, background 0.12s;
-      caret-color: #f5deb2;
-    }
-    .dice-target-input:focus {
-      border-color: rgba(242, 197, 116, 0.42);
-      background: rgba(21, 13, 8, 0.72);
-    }
-    .dice-target-input::placeholder { color: #635640; }
-    .dice-target-type {
-      width: 54px;
-      background: rgba(11, 7, 4, 0.56);
-      border: 1px solid rgba(181, 142, 73, 0.16);
-      border-radius: 6px;
-      color: #fff0cd;
-      font-size: 10.5px;
-      font-weight: 700;
-      font-family: Georgia, "Times New Roman", serif;
-      letter-spacing: 0.06em;
-      padding: 5px 18px 5px 7px;
-      outline: none;
-      appearance: none;
-      -webkit-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23e7c98d' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 6px center;
-      cursor: pointer;
-    }
-    .dice-target-type:focus { border-color: rgba(242, 197, 116, 0.42); }
-    .dice-target-value {
-      width: 58px;
-      text-align: center;
-      background: rgba(11, 7, 4, 0.56);
-      border: 1px solid rgba(181, 142, 73, 0.16);
-      border-radius: 6px;
-      color: #fff6de;
-      font-size: 11.5px;
-      font-weight: 700;
-      font-family: Georgia, "Times New Roman", serif;
-      padding: 5px 4px;
-      outline: none;
-      caret-color: #f5deb2;
-    }
-    .dice-target-value:focus { border-color: rgba(242, 197, 116, 0.42); }
-    .dice-target-icon-btn {
-      border: 1px solid rgba(181, 142, 73, 0.12);
-      background: rgba(53, 39, 24, 0.45);
-      color: #cfbb95;
-      width: 24px;
-      height: 24px;
-      border-radius: 6px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.12s, color 0.12s, border-color 0.12s;
-      flex-shrink: 0;
-      font-family: Georgia, "Times New Roman", serif;
-    }
-    .dice-target-icon-btn:hover {
-      background: rgba(111, 75, 31, 0.36);
-      border-color: rgba(232, 188, 107, 0.24);
-      color: #f0dfbc;
-    }
-    .dice-target-icon-btn.delete:hover {
-      background: rgba(111, 41, 31, 0.34);
-      border-color: rgba(211, 111, 91, 0.24);
-      color: #ffc9bb;
-    }
-    .dice-target-notes {
-      width: 100%;
-      box-sizing: border-box;
-      background: transparent;
-      border: none;
-      border-top: 1px solid rgba(181, 142, 73, 0.1);
-      color: #d1bd9b;
-      font-size: 11px;
-      font-family: Georgia, "Times New Roman", serif;
-      font-style: italic;
-      padding: 6px 2px 1px;
-      outline: none;
-      caret-color: #f5deb2;
-    }
-    .dice-target-notes::placeholder { color: #65563f; }
-    .dice-target-outcomes {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      min-height: 0;
-      position: relative;
-      z-index: 1;
-    }
-    .dice-target-chip {
-      font-size: 10.5px;
-      font-weight: 700;
-      border: 1px solid rgba(170, 136, 83, 0.24);
-      border-radius: 999px;
-      padding: 3px 9px;
-      background: linear-gradient(180deg, rgba(53, 37, 22, 0.74), rgba(27, 19, 12, 0.82));
-      color: #ebddbb;
-      white-space: nowrap;
-      font-family: Georgia, "Times New Roman", serif;
-      letter-spacing: 0.03em;
-    }
-    .dice-target-chip.pass {
-      color: #a7efb4;
-      border-color: rgba(117, 198, 120, 0.34);
-      background: linear-gradient(180deg, rgba(34, 80, 35, 0.42), rgba(18, 41, 21, 0.56));
-    }
-    .dice-target-chip.fail {
-      color: #ffb0a1;
-      border-color: rgba(208, 101, 81, 0.36);
-      background: linear-gradient(180deg, rgba(93, 32, 27, 0.4), rgba(47, 16, 13, 0.54));
-    }
-    /* ── Dice Modifier List ── */
-    .dmod-header {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin: 4px 0 6px;
-      padding: 8px 10px 6px;
-      border-radius: 10px 10px 6px 6px;
-      border: 1px solid rgba(184, 143, 73, 0.18);
-      background:
-        radial-gradient(circle at 50% 0%, rgba(255, 225, 163, 0.08), transparent 34%),
-        linear-gradient(180deg, rgba(63, 42, 21, 0.48), rgba(28, 19, 11, 0.48));
-      position: relative;
-      z-index: 1;
-    }
-    .dmod-header-label { font-size: 11px; color: #d8c29c; flex: 1; font-family: Georgia, "Times New Roman", serif; letter-spacing: 0.06em; text-transform: uppercase; }
-    .dmod-include-label { display: flex; align-items: center; gap: 3px; font-size: 11px; color: #cbb791; cursor: pointer; user-select: none; }
-    .dmod-include-label input { accent-color: #c88c35; cursor: pointer; margin: 0; }
-    .dmod-total-pill {
-      font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 100px;
-      background: linear-gradient(180deg, rgba(70, 49, 23, 0.74), rgba(36, 24, 14, 0.84)); border: 1px solid rgba(181, 142, 73, 0.22); color: #d0bc97;
-    }
-    .dmod-total-pill.positive { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.3); color: #22c55e; }
-    .dmod-total-pill.negative { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.28); color: #f87171; }
-    .dmod-list { display: flex; flex-direction: column; gap: 5px; }
-    .dmod-item {
-      display: flex; flex-direction: column; gap: 3px;
-      background:
-        linear-gradient(180deg, rgba(255, 229, 180, 0.03), transparent 24%),
-        linear-gradient(180deg, rgba(56, 39, 20, 0.7), rgba(28, 19, 11, 0.84));
-      border: 1px solid rgba(183, 141, 72, 0.2);
-      border-radius: 8px; padding: 7px 9px; transition: border-color 0.12s, box-shadow 0.12s;
-      box-shadow: inset 0 1px 0 rgba(255, 233, 191, 0.03);
-    }
-    .dmod-item:focus-within { border-color: rgba(230, 192, 112, 0.34); box-shadow: inset 0 1px 0 rgba(255, 233, 191, 0.06), 0 0 0 1px rgba(230, 192, 112, 0.06); }
-    .dmod-top { display: flex; align-items: center; gap: 6px; }
-    .dmod-name-input {
-      flex: 1; background: transparent; border: none; outline: none;
-      color: #f0e4ca; font-size: 12px; font-family: Georgia, "Times New Roman", serif; caret-color: #f0c26b; min-width: 0;
-    }
-    .dmod-name-input::placeholder { color: #6d5a42; }
-    .dmod-val-input {
-      width: 46px; flex-shrink: 0; text-align: center; background: rgba(19,13,8,0.66);
-      border: 1px solid rgba(188,145,74,0.26); border-radius: 6px;
-      color: #ffdba0; font-size: 12px; font-weight: 700; font-family: Georgia, "Times New Roman", serif;
-      padding: 4px 4px; outline: none; transition: border-color 0.12s, box-shadow 0.12s; caret-color: #f0c26b;
-    }
-    .dmod-val-input:focus { border-color: rgba(230,192,112,0.46); box-shadow: 0 0 0 2px rgba(230,192,112,0.08); }
-    .dmod-delete-btn {
+    .stat-item .item-disp-note { color: #a08a63; }
+    .stat-delete-btn {
       background: none; border: none; padding: 2px 3px; cursor: pointer; flex-shrink: 0;
-      color: #7e694d; border-radius: 3px; transition: color 0.12s; display: flex; align-items: center;
+      color: rgba(217,164,65,0.32); border-radius: 3px; transition: color 0.12s; display: flex; align-items: center;
     }
-    .dmod-delete-btn:hover { color: #f87171; }
-    .dmod-notes-input {
-      width: 100%; box-sizing: border-box; background: transparent;
-      border: none; border-top: 1px solid rgba(181,142,73,0.1); outline: none;
-      color: #c8b38d; font-size: 11px; font-family: Georgia, "Times New Roman", serif; font-style: italic;
-      padding: 4px 0 1px; caret-color: #f0c26b;
+    .stat-delete-btn:hover { color: #f87171; }
+    .stat-item .item-toggle-btn.edit { color: rgba(217,164,65,0.45); border-color: rgba(217,164,65,0.22); }
+    .stat-item .item-toggle-btn.edit:hover { color: #f3d8a3; border-color: rgba(217,164,65,0.5); }
+    /* bulk stat modification panel */
+    .stat-adjust-panel {
+      display: flex; flex-direction: column; gap: 6px;
+      border-top: 1px solid rgba(217,164,65,0.18); padding-top: 8px; margin-top: 2px;
     }
-    .dmod-notes-input::placeholder { color: #6b5941; }
-    .dmod-empty { font-size: 10.5px; color: #937b59; font-style: italic; padding: 4px 2px; font-family: Georgia, "Times New Roman", serif; }
-    .dmod-form {
-      background:
-        radial-gradient(circle at top, rgba(255, 228, 178, 0.08), transparent 38%),
-        linear-gradient(180deg, rgba(67, 47, 24, 0.58), rgba(29, 20, 12, 0.68));
-      border: 1px solid rgba(183, 141, 72, 0.22);
-      border-radius: 10px;
-      box-shadow: inset 0 1px 0 rgba(255, 232, 190, 0.05);
+    .stat-adjust-row { display: flex; align-items: center; gap: 6px; }
+    .stat-select {
+      flex: 1; min-width: 0; background: rgba(20,16,10,0.4);
+      border: 1px solid rgba(217,164,65,0.28); border-radius: 5px;
+      color: #f3d8a3; font-size: 11.5px; font-family: inherit;
+      padding: 5px 7px; outline: none; transition: border-color 0.12s;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23d9a445' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 7px center;
+      padding-right: 22px; cursor: pointer;
     }
-    .dmod-form .af-input,
-    .dmod-form .af-number {
-      background: rgba(24, 16, 10, 0.66);
-      border: 1px solid rgba(188, 145, 74, 0.24);
-      border-radius: 7px;
-      color: #f1e3c4;
-      font-family: Georgia, "Times New Roman", serif;
-      caret-color: #f0c26b;
+    .stat-select:focus { border-color: rgba(217,164,65,0.6); }
+    .stat-select option { background: #241a0e; color: #f3d8a3; }
+    .stat-amount-input {
+      width: 84px; flex-shrink: 0; text-align: center;
+      background: rgba(20,16,10,0.4); border: 1px solid rgba(217,164,65,0.28); border-radius: 5px;
+      color: #f3d8a3; font-size: 12px; font-weight: 700; font-family: inherit;
+      padding: 5px 4px; outline: none; transition: border-color 0.12s; caret-color: #d9a445;
     }
-    .dmod-form .af-input::placeholder,
-    .dmod-form .af-number::placeholder {
-      color: #78664b;
+    .stat-amount-input::placeholder { color: rgba(217,164,65,0.4); }
+    .stat-amount-input:focus { border-color: rgba(217,164,65,0.6); }
+    .stat-reason-input {
+      width: 100%; box-sizing: border-box; background: rgba(20,16,10,0.3);
+      border: 1px solid rgba(217,164,65,0.18); border-radius: 5px;
+      color: #c9b08a; font-size: 11px; font-family: inherit; font-style: italic;
+      padding: 5px 7px; outline: none; transition: border-color 0.12s; caret-color: #d9a445;
     }
-    .dmod-form .af-input:focus,
-    .dmod-form .af-number:focus {
-      border-color: rgba(232, 188, 107, 0.46);
-      box-shadow: 0 0 0 2px rgba(232, 188, 107, 0.08);
+    .stat-reason-input::placeholder { color: rgba(217,164,65,0.3); }
+    .stat-reason-input:focus { border-color: rgba(217,164,65,0.45); }
+    .stat-op-btn {
+      padding: 5px 11px; border-radius: 5px; font-size: 12px; font-weight: 700;
+      font-family: inherit; cursor: pointer; border: 1px solid transparent;
+      transition: background 0.12s, border-color 0.12s; flex-shrink: 0;
     }
-    .dmod-form .af-submit {
-      background: linear-gradient(180deg, rgba(136, 96, 41, 0.96), rgba(84, 55, 25, 0.98));
-      border: 1px solid rgba(194, 151, 74, 0.36);
-      color: #f8e8c6;
-      border-radius: 8px;
-      font-family: Georgia, "Times New Roman", serif;
-      letter-spacing: 0.04em;
-    }
-    .dmod-form .af-submit:hover {
-      background: linear-gradient(180deg, rgba(160, 113, 49, 0.98), rgba(101, 66, 30, 1));
-      border-color: rgba(232, 188, 107, 0.52);
-    }
-    .dice-result-modifier {
-      font-size: 11px;
-      color: #d4bf99;
-      text-align: center;
-      line-height: 1.45;
-      font-family: Georgia, "Times New Roman", serif;
-      position: relative;
-      z-index: 1;
-    }
-    .dice-roll-btn {
-      flex: 1;
-      padding: 8px 11px;
-      border-radius: 10px;
-      border: 1px solid rgba(245, 206, 126, 0.62);
-      background:
-        radial-gradient(circle at 50% 0%, rgba(255, 224, 156, 0.34), transparent 44%),
-        linear-gradient(180deg, rgba(184, 129, 45, 1), rgba(121, 76, 24, 1));
-      color: #fff3d6;
-      font-size: 12px;
-      font-weight: 700;
-      font-family: Georgia, "Times New Roman", serif;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: filter 0.12s, border-color 0.12s, transform 0.08s, box-shadow 0.12s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      box-shadow: inset 0 1px 0 rgba(255, 241, 211, 0.32), 0 8px 16px rgba(44, 24, 7, 0.28), 0 0 20px rgba(255, 191, 87, 0.08);
-      position: relative;
-      z-index: 1;
-      overflow: hidden;
-    }
-    .dice-roll-btn::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(120deg, transparent 18%, rgba(255, 241, 211, 0.22) 34%, transparent 52%);
-      transform: translateX(-130%);
-      transition: transform 0.34s ease;
-      pointer-events: none;
-    }
-    .dice-roll-btn:hover {
-      filter: brightness(1.05);
-      border-color: rgba(248, 214, 144, 0.68);
-      box-shadow: inset 0 1px 0 rgba(255, 239, 203, 0.34), 0 10px 18px rgba(44, 24, 7, 0.32), 0 0 24px rgba(255, 194, 92, 0.12);
-    }
-    .dice-roll-btn:hover::before { transform: translateX(130%); }
-    .dice-roll-btn:active { transform: scale(0.97); }
-    .dice-roll-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    #sc-np-dice-result {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
-      min-height: 72px;
-      padding: 10px 8px 7px;
-      border-radius: 11px;
-      border: 1px solid rgba(190, 146, 74, 0.26);
-      background:
-        radial-gradient(circle at 50% 10%, rgba(255, 227, 164, 0.14), transparent 42%),
-        radial-gradient(circle at 50% 0%, rgba(255, 188, 92, 0.08), transparent 30%),
-        linear-gradient(180deg, rgba(58, 37, 18, 0.76), rgba(24, 16, 10, 0.88));
-      box-shadow: inset 0 1px 0 rgba(255, 231, 173, 0.08), inset 0 -10px 24px rgba(0, 0, 0, 0.08);
-      position: relative;
-      z-index: 1;
-      overflow: hidden;
-    }
-    #sc-np-dice-result::before,
-    #sc-np-dice-result::after {
-      content: "✦";
-      position: absolute;
-      top: 8px;
-      font: 700 14px/1 Georgia, "Times New Roman", serif;
-      color: rgba(243, 203, 131, 0.46);
-      text-shadow: 0 0 8px rgba(255, 189, 81, 0.18);
-      pointer-events: none;
-    }
-    #sc-np-dice-result::before { left: 10px; }
-    #sc-np-dice-result::after { right: 10px; }
-    .dice-result-total.rolling {
-      animation: dice-spin 0.72s cubic-bezier(0.2, 0.95, 0.25, 1);
-      text-shadow: 0 0 24px rgba(255, 196, 86, 0.3), 0 0 42px rgba(255, 154, 61, 0.16), 0 2px 14px rgba(0, 0, 0, 0.42);
-    }
-    .dice-result-total {
-      font-size: 42px;
-      font-weight: 800;
-      line-height: 1;
-      color: #fff0cb;
-      font-variant-numeric: tabular-nums;
-      font-family: Georgia, "Times New Roman", serif;
-      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.38), 0 0 18px rgba(255, 204, 111, 0.08);
-      transition: color 0.25s, text-shadow 0.25s;
-    }
-    .dice-result-total.nat20 { color: #93ef9f; text-shadow: 0 0 22px rgba(74,222,128,0.5), 0 0 34px rgba(74,222,128,0.18); }
-    .dice-result-total.nat1  { color: #ffb09f; text-shadow: 0 0 22px rgba(248,113,113,0.4), 0 0 34px rgba(248,113,113,0.14); }
-    .dice-result-total.nat20,
-    .dice-result-nat.nat20 {
-      animation: crit-blaze 0.8s ease-out;
-    }
-    .dice-result-total.nat1,
-    .dice-result-nat.nat1 {
-      animation: fumble-burn 0.8s ease-out;
-    }
-    @keyframes dice-spin {
-      0%   { transform: scale(0.42) rotate(-30deg); opacity: 0; filter: blur(1.4px); }
-      35%  { transform: scale(1.26) rotate(10deg); opacity: 1; filter: blur(0); }
-      62%  { transform: scale(0.92) rotate(-4deg); opacity: 1; }
-      82%  { transform: scale(1.06) rotate(2deg); opacity: 1; }
-      100% { transform: scale(1) rotate(0deg); opacity: 1; filter: blur(0); }
-    }
-    @keyframes crit-blaze {
-      0% { transform: scale(0.88); filter: brightness(1); }
-      30% { transform: scale(1.16); filter: brightness(1.35); }
-      62% { transform: scale(1.04); filter: brightness(1.18); }
-      100% { transform: scale(1); filter: brightness(1); }
-    }
-    @keyframes fumble-burn {
-      0% { transform: scale(0.92); filter: brightness(1); }
-      25% { transform: scale(1.12); filter: brightness(1.2); }
-      55% { transform: scale(0.98); filter: brightness(1.08); }
-      100% { transform: scale(1); filter: brightness(1); }
-    }
-    .dice-result-breakdown {
-      font-size: 11px;
-      color: #dcc59f;
-      text-align: center;
-      font-family: Georgia, "Times New Roman", serif;
-      line-height: 1.4;
-    }
-    .dice-result-nat {
-      font-size: 11px;
-      font-weight: 700;
-      font-family: Georgia, "Times New Roman", serif;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      text-shadow: 0 1px 7px rgba(0, 0, 0, 0.22);
-    }
-    .dice-result-nat.nat20 { color: #93ef9f; }
-    .dice-result-nat.nat1  { color: #ffb09f; }
-    .dice-history {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      min-height: 22px;
-      position: relative;
-      z-index: 1;
-    }
-    .dice-history-chip {
-      font-size: 10.5px;
-      font-weight: 700;
-      padding: 3px 9px;
-      border-radius: 999px;
-      background:
-        linear-gradient(180deg, rgba(255, 224, 166, 0.06), transparent 30%),
-        linear-gradient(180deg, rgba(79, 56, 25, 0.8), rgba(39, 27, 16, 0.88));
-      border: 1px solid rgba(187, 146, 75, 0.26);
-      color: #e8d7b0;
-      font-family: Georgia, "Times New Roman", serif;
-      letter-spacing: 0.03em;
-    }
-    .dice-history-chip.nat20 {
-      background: linear-gradient(180deg, rgba(34, 89, 41, 0.54), rgba(19, 45, 23, 0.64));
-      border-color: rgba(74,222,128,0.25);
-      color: #9cefaa;
-    }
-    .dice-history-chip.nat1  {
-      background: linear-gradient(180deg, rgba(100, 39, 32, 0.48), rgba(52, 20, 17, 0.62));
-      border-color: rgba(248,113,113,0.2);
-      color: #ffb4a7;
-    }
+    .stat-op-add { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.3); color: #22c55e; }
+    .stat-op-add:hover { background: rgba(34,197,94,0.22); border-color: rgba(34,197,94,0.5); }
+    .stat-op-sub { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.28); color: #f87171; }
+    .stat-op-sub:hover { background: rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.45); }
+    .stat-op-set { background: rgba(217,164,65,0.14); border-color: rgba(217,164,65,0.4); color: #e8bd6c; }
+    .stat-op-set:hover { background: rgba(217,164,65,0.24); border-color: rgba(217,164,65,0.6); }
+    .stat-feedback { font-size: 10.5px; color: #e8bd6c; height: 14px; opacity: 0; transition: opacity 0.3s; }
+    .stat-feedback.visible { opacity: 1; }
 
     /* ── Add form ── */
     .af-form {
@@ -1694,52 +1109,31 @@
             <button id="sc-np-quest-copy" class="ql-copy-btn">⎘ Insert</button>
           </div>
           <div id="sc-np-quest-list"></div>
-          <!-- Dice Roller -->
-          <div class="ql-section-header" style="margin-top:4px;">
-            <span class="ql-section-label">Dice Roller</span>
-            <button id="sc-np-dice-copy" class="ql-copy-btn">⎘ Insert Last</button>
+          <!-- Character Stats -->
+          <div class="ql-section-header ql-collapsible-hdr" data-section="sc-np-stats-body" style="margin-top:4px;">
+            <span class="ql-section-label">Stats</span>
+            <div style="display:flex;gap:5px;align-items:center;">
+              <button id="sc-np-stats-copy" class="ql-copy-btn">⎘ Insert</button>
+              <span class="ql-chevron"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+            </div>
           </div>
-          <div class="rp-card" id="sc-np-dice-section">
-            <div class="dice-faces-row">
-              <button class="dice-face-btn active" data-faces="4">d4</button>
-              <button class="dice-face-btn" data-faces="6">d6</button>
-              <button class="dice-face-btn" data-faces="8">d8</button>
-              <button class="dice-face-btn" data-faces="10">d10</button>
-              <button class="dice-face-btn" data-faces="12">d12</button>
-              <button class="dice-face-btn active" data-faces="20">d20</button>
-              <button class="dice-face-btn" data-faces="100">d100</button>
-            </div>
-            <div class="dice-controls-row">
-              <span class="dice-count-label">Roll</span>
-              <input id="sc-np-dice-count" type="number" class="dice-count-input" value="1" min="1" max="20" data-ai-rewriter-ignore="1" />
-              <span class="dice-count-label" id="sc-np-dice-label">× d20</span>
-              <button id="sc-np-dice-roll" class="dice-roll-btn">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="4"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="16" cy="16" r="1.2" fill="currentColor"/><circle cx="16" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="16" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>
-                Roll
-              </button>
-            </div>
-            <input id="sc-np-dice-context" type="text" class="dice-context-input" maxlength="80" placeholder="Context… e.g. attempting to pick the lock" data-ai-rewriter-ignore="1" />
-            <div class="dice-targets-wrap">
-              <div class="dice-targets-head">
-                <span class="dice-targets-title">Target Checks (DC/AC)</span>
-                <button id="sc-np-dice-target-add" class="dice-targets-btn">+ Add</button>
-                <button id="sc-np-dice-target-clear" class="dice-targets-btn clear">Clear</button>
+          <div id="sc-np-stats-body" class="ql-section-body">
+            <div class="rp-card" style="padding:8px 10px;gap:6px;">
+              <div id="sc-np-stats-list"></div>
+              <div class="stat-adjust-panel" id="sc-np-stats-adjust">
+                <div class="stat-adjust-row">
+                  <select id="sc-np-stats-select" class="stat-select" data-ai-rewriter-ignore="1"><option value="">Select stat…</option></select>
+                  <input id="sc-np-stats-amount" type="text" class="stat-amount-input" placeholder="Amount / value" data-ai-rewriter-ignore="1" />
+                </div>
+                <input id="sc-np-stats-reason" type="text" class="stat-reason-input" maxlength="80" placeholder="Reason (optional)… e.g. fell into a trap" data-ai-rewriter-ignore="1" />
+                <div class="stat-adjust-row">
+                  <button id="sc-np-stats-op-add" class="stat-op-btn stat-op-add">+ Add</button>
+                  <button id="sc-np-stats-op-sub" class="stat-op-btn stat-op-sub">− Use</button>
+                  <button id="sc-np-stats-op-set" class="stat-op-btn stat-op-set">= Set</button>
+                  <span class="stat-feedback" id="sc-np-stats-fb"></span>
+                </div>
               </div>
-              <div id="sc-np-dice-target-list" class="dice-targets-list"></div>
             </div>
-            <div class="dmod-header">
-              <span class="dmod-header-label">Modifiers</span>
-              <span id="sc-np-dmod-total" class="dmod-total-pill">0</span>
-            </div>
-            <div id="sc-np-dmod-list" class="dmod-list"></div>
-            <div id="sc-np-dice-result">
-              <div class="dice-result-total" id="sc-np-dice-total">—</div>
-              <div class="dice-result-breakdown" id="sc-np-dice-breakdown"></div>
-              <div class="dice-result-nat" id="sc-np-dice-nat"></div>
-              <div class="dice-result-modifier" id="sc-np-dice-mod-display"></div>
-              <div class="dice-target-outcomes" id="sc-np-dice-target-outcomes"></div>
-            </div>
-            <div class="dice-history" id="sc-np-dice-history"></div>
           </div>
           <!-- Resource Counters -->
           <div class="ql-section-header ql-collapsible-hdr" data-section="sc-np-res-body">

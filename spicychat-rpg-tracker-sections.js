@@ -1396,6 +1396,376 @@
     };
   }
 
+  function createStatsSection(deps) {
+    const storageKey = deps.storageKey;
+    const addLog = deps.addLog;
+    const getStats = deps.getStats;
+    const setStats = deps.setStats;
+
+    const statsListEl = document.getElementById("sc-np-stats-list");
+    const statsSelectEl = document.getElementById("sc-np-stats-select");
+    const statsAmountEl = document.getElementById("sc-np-stats-amount");
+    const statsReasonEl = document.getElementById("sc-np-stats-reason");
+    const statsAdjustPanel = document.getElementById("sc-np-stats-adjust");
+    const statsFbEl = document.getElementById("sc-np-stats-fb");
+
+    let statsSaveTimer = null;
+    let statsFbTimer = null;
+
+    function newStat() {
+      return { id: Date.now() + Math.random(), name: "", value: "", notes: "" };
+    }
+
+    function save() {
+      chrome.storage.local.set({ [storageKey]: getStats() });
+    }
+
+    function scheduleSave() {
+      clearTimeout(statsSaveTimer);
+      statsSaveTimer = setTimeout(save, 500);
+    }
+
+    function showStatsFeedback(msg) {
+      if (!statsFbEl) return;
+      statsFbEl.textContent = msg;
+      statsFbEl.classList.add("visible");
+      clearTimeout(statsFbTimer);
+      statsFbTimer = setTimeout(() => statsFbEl.classList.remove("visible"), 1600);
+    }
+
+    function rebuildStatsSelect(keepId) {
+      if (!statsSelectEl || !statsAdjustPanel) return;
+      const stats = getStats();
+      const prev = keepId ?? statsSelectEl.value;
+      statsSelectEl.innerHTML = "<option value=''>Select stat…</option>";
+      stats.forEach((s) => {
+        const opt = document.createElement("option");
+        opt.value = s.id;
+        opt.textContent =
+          (s.name.trim() || "(unnamed)") + "  —  " + (s.value || "—");
+        statsSelectEl.appendChild(opt);
+      });
+      if (prev) statsSelectEl.value = prev;
+      statsAdjustPanel.style.display = stats.length ? "" : "none";
+    }
+
+    function parseStatValue(raw) {
+      const str = String(raw ?? "").trim();
+      const frac = str.match(/^(-?\d+(?:\.\d+)?)\s*\/\s*(-?\d+(?:\.\d+)?)(.*)$/);
+      if (frac) {
+        return {
+          kind: "fraction",
+          current: parseFloat(frac[1]),
+          max: parseFloat(frac[2]),
+          suffix: frac[3] || "",
+        };
+      }
+      const num = str.match(/^(-?\d+(?:\.\d+)?)(.*)$/);
+      if (num) {
+        return { kind: "number", value: parseFloat(num[1]), suffix: num[2] || "" };
+      }
+      return { kind: "text" };
+    }
+
+    function trimNum(n) {
+      return Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
+    }
+
+    function formatStatValue(parsed) {
+      if (parsed.kind === "fraction")
+        return `${trimNum(parsed.current)}/${trimNum(parsed.max)}${parsed.suffix}`;
+      if (parsed.kind === "number")
+        return `${trimNum(parsed.value)}${parsed.suffix}`;
+      return null;
+    }
+
+    function render() {
+      const stats = getStats();
+      if (!statsListEl) return;
+      statsListEl.innerHTML = "";
+      if (!stats.length) {
+        const e = document.createElement("div");
+        e.className = "ql-empty-state";
+        e.style.padding = "6px 0";
+        e.textContent = "No stats yet.";
+        statsListEl.appendChild(e);
+        rebuildStatsSelect();
+        return;
+      }
+      stats.forEach((s, idx) => {
+        const row = document.createElement("div");
+        row.className = "stat-item";
+        row.dataset.statId = s.id;
+
+        const topRow = document.createElement("div");
+        topRow.className = "stat-item-top";
+
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "item-disp-name";
+        nameSpan.textContent = s.name || "(unnamed)";
+
+        const nameEditIn = document.createElement("input");
+        nameEditIn.type = "text";
+        nameEditIn.className = "af-input";
+        nameEditIn.value = s.name;
+        nameEditIn.placeholder = "Stat name…";
+        nameEditIn.maxLength = 40;
+        nameEditIn.style.display = "none";
+        nameEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+        nameEditIn.addEventListener("input", () => {
+          s.name = nameEditIn.value;
+          scheduleSave();
+          rebuildStatsSelect(s.id);
+        });
+
+        const valSpan = document.createElement("span");
+        valSpan.className = "stat-value";
+        valSpan.textContent = s.value !== "" ? s.value : "—";
+        row._valEl = valSpan;
+
+        const valEditIn = document.createElement("input");
+        valEditIn.type = "text";
+        valEditIn.className = "af-input stat-val-input";
+        valEditIn.value = s.value;
+        valEditIn.placeholder = "Value…";
+        valEditIn.maxLength = 20;
+        valEditIn.style.display = "none";
+        valEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+        valEditIn.addEventListener("input", () => {
+          s.value = valEditIn.value;
+          scheduleSave();
+          rebuildStatsSelect(s.id);
+        });
+        row._valEditEl = valEditIn;
+
+        const toggleBtn = document.createElement("button");
+        toggleBtn.className = "item-toggle-btn edit";
+        toggleBtn.textContent = "✎";
+        let isEditing = false;
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "stat-delete-btn";
+        delBtn.title = "Remove";
+        delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+        delBtn.addEventListener("click", () => {
+          addLog(`[Stat removed: ${s.name || "(unnamed)"}]`);
+          stats.splice(idx, 1);
+          save();
+          render();
+        });
+
+        topRow.append(nameSpan, nameEditIn, valSpan, valEditIn, toggleBtn, delBtn);
+
+        const notesSpan = document.createElement("div");
+        notesSpan.className = "item-disp-note";
+        notesSpan.textContent = s.notes;
+        notesSpan.style.display = s.notes ? "" : "none";
+
+        const notesEditIn = document.createElement("input");
+        notesEditIn.type = "text";
+        notesEditIn.className = "af-input";
+        notesEditIn.value = s.notes || "";
+        notesEditIn.style.display = "none";
+        notesEditIn.placeholder = "Notes… e.g. base stat before buffs";
+        notesEditIn.maxLength = 80;
+        notesEditIn.setAttribute("data-ai-rewriter-ignore", "1");
+        notesEditIn.addEventListener("input", () => {
+          s.notes = notesEditIn.value;
+          scheduleSave();
+        });
+
+        toggleBtn.addEventListener("click", () => {
+          isEditing = !isEditing;
+          if (isEditing) {
+            nameSpan.style.display = "none";
+            nameEditIn.style.display = "";
+            valSpan.style.display = "none";
+            valEditIn.style.display = "";
+            notesSpan.style.display = "none";
+            notesEditIn.style.display = "";
+            toggleBtn.className = "item-toggle-btn save";
+            toggleBtn.textContent = "✓ Save";
+            nameEditIn.value = s.name;
+            valEditIn.value = s.value;
+            notesEditIn.value = s.notes || "";
+            nameEditIn.focus();
+          } else {
+            nameEditIn.style.display = "none";
+            nameSpan.style.display = "";
+            valEditIn.style.display = "none";
+            valSpan.style.display = "";
+            notesEditIn.style.display = "none";
+            toggleBtn.className = "item-toggle-btn edit";
+            toggleBtn.textContent = "✎";
+            nameSpan.textContent = s.name || "(unnamed)";
+            valSpan.textContent = s.value !== "" ? s.value : "—";
+            notesSpan.textContent = s.notes;
+            notesSpan.style.display = s.notes ? "" : "none";
+          }
+        });
+
+        row.append(topRow, notesSpan, notesEditIn);
+        statsListEl.appendChild(row);
+      });
+      rebuildStatsSelect();
+    }
+
+    (function mountAddForm() {
+      if (!statsListEl || !statsListEl.parentNode) return;
+      const form = document.createElement("div");
+      form.className = "af-form";
+      const nameIn = document.createElement("input");
+      nameIn.type = "text";
+      nameIn.className = "af-input";
+      nameIn.placeholder = "Stat name… e.g. STR, HP, Armor";
+      nameIn.maxLength = 40;
+      nameIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const valIn = document.createElement("input");
+      valIn.type = "text";
+      valIn.className = "af-input stat-val-input";
+      valIn.placeholder = "Value…";
+      valIn.maxLength = 20;
+      valIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const notesIn = document.createElement("input");
+      notesIn.type = "text";
+      notesIn.className = "af-input";
+      notesIn.placeholder = "Notes (optional)…";
+      notesIn.maxLength = 80;
+      notesIn.setAttribute("data-ai-rewriter-ignore", "1");
+      const submitBtn = document.createElement("button");
+      submitBtn.className = "af-submit";
+      submitBtn.textContent = "+ Add Stat";
+      const row1 = document.createElement("div");
+      row1.className = "af-row";
+      row1.append(nameIn, valIn, submitBtn);
+      form.append(row1, notesIn);
+      statsListEl.parentNode.insertBefore(form, statsListEl);
+      const doAdd = () => {
+        const stats = getStats();
+        const name = nameIn.value.trim();
+        const value = valIn.value.trim();
+        const notes = notesIn.value.trim();
+        const stat = newStat();
+        stat.name = name;
+        stat.value = value;
+        stat.notes = notes;
+        stats.push(stat);
+        save();
+        render();
+        const notesPart = notes ? ` — ${notes}` : "";
+        addLog(`[Stat added: ${name || "(unnamed)"}${notesPart} = ${value || "—"}]`);
+        nameIn.value = "";
+        valIn.value = "";
+        notesIn.value = "";
+        nameIn.focus();
+      };
+      submitBtn.addEventListener("click", doAdd);
+      nameIn.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          doAdd();
+        }
+      });
+    })();
+
+    function applyStatOp(op) {
+      const stats = getStats();
+      if (!statsSelectEl || !statsAmountEl || !statsListEl) return;
+      const id = statsSelectEl.value;
+      if (!id) {
+        showStatsFeedback("Pick a stat first.");
+        return;
+      }
+      const s = stats.find((x) => String(x.id) === id);
+      if (!s) return;
+      const amountRaw = statsAmountEl.value.trim();
+      const reason = statsReasonEl ? statsReasonEl.value.trim() : "";
+      const before = s.value !== "" ? s.value : "—";
+
+      if (op === "set") {
+        if (!amountRaw) {
+          showStatsFeedback("Type a value first.");
+          return;
+        }
+        s.value = amountRaw;
+      } else {
+        const delta = parseFloat(amountRaw);
+        if (!amountRaw || !isFinite(delta)) {
+          showStatsFeedback("Enter a number to add/use.");
+          return;
+        }
+        const parsed = parseStatValue(s.value);
+        if (parsed.kind === "fraction") {
+          parsed.current =
+            op === "add"
+              ? Math.min(parsed.max, parsed.current + delta)
+              : Math.max(0, parsed.current - delta);
+          s.value = formatStatValue(parsed);
+        } else if (parsed.kind === "number") {
+          parsed.value =
+            op === "add"
+              ? parsed.value + delta
+              : Math.max(0, parsed.value - delta);
+          s.value = formatStatValue(parsed);
+        } else {
+          showStatsFeedback("Not numeric — use Set instead.");
+          return;
+        }
+      }
+
+      const row = statsListEl.querySelector(`[data-stat-id="${id}"]`);
+      if (row && row._valEl) row._valEl.textContent = s.value !== "" ? s.value : "—";
+      if (row && row._valEditEl) row._valEditEl.value = s.value;
+      rebuildStatsSelect(id);
+      save();
+
+      const notePart = s.notes ? ` (${s.notes})` : "";
+      const reasonPart = reason ? ` — ${reason}` : "";
+      const logMsg =
+        op === "set"
+          ? `[${s.name || "Stat"}: set to ${s.value}${notePart}${reasonPart}]`
+          : `[${s.name || "Stat"}: ${before} → ${s.value}${notePart}${reasonPart}]`;
+      showStatsFeedback(`${before} → ${s.value}`);
+      addLog(logMsg);
+      statsAmountEl.value = "";
+      if (statsReasonEl) statsReasonEl.value = "";
+    }
+
+    document
+      .getElementById("sc-np-stats-op-add")
+      ?.addEventListener("click", () => applyStatOp("add"));
+    document
+      .getElementById("sc-np-stats-op-sub")
+      ?.addEventListener("click", () => applyStatOp("sub"));
+    document
+      .getElementById("sc-np-stats-op-set")
+      ?.addEventListener("click", () => applyStatOp("set"));
+
+    function load() {
+      chrome.storage.local.get(storageKey, (d) => {
+        setStats(Array.isArray(d[storageKey]) ? d[storageKey] : []);
+        render();
+      });
+    }
+
+    function exportLine() {
+      const stats = getStats();
+      if (!stats.length) return "[Stats: none]";
+      const parts = stats.map((s) => {
+        const note = s.notes ? ` (${s.notes})` : "";
+        return `${s.name || "(unnamed)"} ${s.value || "—"}${note}`;
+      });
+      return `[Stats: ${parts.join(" | ")}]`;
+    }
+
+    return {
+      save,
+      render,
+      load,
+      exportLine,
+    };
+  }
+
   window.SCRPGTrackerSections = Object.assign(
     {},
     window.SCRPGTrackerSections || {},
@@ -1405,6 +1775,7 @@
       createPartySection,
       createNpcsSection,
       createRumoursSection,
+      createStatsSection,
     },
   );
 })();
