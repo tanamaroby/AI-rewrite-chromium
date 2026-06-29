@@ -1927,6 +1927,7 @@
       "fmtTrimLines",
       "fmtNormaliseNewlines",
       "fmtCapitaliseSentences",
+      "fmtPreserveLists",
       "fmtUnwrapBrackets",
       "fmtExtraDelimiters",
       "fmtRepairAsterisks",
@@ -2030,6 +2031,13 @@
       {
         label: "WRAPPING",
         rows: [
+          {
+            key: "fmtPreserveLists",
+            name: "Preserve lists (- and 1. items)",
+            b: "- item one",
+            a: "- item one",
+            hint: "Bullet and numbered list lines are left unwrapped and paragraph-spacing won't insert blank lines between them",
+          },
           {
             key: "fmtUnwrapBrackets",
             name: "Leave [ ] square brackets unwrapped",
