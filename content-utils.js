@@ -4,10 +4,16 @@
 (function () {
   "use strict";
 
-  function wrapOutsideText(str) {
+  function isListLine(line) {
+    const t = line.trimStart();
+    return /^-\s/.test(t) || /^\d+\.\s/.test(t);
+  }
+
+  function wrapOutsideText(str, opts) {
     return str.replace(/[^\n]+/g, (chunk) => {
       const trimmed = chunk.trim();
       if (!trimmed) return chunk;
+      if (opts && opts.fmtPreserveLists && isListLine(trimmed)) return chunk;
       const leadWS = chunk.slice(0, chunk.length - chunk.trimStart().length);
       const trailWS = chunk.slice(chunk.trimEnd().length);
       return leadWS + "*" + trimmed + "*" + trailWS;
@@ -89,7 +95,31 @@
         .join("\n");
     }
 
-    if (options.fmtNormaliseNewlines) text = text.replace(/\n+/g, "\n\n");
+    if (options.fmtNormaliseNewlines) {
+      if (options.fmtPreserveLists) {
+        const rawLines = text.split("\n");
+        const outLines = [];
+        for (let i = 0; i < rawLines.length; i++) {
+          const cur = rawLines[i];
+          if (outLines.length === 0) { outLines.push(cur); continue; }
+          const prev = outLines[outLines.length - 1];
+          const curBlank = cur.trim() === "";
+          const prevBlank = prev.trim() === "";
+          if (curBlank && prevBlank) continue;
+          if (!curBlank && !prevBlank && isListLine(cur) && isListLine(prev)) {
+            outLines.push(cur);
+          } else if (!curBlank && !prevBlank) {
+            outLines.push("");
+            outLines.push(cur);
+          } else {
+            outLines.push(cur);
+          }
+        }
+        text = outLines.join("\n");
+      } else {
+        text = text.replace(/\n+/g, "\n\n");
+      }
+    }
     if (options.fmtCapitaliseSentences) text = capitaliseSentences(text);
 
     if (options.fmtCapitaliseQuotes) {
@@ -114,14 +144,14 @@
 
     while ((match = regex.exec(text)) !== null) {
       if (match.index > lastIndex) {
-        parts.push(wrapOutsideText(text.slice(lastIndex, match.index)));
+        parts.push(wrapOutsideText(text.slice(lastIndex, match.index), options));
       }
       parts.push(match[0]);
       lastIndex = regex.lastIndex;
     }
 
     if (lastIndex < text.length) {
-      parts.push(wrapOutsideText(text.slice(lastIndex)));
+      parts.push(wrapOutsideText(text.slice(lastIndex), options));
     }
 
     let result = parts.join("");

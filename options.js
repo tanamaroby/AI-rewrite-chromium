@@ -411,6 +411,7 @@ const FMT_TOGGLES = [
   "fmtTrimLines",
   "fmtNormaliseNewlines",
   "fmtCapitaliseSentences",
+  "fmtPreserveLists",
   "fmtUnwrapBrackets",
   "fmtRepairAsterisks",
   "fmtActionPunctuation",
