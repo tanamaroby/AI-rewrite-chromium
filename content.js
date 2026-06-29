@@ -310,6 +310,10 @@
     return /^\s*\[TRACKER(?:\]|\s*\|)/.test(String(text));
   }
 
+  function formatResourceValue(raw) {
+    return window.AIRewriterContentUtils?.formatResourceValue(raw) ?? String(raw ?? "");
+  }
+
   function buildTrackerSummaryForFormat(done) {
     if (!isSpicyChat) {
       done("");
@@ -342,12 +346,10 @@
         parts.push(`${name} (${detail.join("; ")})`);
       });
 
-      // Resources — name, value, and notes in parentheses if present
+      // Resources — formatted value with thousand separators / compact suffix
       resources.forEach((r) => {
         const name = String(r?.name || "").trim() || "(unnamed)";
-        const value = Number.isFinite(Number(r?.value))
-          ? Number(r.value)
-          : String(r?.value || "0").trim() || "0";
+        const value = formatResourceValue(r?.value);
         const notes = String(r?.notes || "").trim();
         parts.push(notes ? `${name}: ${value} (${notes})` : `${name}: ${value}`);
       });

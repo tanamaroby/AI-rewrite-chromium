@@ -226,9 +226,18 @@
     return parts.join("\n\n");
   }
 
+  // Formats a numeric resource value with thousand separators and compact
+  // suffix notation for large numbers, keeping raw strings as-is.
+  function formatResourceValue(raw) {
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return String(raw ?? "");
+    return n.toLocaleString();
+  }
+
   const api = {
     formatText,
     composeRewritePrompt,
+    formatResourceValue,
   };
 
   const root = typeof window !== "undefined" ? window : globalThis;

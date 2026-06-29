@@ -6,6 +6,8 @@
     const addLog = deps.addLog;
     const getResources = deps.getResources;
     const setResources = deps.setResources;
+    const fmtVal = (v) =>
+      window.AIRewriterContentUtils?.formatResourceValue(v) ?? String(v ?? "");
 
     const resListEl = document.getElementById("sc-np-res-list");
     const resSelectEl = document.getElementById("sc-np-res-select");
@@ -206,7 +208,7 @@
         render();
         const notesPart = notes ? ` — ${notes}` : "";
         addLog(
-          `[Resource added: ${name || "(unnamed)"}${notesPart} (value: ${value})]`,
+          `[Resource added: ${name || "(unnamed)"}${notesPart} (value: ${fmtVal(value)})]`,
         );
         nameIn.value = "";
         valIn.value = "0";
@@ -244,16 +246,16 @@
       const notePart = r.notes ? ` (${r.notes})` : "";
       let logMsg;
       if (op === "add") {
-        logMsg = `[${r.name || "Resource"}: gained ${amount}, ${before} → ${r.value} total${notePart}]`;
+        logMsg = `[${r.name || "Resource"}: gained ${fmtVal(amount)}, ${fmtVal(before)} → ${fmtVal(r.value)} total${notePart}]`;
       } else if (op === "sub") {
-        logMsg = `[${r.name || "Resource"}: used ${amount}, ${before} → ${r.value} left${notePart}]`;
+        logMsg = `[${r.name || "Resource"}: used ${fmtVal(amount)}, ${fmtVal(before)} → ${fmtVal(r.value)} left${notePart}]`;
       } else {
-        logMsg = `[${r.name || "Resource"}: set to ${r.value}${notePart}]`;
+        logMsg = `[${r.name || "Resource"}: set to ${fmtVal(r.value)}${notePart}]`;
       }
       showResFeedback(
         op === "set"
-          ? `= ${r.value}`
-          : `${op === "add" ? "+" : "-"}${amount} → ${r.value}`,
+          ? `= ${fmtVal(r.value)}`
+          : `${op === "add" ? "+" : "−"}${fmtVal(amount)} → ${fmtVal(r.value)}`,
       );
       addLog(logMsg);
     }

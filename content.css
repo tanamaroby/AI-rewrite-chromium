@@ -380,6 +380,23 @@ html.sc-style-bold div[id^="message-"] strong {
     0 0 26px rgba(139, 92, 246, 0.32);
 }
 
+/* Horizontal rule — restore --- which SpicyChat hides */
+div[id^="message-"] hr {
+  display: block !important;
+  border: none !important;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(139, 92, 246, 0.45) 20%,
+    rgba(167, 139, 250, 0.85) 50%,
+    rgba(139, 92, 246, 0.45) 80%,
+    transparent
+  );
+  margin: 14px 0;
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.28), 0 0 20px rgba(139, 92, 246, 0.1);
+}
+
 /* When bracket emphasis is disabled, collapse spans to plain text instantly */
 html.sc-inject-brackets-hidden .ai-bracket-scene {
   display: inline !important;
