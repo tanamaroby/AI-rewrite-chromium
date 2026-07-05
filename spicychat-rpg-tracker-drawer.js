@@ -125,9 +125,14 @@
     const questSheetStatusEl = document.getElementById(
       "sc-np-quest-sheet-status",
     );
+    const thoughtInput = document.getElementById("sc-np-thought-input");
+    const thoughtInsertBtn = document.getElementById(
+      "sc-np-thought-insert-btn",
+    );
     const rpPanel = document.getElementById("sc-np-rp-panel");
     const fmtPanel = document.getElementById("sc-np-fmt-panel");
     const stylePanel = document.getElementById("sc-np-style-panel");
+    const stylerPanel = document.getElementById("sc-np-styler-panel");
     const rpPersonaPillsEl = document.getElementById("sc-rp-persona-pills");
     const rpPersonaEditorEl = document.getElementById("sc-rp-persona-editor");
     const rpPersonaLabelInput = document.getElementById("sc-rp-persona-label");
@@ -1108,6 +1113,25 @@
       notesIn.addEventListener("input", () => autoResizeTextarea(notesIn));
     })();
 
+    // Quick Thought insert
+    (function () {
+      if (!thoughtInput || !thoughtInsertBtn) return;
+      const doInsert = () => {
+        const txt = thoughtInput.value.trim();
+        if (!txt) return;
+        addLog(`[Thought: ${txt}]`);
+        flashCopyBtnLabel(thoughtInsertBtn);
+        thoughtInput.value = "";
+      };
+      thoughtInsertBtn.addEventListener("click", doInsert);
+      thoughtInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          doInsert();
+        }
+      });
+    })();
+
     function loadQuests() {
       chrome.storage.local.get(QUEST_KEY, (data) => {
         quests = Array.isArray(data[QUEST_KEY]) ? data[QUEST_KEY] : [];
@@ -1266,8 +1290,10 @@
       rpPanel.classList.toggle("visible", t === "rp");
       fmtPanel.classList.toggle("visible", t === "fmt");
       stylePanel.classList.toggle("visible", t === "style");
+      stylerPanel.classList.toggle("visible", t === "styler");
       if (t === "fmt") loadFormatterPanel();
       if (t === "style") loadStylePanel();
+      if (t === "styler") loadStylerPanel();
     }
 
     document.querySelectorAll(".sc-np-tab-pill").forEach((btn) => {
@@ -1811,6 +1837,121 @@
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area === "sync" && STYLE_KEYS_TO_WATCH.some((k) => k in changes)) {
         if (activeTab === "style") loadStylePanel();
+      }
+    });
+
+    /* ════════════════ TEXT STYLER PANEL ════════════════ */
+
+    const STYLER_KEYS_TO_WATCH = [
+      "stylerBoldEnabled",
+      "stylerItalicEnabled",
+      "stylerStrikethroughEnabled",
+    ];
+
+    const STYLER_FEATURES = [
+      {
+        key: "stylerBoldEnabled",
+        name: "Bold Selection",
+        shortcut: "Ctrl+B",
+        description:
+          "Wraps the selected text in **double asterisks** so it renders bold. Press again on bolded text to remove it. With no selection, drops markers at the cursor so you can type straight into them.",
+      },
+      {
+        key: "stylerItalicEnabled",
+        name: "Italic Selection",
+        shortcut: "Ctrl+I",
+        description:
+          "Wraps the selected text in *single asterisks* so it renders italic. Press again on italicised text to remove it. With no selection, drops markers at the cursor.",
+      },
+      {
+        key: "stylerStrikethroughEnabled",
+        name: "Strikethrough Selection",
+        shortcut: "Ctrl+Shift+X",
+        description:
+          "Wraps the selected text in ~~double tildes~~ so it renders struck through. Press again on struck-through text to remove it. With no selection, drops markers at the cursor.",
+      },
+    ];
+
+    function renderStylerPanel(d) {
+      stylerPanel.innerHTML = "";
+
+      // ── Header card ──
+      const hCard = document.createElement("div");
+      hCard.className = "rp-card";
+      hCard.style.cssText = "padding:10px 14px;gap:8px;";
+      hCard.innerHTML = `
+        <div class="fmt-master-row">
+          <span style="font-size:12px;font-weight:600;color:#cbd5e1;">Text Styler</span>
+        </div>
+        <div style="font-size:11px;color:#475569;line-height:1.55;">
+          Keyboard shortcuts that apply Markdown-style formatting to whatever
+          text you've selected in any text box — not just SpicyChat.
+        </div>`;
+      stylerPanel.appendChild(hCard);
+
+      // ── Feature rows ──
+      const sec = document.createElement("div");
+      sec.className = "rp-section-label";
+      sec.textContent = "SHORTCUTS";
+      stylerPanel.appendChild(sec);
+
+      const card = document.createElement("div");
+      card.className = "rp-card";
+      card.style.padding = "4px 14px";
+
+      STYLER_FEATURES.forEach(({ key, name, shortcut, description }) => {
+        const on = d[key] !== false;
+
+        const row = document.createElement("div");
+        row.className = "style-feature-row";
+
+        const top = document.createElement("div");
+        top.className = "style-feature-top";
+
+        const nameWrap = document.createElement("span");
+        nameWrap.style.cssText = "display:flex;align-items:center;gap:7px;";
+        const nameEl = document.createElement("span");
+        nameEl.className = "style-feature-name";
+        nameEl.textContent = name;
+        const chip = document.createElement("span");
+        chip.className = "fmt-meta-chip";
+        chip.textContent = shortcut;
+        nameWrap.append(nameEl, chip);
+
+        const toggle = document.createElement("label");
+        toggle.className = "rp-toggle";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = on;
+        checkbox.setAttribute("data-ai-rewriter-ignore", "1");
+        checkbox.addEventListener("change", () => {
+          chrome.storage.sync.set({ [key]: checkbox.checked });
+        });
+        const track = document.createElement("span");
+        track.className = "rp-toggle-track";
+        toggle.append(checkbox, track);
+
+        top.append(nameWrap, toggle);
+
+        const desc = document.createElement("span");
+        desc.className = "style-feature-desc";
+        desc.textContent = description;
+
+        row.append(top, desc);
+        card.appendChild(row);
+      });
+
+      stylerPanel.appendChild(card);
+    }
+
+    function loadStylerPanel() {
+      chrome.storage.sync.get(STYLER_KEYS_TO_WATCH, renderStylerPanel);
+    }
+
+    // Live-reload when settings change while Styler tab is active
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === "sync" && STYLER_KEYS_TO_WATCH.some((k) => k in changes)) {
+        if (activeTab === "styler") loadStylerPanel();
       }
     });
 

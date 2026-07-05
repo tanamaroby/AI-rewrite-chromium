@@ -50,6 +50,9 @@
   let scBlockquoteStyle = true;
   let scNumberedListStyle = true;
   let scSeparatorStyle = true;
+  let stylerBoldEnabled = true;
+  let stylerItalicEnabled = true;
+  let stylerStrikethroughEnabled = true;
   const isSpicyChat = location.hostname.includes("spicychat.ai");
   const REWRITE_SHORTCUT_KEY = "n";
   const SYNC_SETTINGS_KEYS = [
@@ -95,6 +98,9 @@
     "scBlockquoteStyle",
     "scNumberedListStyle",
     "scSeparatorStyle",
+    "stylerBoldEnabled",
+    "stylerItalicEnabled",
+    "stylerStrikethroughEnabled",
   ];
   const SYNC_SETTINGS_KEY_SET = new Set(SYNC_SETTINGS_KEYS);
   let settingsReloadTimer = null;
@@ -189,6 +195,9 @@
       scBlockquoteStyle = data.scBlockquoteStyle !== false;
       scNumberedListStyle = data.scNumberedListStyle !== false;
       scSeparatorStyle = data.scSeparatorStyle !== false;
+      stylerBoldEnabled = data.stylerBoldEnabled !== false;
+      stylerItalicEnabled = data.stylerItalicEnabled !== false;
+      stylerStrikethroughEnabled = data.stylerStrikethroughEnabled !== false;
       if (isSpicyChat) {
         document.documentElement.classList.toggle(
           "sc-inject-brackets-hidden",
@@ -717,12 +726,121 @@
     }
   }
 
+  // ─── Text styler (Markdown-style wrap shortcuts) ───────────────────────────
+
+  const BOLD_MARK = "**";
+  const ITALIC_MARK = "*";
+  const STRIKETHROUGH_MARK = "~~";
+
+  function countLeadingChar(str, ch) {
+    let i = 0;
+    while (i < str.length && str[i] === ch) i++;
+    return i;
+  }
+
+  function countTrailingChar(str, ch) {
+    let i = 0;
+    while (i < str.length && str[str.length - 1 - i] === ch) i++;
+    return i;
+  }
+
+  // Checks the text is wrapped in exactly `mark` (e.g. distinguishes a
+  // single-asterisk *italic* wrap from a double-asterisk **bold** one).
+  function isWrappedInMark(text, mark) {
+    if (text.length < mark.length * 2) return false;
+    const ch = mark[0];
+    return (
+      countLeadingChar(text, ch) === mark.length &&
+      countTrailingChar(text, ch) === mark.length
+    );
+  }
+
+  function toggleMarkContentEditable(el, mark) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    if (!el.contains(range.commonAncestorContainer)) return;
+    const selected = sel.toString();
+    if (!selected) {
+      document.execCommand("insertText", false, mark + mark);
+      for (let i = 0; i < mark.length; i++) {
+        sel.modify("move", "backward", "character");
+      }
+    } else if (isWrappedInMark(selected, mark)) {
+      document.execCommand(
+        "insertText",
+        false,
+        selected.slice(mark.length, -mark.length),
+      );
+    } else {
+      document.execCommand("insertText", false, mark + selected + mark);
+    }
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  function toggleMarkTextInput(el, mark) {
+    const { selectionStart: start, selectionEnd: end, value } = el;
+    const selected = value.slice(start, end);
+    let newValue, newStart, newEnd;
+    if (start === end) {
+      newValue = value.slice(0, start) + mark + mark + value.slice(end);
+      newStart = newEnd = start + mark.length;
+    } else if (isWrappedInMark(selected, mark)) {
+      const unwrapped = selected.slice(mark.length, -mark.length);
+      newValue = value.slice(0, start) + unwrapped + value.slice(end);
+      newStart = start;
+      newEnd = start + unwrapped.length;
+    } else {
+      newValue =
+        value.slice(0, start) + mark + selected + mark + value.slice(end);
+      newStart = start + mark.length;
+      newEnd = end + mark.length;
+    }
+    el.value = newValue;
+    el.selectionStart = newStart;
+    el.selectionEnd = newEnd;
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  function toggleMark(el, mark) {
+    if (el.isContentEditable) toggleMarkContentEditable(el, mark);
+    else toggleMarkTextInput(el, mark);
+  }
+
+  function toggleBold(el) {
+    toggleMark(el, BOLD_MARK);
+  }
+
+  function toggleItalic(el) {
+    toggleMark(el, ITALIC_MARK);
+  }
+
+  function toggleStrikethrough(el) {
+    toggleMark(el, STRIKETHROUGH_MARK);
+  }
+
   // ─── Keyboard shortcuts (format + rewrite) ────────────────────────────────────
 
   document.addEventListener(
     "keydown",
     (e) => {
       if (!isEditableElement(document.activeElement)) return;
+      if (stylerBoldEnabled && matchShortcut(e, "b", false)) {
+        e.preventDefault();
+        toggleBold(document.activeElement);
+        return;
+      }
+      if (stylerItalicEnabled && matchShortcut(e, "i", false)) {
+        e.preventDefault();
+        toggleItalic(document.activeElement);
+        return;
+      }
+      if (stylerStrikethroughEnabled && matchShortcut(e, "x", true)) {
+        e.preventDefault();
+        toggleStrikethrough(document.activeElement);
+        return;
+      }
       const action = getShortcutAction(e);
       if (!action) return;
       e.preventDefault();

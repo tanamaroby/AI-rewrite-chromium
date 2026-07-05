@@ -344,6 +344,13 @@
       transition: background 0.12s, border-color 0.12s;
     }
     .ql-update-btn:hover { background: linear-gradient(180deg, rgba(145,101,44,0.94), rgba(90,59,28,0.98)); border-color: rgba(232,188,107,0.5); }
+    .ql-thought-row { display: flex; gap: 5px; align-items: center; margin-bottom: 2px; }
+    .ql-thought-input {
+      flex: 1; min-width: 0; background: rgba(0,0,0,0.14); border: 1px solid rgba(153,114,54,0.2); border-radius: 5px;
+      color: #f4e4bf; font-size: 11px; font-family: Georgia, "Times New Roman", serif; font-style: italic;
+      caret-color: #b87d2e; padding: 4px 7px; outline: none;
+    }
+    .ql-thought-input::placeholder { color: #8a7358; }
     .ql-updates-list {
       display: flex; flex-direction: column; gap: 2px;
       padding-top: 3px; margin-top: 2px;
@@ -1041,6 +1048,17 @@
     #sc-np-style-panel::-webkit-scrollbar { width: 5px; }
     #sc-np-style-panel::-webkit-scrollbar-track { background: transparent; }
     #sc-np-style-panel::-webkit-scrollbar-thumb { background: rgba(108,99,255,0.3); border-radius: 3px; }
+
+    /* ── Text styler panel ── */
+    #sc-np-styler-panel {
+      position: absolute; inset: 0; overflow-y: auto;
+      padding: 14px; box-sizing: border-box;
+      display: none; flex-direction: column; gap: 10px;
+    }
+    #sc-np-styler-panel.visible { display: flex; }
+    #sc-np-styler-panel::-webkit-scrollbar { width: 5px; }
+    #sc-np-styler-panel::-webkit-scrollbar-track { background: transparent; }
+    #sc-np-styler-panel::-webkit-scrollbar-thumb { background: rgba(108,99,255,0.3); border-radius: 3px; }
     .style-feature-row {
       display: flex; flex-direction: column; gap: 6px;
       padding: 10px 0; border-bottom: 1px solid rgba(108,99,255,0.07);
@@ -1081,6 +1099,7 @@
           <button class="sc-np-tab-pill" data-tab="rp">RP Tools</button>
           <button class="sc-np-tab-pill" data-tab="fmt">Formatter</button>
           <button class="sc-np-tab-pill" data-tab="style">Style</button>
+          <button class="sc-np-tab-pill" data-tab="styler">Styler</button>
         </div>
         <button id="sc-np-btn-close" title="Close (Esc)">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -1103,8 +1122,16 @@
             <span id="sc-np-quest-sheet-status" class="ql-sheet-status" aria-live="polite"></span>
           </div>
           <input id="sc-np-quest-sheet-file" type="file" accept="application/json,.json" style="display:none" data-ai-rewriter-ignore="1" />
-          <!-- Quest Log -->
+          <!-- Quick Thought -->
           <div class="ql-section-header">
+            <span class="ql-section-label">Thoughts</span>
+          </div>
+          <div class="ql-thought-row">
+            <input id="sc-np-thought-input" type="text" class="ql-thought-input" placeholder="Jot a quick thought…" maxlength="240" data-ai-rewriter-ignore="1" />
+            <button id="sc-np-thought-insert-btn" class="ql-copy-btn">⎘ Insert</button>
+          </div>
+          <!-- Quest Log -->
+          <div class="ql-section-header" style="margin-top:4px;">
             <span class="ql-section-label">Quests</span>
             <button id="sc-np-quest-copy" class="ql-copy-btn">⎘ Insert</button>
           </div>
@@ -1407,6 +1434,7 @@
         </div>
         <div id="sc-np-fmt-panel"></div>
         <div id="sc-np-style-panel"></div>
+        <div id="sc-np-styler-panel"></div>
       </div>
     `;
   }
