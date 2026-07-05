@@ -1,0 +1,173 @@
+/* ============================================================
+   AI Rewriter — shared design tokens
+   ------------------------------------------------------------
+   Single source of truth for every color (and shared radius/font)
+   used across the popup, options page, universal formatter overlay,
+   and the SpicyChat RPG Tracker drawer. Change a value here and it
+   updates everywhere that references it.
+
+   Loaded first, before any other stylesheet, on every surface:
+   see manifest.json content_scripts + popup.html / options.html.
+   ============================================================ */
+
+:root {
+  /* ---- Extension chrome (popup / options / universal overlay) ---- */
+  --sc-ui-bg: #0f0c1e;
+  --sc-ui-bg-2: #16122a;
+  --sc-ui-bg-3: #1e1a35;
+  --sc-ui-bg-4: #241f3d;
+  --sc-ui-border: rgba(108, 99, 255, 0.2);
+  --sc-ui-border-hover: rgba(108, 99, 255, 0.38);
+  --sc-ui-text: #e0deff;
+  --sc-ui-text-muted: #8b85b8;
+  --sc-ui-text-faint: #4e4a6b;
+  --sc-ui-warning-rgb: 251, 146, 60;
+  --sc-ui-warning: rgb(var(--sc-ui-warning-rgb));
+  --sc-ui-warning-dark: #f59e0b; /* darker stop for the storage-meter warning gradient */
+  --sc-ui-radius: 10px;
+  --sc-ui-font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --sc-ui-mono: "SF Mono", "Fira Code", "Fira Mono", "Cascadia Code", monospace;
+
+  /* ---- Core brand accent (violet) — shared by every surface ---- */
+  --sc-accent-rgb: 108, 99, 255; /* #6c63ff */
+  --sc-accent: rgb(var(--sc-accent-rgb));
+  --sc-accent-2-rgb: 167, 139, 250; /* #a78bfa */
+  --sc-accent-2: rgb(var(--sc-accent-2-rgb));
+  --sc-accent-3: #c4b5fd; /* lightest lavender, used for chip text */
+  --sc-accent-violet-rgb: 139, 92, 246; /* #8b5cf6, secondary violet for gradients/glows */
+  --sc-accent-violet: rgb(var(--sc-accent-violet-rgb));
+  --sc-white: rgb(var(--sc-white-rgb));
+
+  /* ---- Semantic colors ---- */
+  --sc-success-rgb: 34, 197, 94; /* #22c55e */
+  --sc-success: rgb(var(--sc-success-rgb));
+  --sc-success-light: #4ade80;
+  --sc-success-dark: #16803d;
+  --sc-danger-rgb: 239, 68, 68; /* #ef4444 */
+  --sc-danger: rgb(var(--sc-danger-rgb));
+  --sc-danger-light: #f87171;
+  --sc-danger-dark: #b44738;
+  --sc-warning-rgb: 251, 191, 36; /* #fbbf24 */
+  --sc-warning: rgb(var(--sc-warning-rgb));
+  --sc-info-rgb: 56, 189, 248; /* #38bdf8 */
+  --sc-info: rgb(var(--sc-info-rgb));
+
+  /* ---- Neutral / slate scale (drawer text hierarchy) ---- */
+  --sc-slate-200: #e2e8f0;
+  --sc-slate-300: #cbd5e1;
+  --sc-slate-400-rgb: 148, 163, 184; /* #94a3b8 */
+  --sc-slate-400: rgb(var(--sc-slate-400-rgb));
+  --sc-slate-500-rgb: 100, 116, 139; /* #64748b */
+  --sc-slate-500: rgb(var(--sc-slate-500-rgb));
+  --sc-slate-600: #475569;
+  --sc-slate-700: #334155;
+  --sc-slate-800: #293548; /* darkest placeholder / icon tone */
+
+  /* ---- Overlay blacks / whites (shadows, subtle highlights) ---- */
+  --sc-black-rgb: 0, 0, 0;
+  --sc-white-rgb: 255, 255, 255;
+
+  /* ---- Drawer chrome (SpicyChat panel background) ---- */
+  --sc-drawer-bg: #0f0e1a;
+  --sc-drawer-bg-2: #1c1834;
+  --sc-drawer-bg-2-hover: #271f4a;
+  --sc-drawer-dropdown-bg: #1a1730;
+
+  /* ---- Quest Log "gilded parchment" theme ---- */
+  --sc-gold-rgb: 217, 164, 65; /* stat tracker gold accent */
+  --sc-gold: rgb(var(--sc-gold-rgb));
+  --sc-gold-bright: #f3d8a3;
+  --sc-gold-mid: #e8bd6c;
+  --sc-gold-label: #d9c39c;
+  --sc-gold-muted: #c9b08a;
+  --sc-gold-note: #a08a63;
+  --sc-gold-dropdown-bg: #241a0e;
+
+  --sc-quest-active: #9f6a2f;
+  --sc-quest-active-rgb: 172, 122, 59;
+  --sc-quest-failed-border: #cf6e5b;
+  --sc-quest-caret: #b87d2e;
+  --sc-quest-done-border-rgb: 69, 148, 78; /* softer green for the "done" card border, distinct from --sc-success */
+  --sc-danger-dark-rgb: 180, 71, 56; /* "failed" card border/chip, paired with --sc-danger-dark */
+
+  /* Card surfaces (light "paper" gradient) */
+  --sc-parchment-rgb: 232, 207, 165;
+  --sc-parchment-dark-rgb: 206, 176, 135;
+  --sc-parchment-shadow-rgb: 121, 90, 48;
+  --sc-parchment-shadow-dark-rgb: 63, 42, 21;
+  --sc-parchment-highlight-rgb: 255, 230, 186; /* faint warm highlight overlays, reused everywhere one is needed */
+
+  /* Ink (dark serif text scale, darkest → lightest — each slot is one specific role) */
+  --sc-ink-1: #1a1209; /* primary title / value text on parchment */
+  --sc-ink-2: #2b2013; /* notes textarea text */
+  --sc-ink-3: #2f2417; /* update-log input text */
+  --sc-ink-4: #2f2418; /* update-log entry text */
+  --sc-ink-5: #24190f; /* update-log entry, most recent */
+  --sc-ink-6: #3f2d1c; /* delete icon */
+  --sc-ink-7: #4c3313; /* insert icon */
+  --sc-ink-8: #483522; /* empty-state text */
+  --sc-ink-9: #55402a; /* update-log delete icon */
+  --sc-ink-done: #4d4335;
+  --sc-ink-failed: #563d31;
+  --sc-ink-muted: #5b687f;
+  --sc-ink-note: #4a6fbe;
+
+  /* Parchment input text / placeholders (warm brown scale) */
+  --sc-parchment-text: #f4ead3;
+  --sc-parchment-caret: #efc773;
+  --sc-parchment-placeholder-1: #5f4a31; /* title input */
+  --sc-parchment-placeholder-2: #655139; /* notes input */
+  --sc-parchment-placeholder-3: #6d573c; /* update-log input */
+  --sc-parchment-placeholder-4: #8a7358; /* quick-thought input */
+  --sc-parchment-placeholder-5: #8e795d; /* quest form inputs */
+
+  /* Wood button gradient (consolidated — one shared pair for every gilded button) */
+  --sc-wood-btn-rgb: 130, 90, 40;
+  --sc-wood-btn-dark-rgb: 78, 51, 23;
+  --sc-wood-btn-hover-rgb: 152, 106, 46;
+  --sc-wood-btn-hover-dark-rgb: 92, 60, 27;
+  --sc-wood-border-rgb: 190, 143, 68;
+  --sc-wood-border-hover-rgb: 217, 176, 100;
+  --sc-wood-btn-text: #f4e4bf;
+  --sc-wood-hover-text: #8a541a;
+
+  /* Rest panel (Abilities → Take Rest) */
+  --sc-rest-panel-rgb: 68, 46, 18;
+  --sc-rest-highlight-rgb: 250, 220, 144;
+  --sc-rest-btn-rgb: 144, 104, 33;
+  --sc-rest-btn-dark-rgb: 94, 59, 17;
+  --sc-rest-cream: #fff4d7;
+  --sc-rest-gold-text: #f7deb0;
+  --sc-rest-hint: #cbb389;
+  --sc-rest-notes-text: #e9ddc4;
+  --sc-rest-notes-placeholder: #a88f67;
+
+  /* RP log "thinking" italic text */
+  --sc-thinking-text: #78716c;
+
+  /* Stat tracker dark input backgrounds + done-state green accents */
+  --sc-quest-input-bg-rgb: 20, 16, 10;
+  --sc-success-mid: #4ca866;
+  --sc-success-dark-rgb: 22, 128, 61;
+  --sc-rest-panel-dark-rgb: 23, 16, 8;
+  --sc-slate-900-rgb: 15, 23, 42;
+  --sc-slate-900-focus-rgb: 20, 27, 44;
+
+  /* ---- Universal overlay (content.css: loading outline, toast, formatter, bracket styling) ---- */
+  --sc-emerald-rgb: 16, 185, 129; /* #10b981 — formatter success (distinct from --sc-success) */
+  --sc-emerald: rgb(var(--sc-emerald-rgb));
+  --sc-emerald-bg-rgb: 8, 22, 17; /* formatter overlay background */
+  --sc-error-toast-rgb: 255, 80, 80; /* rewrite-toast error border, brighter than --sc-danger */
+  --sc-error-toast-bg-rgb: 40, 17, 17;
+  --sc-overlay-bg-rgb: 15, 12, 30; /* rewrite overlay / toast / formatter button backgrounds */
+  --sc-bracket-bg-rgb: 14, 9, 32; /* [Scene bracket] gradient, top stop */
+  --sc-bracket-bg-2-rgb: 22, 13, 45; /* [Scene bracket] gradient, bottom stop */
+  --sc-blockquote-bg-rgb: 20, 10, 45;
+  --sc-violet-glow-rgb: 109, 40, 217; /* inset glow under bracket/blockquote */
+
+  --sc-lavender-soft: #ddd6fe; /* blockquote & scene-fill-btn text, table header text */
+  --sc-lavender-bright: #ede9fe; /* bold-emphasis text */
+  --sc-lavender-white: #f5f3ff; /* scene-fill-btn hover text */
+  --sc-pink-soft: #ffcdd2; /* rewrite toast error text */
+  --sc-mint-soft: #a7f3d0; /* formatter toast text */
+}

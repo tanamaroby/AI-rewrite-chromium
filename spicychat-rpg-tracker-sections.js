@@ -401,7 +401,7 @@
       abilities.forEach((a, idx) => {
         const wrapper = document.createElement("div");
         wrapper.style.cssText =
-          "display:flex;flex-direction:column;gap:4px;padding:5px 0;border-bottom:1px solid rgba(108,99,255,0.07);";
+          "display:flex;flex-direction:column;gap:4px;padding:5px 0;border-bottom:1px solid rgba(var(--sc-accent-rgb), 0.07);";
         if (idx === abilities.length - 1) wrapper.style.borderBottom = "none";
 
         const topRow = document.createElement("div");
@@ -552,12 +552,12 @@
             "flex:1;min-width:28px;padding:4px 0;border-radius:5px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;border:1px solid;transition:background 0.12s,opacity 0.12s;";
           const used = i >= a.current;
           btn.style.background = used
-            ? "rgba(108,99,255,0.04)"
-            : "rgba(108,99,255,0.15)";
+            ? "rgba(var(--sc-accent-rgb), 0.04)"
+            : "rgba(var(--sc-accent-rgb), 0.15)";
           btn.style.borderColor = used
-            ? "rgba(108,99,255,0.1)"
-            : "rgba(108,99,255,0.4)";
-          btn.style.color = used ? "#334155" : "#a78bfa";
+            ? "rgba(var(--sc-accent-rgb), 0.1)"
+            : "rgba(var(--sc-accent-rgb), 0.4)";
+          btn.style.color = used ? "var(--sc-slate-700)" : "var(--sc-accent-2)";
           btn.style.opacity = used ? "0.4" : "1";
           btn.textContent = "Use";
           btn.disabled = a.current === 0;
@@ -578,7 +578,7 @@
         if (a.max > 10) {
           const more = document.createElement("span");
           more.style.cssText =
-            "font-size:9.5px;color:#334155;align-self:center;padding:0 4px;";
+            "font-size:9.5px;color:var(--sc-slate-700);align-self:center;padding:0 4px;";
           more.textContent = `+${a.max - 10} more`;
           useRow.appendChild(more);
         }
@@ -1142,7 +1142,7 @@
 
         const noteSpan = document.createElement("div");
         noteSpan.style.cssText =
-          "color:#64748b;font-size:11.5px;font-family:inherit;padding:2px 0;";
+          "color:var(--sc-slate-500);font-size:11.5px;font-family:inherit;padding:2px 0;";
         noteSpan.textContent = n.note;
         noteSpan.style.display = n.note ? "" : "none";
         const noteEditIn = document.createElement("input");
@@ -1317,7 +1317,7 @@
         check.className = "rumour-check";
         check.title = "Mark as followed up";
         if (r.done)
-          check.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+          check.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--sc-success)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
         check.addEventListener("click", () => {
           r.done = !r.done;
           addLog(

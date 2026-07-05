@@ -871,7 +871,7 @@
         nameSpan.textContent = q.title || "(untitled)";
         if (q.state !== "active") {
           nameSpan.style.textDecoration = "line-through";
-          nameSpan.style.color = q.state === "failed" ? "#563d31" : "#4d4335";
+          nameSpan.style.color = q.state === "failed" ? "var(--sc-ink-failed)" : "var(--sc-ink-done)";
         }
         const notesSpan = document.createElement("div");
         notesSpan.className = "item-disp-note";
@@ -961,10 +961,10 @@
             const active = q.state === "active";
             nameSpan.style.textDecoration = active ? "" : "line-through";
             nameSpan.style.color = active
-              ? "#1a1209"
+              ? "var(--sc-ink-1)"
               : q.state === "failed"
-                ? "#563d31"
-                : "#4d4335";
+                ? "var(--sc-ink-failed)"
+                : "var(--sc-ink-done)";
             notesSpan.textContent = q.notes;
             notesSpan.style.display = q.notes ? "" : "none";
           }
@@ -1531,7 +1531,7 @@
       hCard.style.cssText = "padding:10px 14px;gap:8px;";
       hCard.innerHTML = `
         <div class="fmt-master-row">
-          <span style="font-size:12px;font-weight:600;color:#cbd5e1;">Auto-formatter</span>
+          <span style="font-size:12px;font-weight:600;color:var(--sc-slate-300);">Auto-formatter</span>
           <span class="fmt-master-badge ${enabled ? "on" : "off"}">${enabled ? "ENABLED" : "DISABLED"}</span>
         </div>
         <div class="fmt-meta-row">
@@ -1540,10 +1540,10 @@
           <span style="margin-left:4px;">auto after rewrite</span>
           <span class="fmt-master-badge ${autoFmt ? "on" : "off"}" style="font-size:9.5px;">${autoFmt ? "ON" : "OFF"}</span>
         </div>
-        <div style="font-size:10px;color:#334155;font-style:italic;margin-top:2px;">
+        <div style="font-size:10px;color:var(--sc-slate-700);font-style:italic;margin-top:2px;">
           ${escH(shortcut)} formats and prepends a tracker summary; ${escH(noTrackerShortcut)} formats without it.
           Text outside quotes &amp; [brackets] is wrapped in
-          <span style="color:#6c63ff;font-family:ui-monospace,monospace;">*asterisks*</span> automatically.
+          <span style="color:var(--sc-accent);font-family:ui-monospace,monospace;">*asterisks*</span> automatically.
         </div>`;
       fmtPanel.appendChild(hCard);
 
@@ -1625,7 +1625,7 @@
           if (extras) {
             const sep = document.createElement("div");
             sep.style.cssText =
-              "height:1px;background:rgba(108,99,255,0.07);margin:2px 0;";
+              "height:1px;background:rgba(var(--sc-accent-rgb), 0.07);margin:2px 0;";
             card.appendChild(sep);
             const eRow = document.createElement("div");
             eRow.className = "fmt-row";
@@ -1641,7 +1641,7 @@
             const eChip = document.createElement("span");
             eChip.className = "fmt-ex-before";
             eChip.style.cssText =
-              "color:#a78bfa;background:rgba(108,99,255,0.1);border-color:rgba(108,99,255,0.25);";
+              "color:var(--sc-accent-2);background:rgba(var(--sc-accent-rgb), 0.1);border-color:rgba(var(--sc-accent-rgb), 0.25);";
             eChip.textContent = extras;
             eEx.appendChild(eChip);
             eBody.append(eName, eEx);
@@ -1756,9 +1756,9 @@
       hCard.style.cssText = "padding:10px 14px;gap:8px;";
       hCard.innerHTML = `
         <div class="fmt-master-row">
-          <span style="font-size:12px;font-weight:600;color:#cbd5e1;">Chat Injection</span>
+          <span style="font-size:12px;font-weight:600;color:var(--sc-slate-300);">Chat Injection</span>
         </div>
-        <div style="font-size:11px;color:#475569;line-height:1.55;">
+        <div style="font-size:11px;color:var(--sc-slate-600);line-height:1.55;">
           Enhances SpicyChat AI messages in-place with rendering and visual styling
           the platform doesn't provide by default. Features apply to new messages
           automatically; bracket toggling is instant on all existing messages.
@@ -1783,7 +1783,7 @@
         row.className = "style-feature-row";
         if (subOf) {
           row.style.cssText =
-            "margin-left:14px;padding-left:10px;border-left:2px solid rgba(139,92,246,0.22);" +
+            "margin-left:14px;padding-left:10px;border-left:2px solid rgba(var(--sc-accent-violet-rgb), 0.22);" +
             (parentOn ? "" : "opacity:0.45;pointer-events:none;");
         }
 
@@ -1881,9 +1881,9 @@
       hCard.style.cssText = "padding:10px 14px;gap:8px;";
       hCard.innerHTML = `
         <div class="fmt-master-row">
-          <span style="font-size:12px;font-weight:600;color:#cbd5e1;">Text Styler</span>
+          <span style="font-size:12px;font-weight:600;color:var(--sc-slate-300);">Text Styler</span>
         </div>
-        <div style="font-size:11px;color:#475569;line-height:1.55;">
+        <div style="font-size:11px;color:var(--sc-slate-600);line-height:1.55;">
           Keyboard shortcuts that apply Markdown-style formatting to whatever
           text you've selected in any text box — not just SpicyChat.
         </div>`;

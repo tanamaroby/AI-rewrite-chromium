@@ -7,24 +7,25 @@
   padding: 0;
 }
 
+/* Palette lives in theme.css (loaded before this file) — see --sc-* tokens there. */
 :root {
-  --bg: #0f0c1e;
-  --bg2: #16122a;
-  --bg3: #1e1a35;
-  --bg4: #241f3d;
-  --border: rgba(108, 99, 255, 0.18);
-  --border-hover: rgba(108, 99, 255, 0.38);
-  --accent: #6c63ff;
-  --accent2: #a78bfa;
-  --text: #e0deff;
-  --text-muted: #8b85b8;
-  --text-faint: #4e4872;
-  --success: #4ade80;
-  --error: #f87171;
-  --danger: #ef4444;
-  --radius: 10px;
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --mono: "SF Mono", "Fira Code", "Fira Mono", "Cascadia Code", monospace;
+  --bg: var(--sc-ui-bg);
+  --bg2: var(--sc-ui-bg-2);
+  --bg3: var(--sc-ui-bg-3);
+  --bg4: var(--sc-ui-bg-4);
+  --border: var(--sc-ui-border);
+  --border-hover: var(--sc-ui-border-hover);
+  --accent: var(--sc-accent);
+  --accent2: var(--sc-accent-2);
+  --text: var(--sc-ui-text);
+  --text-muted: var(--sc-ui-text-muted);
+  --text-faint: var(--sc-ui-text-faint);
+  --success: var(--sc-success-light);
+  --error: var(--sc-danger-light);
+  --danger: var(--sc-danger);
+  --radius: var(--sc-ui-radius);
+  --font: var(--sc-ui-font);
+  --mono: var(--sc-ui-mono);
 }
 
 html,
@@ -98,11 +99,11 @@ body {
 }
 .nav-link:hover {
   color: var(--text);
-  background: rgba(108, 99, 255, 0.1);
+  background: rgba(var(--sc-accent-rgb), 0.1);
 }
 .nav-link.active {
   color: var(--text);
-  background: rgba(108, 99, 255, 0.15);
+  background: rgba(var(--sc-accent-rgb), 0.15);
 }
 .nav-link svg {
   flex-shrink: 0;
@@ -130,34 +131,34 @@ body {
 .storage-detail {
   font-size: 11px;
   font-weight: 600;
-  color: var(--text-secondary, #94a3b8);
+  color: var(--sc-slate-400);
   font-variant-numeric: tabular-nums;
 }
 .storage-bar-track {
   height: 4px;
   border-radius: 3px;
-  background: rgba(148, 163, 184, 0.12);
+  background: rgba(var(--sc-slate-400-rgb), 0.12);
   overflow: hidden;
   margin-bottom: 5px;
 }
 .storage-bar-fill {
   height: 100%;
   border-radius: 3px;
-  background: linear-gradient(90deg, #6c63ff, #a78bfa);
+  background: linear-gradient(90deg, var(--sc-accent), var(--sc-accent-2));
   width: 0%;
   transition:
     width 0.5s ease,
     background 0.3s;
 }
 .storage-bar-fill.warn {
-  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  background: linear-gradient(90deg, var(--sc-ui-warning-dark), var(--sc-warning));
 }
 .storage-bar-fill.danger {
-  background: linear-gradient(90deg, #ef4444, #f87171);
+  background: linear-gradient(90deg, var(--sc-danger), var(--sc-danger-light));
 }
 .storage-sublabel {
   font-size: 10.5px;
-  color: var(--text-faint, #475569);
+  color: var(--sc-slate-600);
   line-height: 1.4;
 }
 
@@ -199,7 +200,7 @@ body {
 .section-desc code {
   font-family: var(--mono);
   font-size: 11.5px;
-  background: rgba(108, 99, 255, 0.12);
+  background: rgba(var(--sc-accent-rgb), 0.12);
   color: var(--accent2);
   padding: 1px 5px;
   border-radius: 4px;
@@ -284,8 +285,8 @@ body {
   color: var(--text-faint);
 }
 .form-input:focus {
-  border-color: rgba(108, 99, 255, 0.6);
-  box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.12);
+  border-color: rgba(var(--sc-accent-rgb), 0.6);
+  box-shadow: 0 0 0 3px rgba(var(--sc-accent-rgb), 0.12);
 }
 
 .form-hint {
@@ -304,7 +305,7 @@ body {
 .form-hint code {
   font-family: var(--mono);
   font-size: 11px;
-  background: rgba(108, 99, 255, 0.1);
+  background: rgba(var(--sc-accent-rgb), 0.1);
   color: var(--accent2);
   padding: 1px 4px;
   border-radius: 3px;
@@ -339,8 +340,8 @@ body {
 
 .btn-primary {
   padding: 10px 22px;
-  background: linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%);
-  color: #fff;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--sc-accent-violet) 100%);
+  color: var(--sc-white);
   border: none;
   border-radius: 8px;
   font-family: var(--font);
@@ -362,7 +363,7 @@ body {
   padding: 6px 14px;
   background: transparent;
   color: var(--accent-light);
-  border: 1px solid rgba(108, 99, 255, 0.35);
+  border: 1px solid rgba(var(--sc-accent-rgb), 0.35);
   border-radius: 6px;
   font-family: var(--font);
   font-size: 12px;
@@ -373,8 +374,8 @@ body {
     border-color 0.15s;
 }
 .btn-ghost:hover {
-  background: rgba(108, 99, 255, 0.12);
-  border-color: rgba(108, 99, 255, 0.6);
+  background: rgba(var(--sc-accent-rgb), 0.12);
+  border-color: rgba(var(--sc-accent-rgb), 0.6);
 }
 
 .save-feedback {
@@ -410,14 +411,14 @@ body {
   margin-top: 2px;
 }
 .model-badge.free {
-  background: rgba(74, 222, 128, 0.15);
+  background: rgba(var(--sc-success-rgb), 0.15);
   color: var(--success);
-  border: 1px solid rgba(74, 222, 128, 0.25);
+  border: 1px solid rgba(var(--sc-success-rgb), 0.25);
 }
 .model-badge.uncensored {
-  background: rgba(251, 146, 60, 0.15);
-  color: #fb923c;
-  border: 1px solid rgba(251, 146, 60, 0.25);
+  background: rgba(var(--sc-ui-warning-rgb), 0.15);
+  color: var(--sc-ui-warning);
+  border: 1px solid rgba(var(--sc-ui-warning-rgb), 0.25);
 }
 .model-tag {
   font-size: 10px;
@@ -430,14 +431,14 @@ body {
   margin-left: 6px;
 }
 .model-tag.recommended {
-  background: rgba(108, 99, 255, 0.15);
+  background: rgba(var(--sc-accent-rgb), 0.15);
   color: var(--accent2);
-  border: 1px solid rgba(108, 99, 255, 0.25);
+  border: 1px solid rgba(var(--sc-accent-rgb), 0.25);
 }
 .model-tag:not(.recommended) {
-  background: rgba(148, 163, 184, 0.1);
+  background: rgba(var(--sc-slate-400-rgb), 0.1);
   color: var(--text-muted);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  border: 1px solid rgba(var(--sc-slate-400-rgb), 0.2);
 }
 
 .model-name {
@@ -452,7 +453,7 @@ body {
   font-family: var(--mono);
   font-size: 11px;
   color: var(--accent2);
-  background: rgba(108, 99, 255, 0.1);
+  background: rgba(var(--sc-accent-rgb), 0.1);
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -481,12 +482,12 @@ body {
     background 0.15s ease;
 }
 .model-card[data-model]:hover {
-  border-color: rgba(108, 99, 255, 0.45);
-  background: rgba(108, 99, 255, 0.07);
+  border-color: rgba(var(--sc-accent-rgb), 0.45);
+  background: rgba(var(--sc-accent-rgb), 0.07);
 }
 .model-card.active {
-  border-color: rgba(108, 99, 255, 0.7) !important;
-  background: rgba(108, 99, 255, 0.1) !important;
+  border-color: rgba(var(--sc-accent-rgb), 0.7) !important;
+  background: rgba(var(--sc-accent-rgb), 0.1) !important;
 }
 
 /* Select / Active pill (top-right of card) */
@@ -507,8 +508,8 @@ body {
     border-color 0.12s;
   opacity: 0;
   color: var(--text-faint);
-  background: rgba(148, 163, 184, 0.1);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(var(--sc-slate-400-rgb), 0.1);
+  border: 1px solid rgba(var(--sc-slate-400-rgb), 0.2);
 }
 .model-card[data-model]:hover .model-select-pill {
   opacity: 1;
@@ -516,8 +517,8 @@ body {
 .model-card.active .model-select-pill {
   opacity: 1;
   color: var(--success);
-  background: rgba(74, 222, 128, 0.12);
-  border-color: rgba(74, 222, 128, 0.25);
+  background: rgba(var(--sc-success-rgb), 0.12);
+  border-color: rgba(var(--sc-success-rgb), 0.25);
 }
 
 /* Stat chips */
@@ -531,27 +532,27 @@ body {
   font-size: 10px;
   font-weight: 600;
   color: var(--text-muted);
-  background: rgba(148, 163, 184, 0.08);
-  border: 1px solid rgba(148, 163, 184, 0.15);
+  background: rgba(var(--sc-slate-400-rgb), 0.08);
+  border: 1px solid rgba(var(--sc-slate-400-rgb), 0.15);
   padding: 2px 7px;
   border-radius: 4px;
   letter-spacing: 0.02em;
 }
 .stat.stat-free {
   color: var(--success);
-  background: rgba(74, 222, 128, 0.08);
-  border-color: rgba(74, 222, 128, 0.2);
+  background: rgba(var(--sc-success-rgb), 0.08);
+  border-color: rgba(var(--sc-success-rgb), 0.2);
 }
 .stat.stat-warn {
-  color: #fb923c;
-  background: rgba(251, 146, 60, 0.08);
-  border-color: rgba(251, 146, 60, 0.2);
+  color: var(--sc-ui-warning);
+  background: rgba(var(--sc-ui-warning-rgb), 0.08);
+  border-color: rgba(var(--sc-ui-warning-rgb), 0.2);
 }
 
 /* Comparison guide */
 .compare-box {
-  background: rgba(108, 99, 255, 0.05);
-  border: 1px solid rgba(108, 99, 255, 0.15);
+  background: rgba(var(--sc-accent-rgb), 0.05);
+  border: 1px solid rgba(var(--sc-accent-rgb), 0.15);
   border-radius: 10px;
   padding: 14px 16px;
   margin-bottom: 18px;
@@ -572,7 +573,7 @@ body {
   padding: 5px 0;
 }
 .compare-row + .compare-row {
-  border-top: 1px solid rgba(148, 163, 184, 0.07);
+  border-top: 1px solid rgba(var(--sc-slate-400-rgb), 0.07);
 }
 .compare-use {
   color: var(--text-muted);
@@ -586,7 +587,7 @@ body {
   font-family: var(--mono);
   font-size: 11px;
   color: var(--accent2);
-  background: rgba(108, 99, 255, 0.1);
+  background: rgba(var(--sc-accent-rgb), 0.1);
   padding: 2px 7px;
   border-radius: 4px;
   white-space: nowrap;
@@ -619,9 +620,9 @@ body {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  border: 1.5px solid rgba(108, 99, 255, 0.3);
+  border: 1.5px solid rgba(var(--sc-accent-rgb), 0.3);
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--sc-slate-400);
   transition:
     background 0.15s,
     border-color 0.15s,
@@ -632,27 +633,27 @@ body {
   max-width: 96px;
 }
 .persona-pill:hover {
-  border-color: rgba(108, 99, 255, 0.6);
+  border-color: rgba(var(--sc-accent-rgb), 0.6);
   color: var(--text-primary);
-  background: rgba(108, 99, 255, 0.12);
+  background: rgba(var(--sc-accent-rgb), 0.12);
 }
 .persona-pill.active {
-  background: rgba(108, 99, 255, 0.25);
-  border-color: #6c63ff;
-  color: #a78bfa;
+  background: rgba(var(--sc-accent-rgb), 0.25);
+  border-color: var(--sc-accent);
+  color: var(--sc-accent-2);
 }
 
 /* Persona edit card */
 .persona-card {
-  border: 1.5px solid rgba(108, 99, 255, 0.18);
+  border: 1.5px solid rgba(var(--sc-accent-rgb), 0.18);
   border-radius: 10px;
   padding: 12px 14px;
   background: var(--bg2);
   transition: border-color 0.15s;
 }
 .persona-card.active {
-  border-color: rgba(108, 99, 255, 0.55);
-  background: rgba(108, 99, 255, 0.06);
+  border-color: rgba(var(--sc-accent-rgb), 0.55);
+  background: rgba(var(--sc-accent-rgb), 0.06);
 }
 .persona-card-header {
   display: flex;
@@ -667,7 +668,7 @@ body {
   min-width: 20px;
 }
 .persona-card.active .persona-slot-num {
-  color: #6c63ff;
+  color: var(--sc-accent);
 }
 .persona-label-input {
   flex: 1;
@@ -682,7 +683,7 @@ body {
   min-width: 0;
 }
 .persona-label-input:focus {
-  border-bottom-color: rgba(108, 99, 255, 0.5);
+  border-bottom-color: rgba(var(--sc-accent-rgb), 0.5);
 }
 .persona-label-input::placeholder {
   color: var(--text-faint);
@@ -691,9 +692,9 @@ body {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: #6c63ff;
-  background: rgba(108, 99, 255, 0.15);
-  border: 1px solid rgba(108, 99, 255, 0.3);
+  color: var(--sc-accent);
+  background: rgba(var(--sc-accent-rgb), 0.15);
+  border: 1px solid rgba(var(--sc-accent-rgb), 0.3);
   border-radius: 10px;
   padding: 2px 8px;
   display: none;
@@ -706,9 +707,9 @@ body {
   font-weight: 600;
   padding: 3px 10px;
   border-radius: 12px;
-  border: 1.5px solid rgba(108, 99, 255, 0.35);
+  border: 1.5px solid rgba(var(--sc-accent-rgb), 0.35);
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--sc-slate-400);
   cursor: pointer;
   transition:
     background 0.15s,
@@ -716,14 +717,14 @@ body {
   white-space: nowrap;
 }
 .persona-toggle-btn:hover {
-  background: rgba(108, 99, 255, 0.15);
-  border-color: #6c63ff;
-  color: #a78bfa;
+  background: rgba(var(--sc-accent-rgb), 0.15);
+  border-color: var(--sc-accent);
+  color: var(--sc-accent-2);
 }
 .persona-card.active .persona-toggle-btn {
-  background: rgba(108, 99, 255, 0.18);
-  border-color: #6c63ff;
-  color: #a78bfa;
+  background: rgba(var(--sc-accent-rgb), 0.18);
+  border-color: var(--sc-accent);
+  color: var(--sc-accent-2);
 }
 
 /* ── Toggle switch ───────────────────────────────────────────────────────────────── */
@@ -800,8 +801,8 @@ body {
 }
 
 .toggle-switch input:checked + .toggle-track {
-  background: rgba(108, 99, 255, 0.28);
-  border-color: rgba(108, 99, 255, 0.6);
+  background: rgba(var(--sc-accent-rgb), 0.28);
+  border-color: rgba(var(--sc-accent-rgb), 0.6);
 }
 
 .toggle-switch input:checked + .toggle-track::after {
@@ -832,7 +833,7 @@ body {
 .toggle-hint code {
   font-family: var(--mono);
   font-size: 11px;
-  background: rgba(108, 99, 255, 0.1);
+  background: rgba(var(--sc-accent-rgb), 0.1);
   color: var(--accent2);
   padding: 1px 4px;
   border-radius: 3px;
