@@ -16,7 +16,6 @@
   function createDrawerStorageKeys(chatId) {
     return {
       legacyNote: "sc_note_v1_" + chatId,
-      rewriteCtx: "sc_rpctx_v1_" + chatId,
       quests: "sc_quests_v1_" + chatId,
       resources: "sc_res_v1_" + chatId,
       abilities: "sc_abl_v1_" + chatId,
@@ -133,86 +132,12 @@
     const fmtPanel = document.getElementById("sc-np-fmt-panel");
     const stylePanel = document.getElementById("sc-np-style-panel");
     const stylerPanel = document.getElementById("sc-np-styler-panel");
-    const rpPersonaPillsEl = document.getElementById("sc-rp-persona-pills");
-    const rpPersonaEditorEl = document.getElementById("sc-rp-persona-editor");
-    const rpPersonaLabelInput = document.getElementById("sc-rp-persona-label");
-    const rpPersonaNameInput = document.getElementById("sc-rp-persona-name");
-    const rpPersonaDescriptionTa = document.getElementById(
-      "sc-rp-persona-description",
-    );
-    const rpPersonaPersonalityTa = document.getElementById(
-      "sc-rp-persona-personality",
-    );
-    const rpAutosaveEl = document.getElementById("sc-rp-autosave");
-    const rpEmptyEl = document.getElementById("sc-rp-empty");
-    const rpRewriteInfo = document.getElementById("sc-rp-rewrite-info");
-    const rpRewriteLabelEl = document.getElementById("sc-rp-rewrite-label");
-    const rpRewriteTsEl = document.getElementById("sc-rp-rewrite-ts");
-    const rpBeforeTextEl = document.getElementById("sc-rp-before-text");
-    const rpAfterTextEl = document.getElementById("sc-rp-after-text");
-    const rpUndoBtn = document.getElementById("sc-rp-undo-btn");
-    const rpIcStats = document.getElementById("sc-rp-ic-stats");
-    const snipChipsCard = document.getElementById("sc-rp-snip-chips-card");
-    const snipEditCard = document.getElementById("sc-rp-snip-edit-card");
-    const snipChipsEl = document.getElementById("sc-rp-snip-chips");
-    const snipRowsEl = document.getElementById("sc-rp-snip-rows");
-    const snipEditBtn = document.getElementById("sc-rp-snip-edit-btn");
-    const snipSaveBtn = document.getElementById("sc-rp-snip-save-btn");
-    const snipSavedEl = document.getElementById("sc-rp-snip-saved");
-    const rewritePillsEl = document.getElementById("sc-rp-rewrite-pills");
-    const rewriteEditorEl = document.getElementById("sc-rp-rewrite-editor");
-    const rewriteNameInput = document.getElementById("sc-rp-rewrite-name");
-    const rewritePromptTa = document.getElementById("sc-rp-rewrite-prompt");
-    const rewriteRunBtn = document.getElementById("sc-rp-rewrite-run");
-    const rewriteStatusEl = document.getElementById("sc-rp-rewrite-status");
-    const rewriteAutosaveEl = document.getElementById("sc-rp-rewrite-autosave");
-    const ctxContextTa = document.getElementById("sc-rp-ctx-context");
-    const ctxPrevSceneTa = document.getElementById("sc-rp-ctx-prevscene");
-    const ctxLocationInput = document.getElementById("sc-rp-ctx-location");
-    const ctxClothesInput = document.getElementById("sc-rp-ctx-clothes");
-    const ctxStatusInput = document.getElementById("sc-rp-ctx-status");
-    const ctxDialogueTa = document.getElementById("sc-rp-ctx-dialogue");
-    const ctxAutosaveEl = document.getElementById("sc-rp-ctx-autosave");
-    const rpLogEmptyEl = document.getElementById("sc-rp-log-empty");
-    const rpLogInfo = document.getElementById("sc-rp-log-info");
-    const rpLogModelEl = document.getElementById("sc-rp-log-model");
-    const rpLogPromptTokEl = document.getElementById("sc-rp-log-prompt-tok");
-    const rpLogCachedRow = document.getElementById("sc-rp-log-cached-row");
-    const rpLogCachedTokEl = document.getElementById("sc-rp-log-cached-tok");
-    const rpLogCompletionTokEl = document.getElementById(
-      "sc-rp-log-completion-tok",
-    );
-    const rpLogThinkingRow = document.getElementById("sc-rp-log-thinking-row");
-    const rpLogThinkingTokEl = document.getElementById(
-      "sc-rp-log-thinking-tok",
-    );
-    const rpLogTotalTokEl = document.getElementById("sc-rp-log-total-tok");
-    const rpLogCostRow = document.getElementById("sc-rp-log-cost-row");
-    const rpLogCostEl = document.getElementById("sc-rp-log-cost");
-    const rpLogElapsedEl = document.getElementById("sc-rp-log-elapsed");
-    const rpLogPromptTextEl = document.getElementById("sc-rp-log-prompt-text");
-    const rpLogThinkingBlock = document.getElementById(
-      "sc-rp-log-thinking-block",
-    );
-    const rpLogThinkingTextEl = document.getElementById(
-      "sc-rp-log-thinking-text",
-    );
-    const rpLogOutputTextEl = document.getElementById("sc-rp-log-output-text");
 
     /* ── State ── */
     let isOpen = false;
     let activeTab = "quests";
-    let rpSaveTimer = null;
-    let rpAutosaveTimer = null;
-    const MAX_SNIPPETS = 5;
-    let rpSnippets = Array.from({ length: MAX_SNIPPETS }, () => ({
-      label: "",
-      text: "",
-    }));
-    let snipEditMode = false;
 
     /* Storage keys */
-    const REWRITE_CTX_KEY = STORAGE_KEYS.rewriteCtx;
     const QUEST_KEY = STORAGE_KEYS.quests;
 
     /* ── CSS variable init ── */
@@ -1307,8 +1232,6 @@
     }
     rpToolsFactory.createRpToolsModule({
       signal: _ac.signal,
-      rewriteCtxKey: STORAGE_KEYS.rewriteCtx,
-      autoResizeTextarea,
     });
     /* ── Drag-to-resize ── */
     let resizing = false;

@@ -173,89 +173,6 @@
     return result;
   }
 
-  function composeRewritePrompt(input) {
-    const data = input || {};
-    const presetPrompt = data.presetPrompt || "";
-    const persona = data.persona || null;
-    const sceneContext = data.sceneContext || {};
-
-    const parts = [];
-    const name = (persona && String(persona.name || "").trim()) || "the user";
-
-    if (
-      persona &&
-      (String(persona.name || "").trim() ||
-        String(persona.description || "").trim() ||
-        String(persona.personality || "").trim())
-    ) {
-      let block =
-        `[Roleplay context — the text you are rewriting is written in first person by ${name}. ` +
-        `Preserve their voice, intent and point of view; never break character or narrate for other characters.`;
-
-      if (String(persona.description || "").trim()) {
-        const resolvedDesc = String(persona.description)
-          .replace(/\{\{user\}\}/gi, name)
-          .trim();
-        block += ` Who ${name} is: ${resolvedDesc}`;
-      }
-
-      if (String(persona.personality || "").trim()) {
-        const resolvedPersonality = String(persona.personality)
-          .replace(/\{\{user\}\}/gi, name)
-          .trim();
-        block += ` ${name}'s personality: ${resolvedPersonality}`;
-      }
-
-      block += "]";
-      parts.push(block);
-    }
-
-    if (String(sceneContext.context || "").trim()) {
-      const resolvedBg = String(sceneContext.context)
-        .replace(/\{\{user\}\}/gi, name)
-        .trim();
-      parts.push(
-        `[Character background & long-term events — established facts and history that stay true across the whole story. Never contradict them: ${resolvedBg}]`,
-      );
-    }
-
-    if (String(sceneContext.prevScene || "").trim()) {
-      parts.push(
-        `[Previous scene — what happened just before, for immediate context. Continue naturally from it but do not rewrite or repeat it:\n${String(sceneContext.prevScene).trim()}]`,
-      );
-    }
-
-    const scene = [];
-    if (String(sceneContext.location || "").trim()) {
-      scene.push(`Location: ${String(sceneContext.location).trim()}`);
-    }
-    if (String(sceneContext.clothes || "").trim()) {
-      scene.push(
-        `${name}'s clothing / appearance: ${String(sceneContext.clothes).trim()}`,
-      );
-    }
-    if (String(sceneContext.status || "").trim()) {
-      scene.push(
-        `${name}'s current status / condition: ${String(sceneContext.status).trim()}`,
-      );
-    }
-
-    if (scene.length) {
-      parts.push(
-        `[Scene details — keep these consistent and never contradict them, but only surface a detail when it is naturally relevant to the text:\n${scene.join("\n")}]`,
-      );
-    }
-
-    if (String(sceneContext.dialogueStyle || "").trim()) {
-      parts.push(
-        `[Spoken dialogue only (text inside quotation marks) must follow this voice and style: ${String(sceneContext.dialogueStyle).trim()}. Do not apply it to narration or actions.]`,
-      );
-    }
-
-    parts.push(presetPrompt);
-    return parts.join("\n\n");
-  }
-
   // Formats a numeric resource value with thousand separators and compact
   // suffix notation for large numbers, keeping raw strings as-is.
   function formatResourceValue(raw) {
@@ -266,7 +183,6 @@
 
   const api = {
     formatText,
-    composeRewritePrompt,
     formatResourceValue,
   };
 

@@ -27,14 +27,10 @@
   let fmtEmDash = true;
   let fmtNoSpaceBeforePunct = true;
   let fmtSpaceAfterPunct = true;
-  let rpPersonas = Array.from({ length: 10 }, () => ({
-    label: "",
+  let rpRewrites = Array.from({ length: 10 }, () => ({
     name: "",
-    description: "",
-    personality: "",
+    prompt: "",
   }));
-  let rpActivePersonaIndex = -1;
-  let rpRewrites = Array.from({ length: 5 }, () => ({ name: "", prompt: "" }));
   let rpActiveRewriteIndex = -1;
   let lastRewrite = null; // { el, before, after, label, ts }
   let lastFocusedEl = null; // last focused SpicyChat input
@@ -79,11 +75,6 @@
     "fmtEmDash",
     "fmtNoSpaceBeforePunct",
     "fmtSpaceAfterPunct",
-    "rpPersonas",
-    "rpActivePersonaIndex",
-    "rpPersonaEnabled",
-    "rpPersonaName",
-    "rpPersonaPrepend",
     "rpRewrites",
     "rpActiveRewriteIndex",
     "fmtShortcut",
@@ -139,40 +130,13 @@
       fmtEmDash = data.fmtEmDash !== false;
       fmtNoSpaceBeforePunct = data.fmtNoSpaceBeforePunct !== false;
       fmtSpaceAfterPunct = data.fmtSpaceAfterPunct !== false;
-      if (Array.isArray(data.rpPersonas) && data.rpPersonas.length > 0) {
-        rpPersonas = data.rpPersonas.slice(0, 10).map((p) => ({
-          label: p.label || "",
-          name: p.name || "",
-          description: p.description || p.prepend || "",
-          personality: p.personality || "",
-        }));
-        while (rpPersonas.length < 10)
-          rpPersonas.push({
-            label: "",
-            name: "",
-            description: "",
-            personality: "",
-          });
-        rpActivePersonaIndex =
-          typeof data.rpActivePersonaIndex === "number"
-            ? data.rpActivePersonaIndex
-            : -1;
-      } else {
-        // Migrate old single-persona storage
-        rpPersonas[0] = {
-          label: data.rpPersonaName || "Persona 1",
-          name: data.rpPersonaName || "",
-          description: data.rpPersonaPrepend || "",
-          personality: "",
-        };
-        rpActivePersonaIndex = data.rpPersonaEnabled === true ? 0 : -1;
-      }
       if (Array.isArray(data.rpRewrites) && data.rpRewrites.length > 0) {
-        rpRewrites = data.rpRewrites.slice(0, 5).map((r) => ({
+        rpRewrites = data.rpRewrites.slice(0, 10).map((r) => ({
           name: r.name || "",
           prompt: r.prompt || "",
         }));
-        while (rpRewrites.length < 5) rpRewrites.push({ name: "", prompt: "" });
+        while (rpRewrites.length < 10)
+          rpRewrites.push({ name: "", prompt: "" });
       }
       rpActiveRewriteIndex =
         typeof data.rpActiveRewriteIndex === "number"
@@ -318,7 +282,6 @@
       stats: "sc_stats_v1_" + chatId,
       party: "sc_party_v1_" + chatId,
       resources: "sc_res_v1_" + chatId,
-      rewriteCtx: "sc_rpctx_v1_" + chatId,
     };
   }
 
@@ -498,41 +461,6 @@
     }, 250);
   }
 
-  // ─── Rewrite prompt builder ──────────────────────────────────────────────
-
-  function getSceneContext() {
-    return new Promise((resolve) => {
-      const chatId = getSpicyChatChatId();
-      if (!chatId) {
-        resolve({});
-        return;
-      }
-      const keys = getSpicyChatStorageKeys(chatId);
-      chrome.storage.local.get(keys.rewriteCtx, (d) => {
-        const c = d[keys.rewriteCtx];
-        resolve(c && typeof c === "object" ? c : {});
-      });
-    });
-  }
-
-  async function buildRewritePrompt(presetPrompt) {
-    const utils = window.AIRewriterContentUtils;
-    if (!utils || typeof utils.composeRewritePrompt !== "function") {
-      return presetPrompt;
-    }
-
-    const persona =
-      rpActivePersonaIndex >= 0 && rpActivePersonaIndex < rpPersonas.length
-        ? rpPersonas[rpActivePersonaIndex]
-        : null;
-    const sceneContext = await getSceneContext();
-    return utils.composeRewritePrompt({
-      presetPrompt,
-      persona,
-      sceneContext,
-    });
-  }
-
   // ─── Input stats for RP Tools (SpicyChat) ────────────────────────────────
 
   function dispatchInputStats(el) {
@@ -664,7 +592,7 @@
     createOverlay(el);
     const startTime = Date.now();
     try {
-      const builtPrompt = await buildRewritePrompt(preset.prompt);
+      const builtPrompt = preset.prompt;
       const result = await new Promise((resolve, reject) => {
         chrome.runtime.sendMessage(
           {
@@ -933,76 +861,6 @@
     await runRewrite(idx);
   });
 
-  // ─── SpicyChat AI-message quick action: send message to Previous Scene ─────
-
-  function parseSceneBracket(text) {
-    const m = String(text || "").match(/\[([^\[\]]*\|[^\[\]]*)\]/);
-    if (!m) return null;
-    const parts = m[1].split("|").map((s) => s.trim());
-    if (parts.length < 2) return null;
-    return {
-      status: parts[0] || "",
-      location: parts[1] || "",
-      clothes: parts.length >= 4 ? parts[3] : "",
-    };
-  }
-
-  function getMessageTextForScene(messageRoot) {
-    const lines = Array.from(messageRoot.querySelectorAll("span.leading-6"))
-      .map((el) => (el.innerText || el.textContent || "").trim())
-      .filter(Boolean);
-    return lines.join("\n").trim();
-  }
-
-  function saveSceneContextFromMessage(sceneText) {
-    return new Promise((resolve) => {
-      const chatId = getSpicyChatChatId();
-      if (!chatId) {
-        resolve({ ok: false, changed: [] });
-        return;
-      }
-      const key = getSpicyChatStorageKeys(chatId).rewriteCtx;
-      chrome.storage.local.get(key, (d) => {
-        const current = d && d[key] && typeof d[key] === "object" ? d[key] : {};
-        const next = {
-          prevScene: sceneText,
-          context: current.context || "",
-          location: current.location || "",
-          clothes: current.clothes || "",
-          status: current.status || "",
-          dialogueStyle: current.dialogueStyle || "",
-        };
-
-        const parsed = parseSceneBracket(sceneText);
-        const changed = [];
-        if (parsed) {
-          if (parsed.status) {
-            next.status = parsed.status;
-            changed.push("status");
-          }
-          if (parsed.location) {
-            next.location = parsed.location;
-            changed.push("location");
-          }
-          if (parsed.clothes) {
-            next.clothes = parsed.clothes;
-            changed.push("clothes");
-          }
-        }
-
-        chrome.storage.local.set({ [key]: next }, () => {
-          // Keep the drawer UI in sync if it is mounted.
-          document.dispatchEvent(
-            new CustomEvent("sc-rp-set-prev-scene", {
-              detail: { text: sceneText },
-            }),
-          );
-          resolve({ ok: true, changed });
-        });
-      });
-    });
-  }
-
   function isAiMessageBlock(messageRoot) {
     if (!messageRoot) return false;
     const hasVoiceBtn = !!messageRoot.querySelector(
@@ -1183,59 +1041,6 @@
       .forEach(processAiMessageBrackets);
   }
 
-  async function onSceneFillButtonClick(messageRoot) {
-    const sceneText = getMessageTextForScene(messageRoot);
-    if (!sceneText) {
-      showToast("No message text found to save.", true);
-      return;
-    }
-    const result = await saveSceneContextFromMessage(sceneText);
-    if (!result.ok) {
-      showToast("Could not save Previous scene for this chat.", true);
-      return;
-    }
-    if (result.changed.length) {
-      showToast(
-        "\u2713 Previous scene saved + auto-filled " +
-          result.changed.join(", ") +
-          ".",
-      );
-    } else {
-      showToast("\u2713 Previous scene saved.");
-    }
-  }
-
-  function mountSceneFillButtons() {
-    if (!isSpicyChat) return;
-    const messages = document.querySelectorAll('div[id^="message-"]');
-    messages.forEach((messageRoot) => {
-      if (!(messageRoot instanceof HTMLElement)) return;
-      if (messageRoot.dataset.aiSceneFillMounted === "1") return;
-      if (!isAiMessageBlock(messageRoot)) return;
-
-      const controlRow = messageRoot.querySelector(
-        "div.flex.justify-between.items-center",
-      );
-      if (!controlRow) return;
-
-      const rightSlot =
-        controlRow.lastElementChild instanceof HTMLElement
-          ? controlRow.lastElementChild
-          : controlRow;
-      rightSlot.classList.add("ai-scene-action-slot");
-
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "ai-scene-fill-btn";
-      btn.textContent = "\u2b73 Use As Previous Scene";
-      btn.title = "Send this AI message to Previous scene context";
-      btn.addEventListener("click", () => onSceneFillButtonClick(messageRoot));
-      rightSlot.appendChild(btn);
-
-      messageRoot.dataset.aiSceneFillMounted = "1";
-    });
-  }
-
   if (isSpicyChat) {
     let mountQueued = false;
     const changedRoots = new Set();
@@ -1295,7 +1100,6 @@
           scroller &&
           scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 80;
 
-        mountSceneFillButtons();
         mountAiMessageMarkdown(roots);
         mountAiMessageBrackets(roots);
 
@@ -1303,7 +1107,6 @@
       });
     };
 
-    mountSceneFillButtons();
     mountAiMessageMarkdown();
     mountAiMessageBrackets();
     const obs = new MutationObserver(scheduleMount);

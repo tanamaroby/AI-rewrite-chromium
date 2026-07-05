@@ -3,20 +3,6 @@
 
   function createRpToolsModule(deps) {
     const listenerOptions = deps.signal ? { signal: deps.signal } : undefined;
-    const REWRITE_CTX_KEY = deps.rewriteCtxKey;
-    const autoResizeTextarea = deps.autoResizeTextarea;
-
-    const rpPersonaPillsEl = document.getElementById("sc-rp-persona-pills");
-    const rpPersonaEditorEl = document.getElementById("sc-rp-persona-editor");
-    const rpPersonaLabelInput = document.getElementById("sc-rp-persona-label");
-    const rpPersonaNameInput = document.getElementById("sc-rp-persona-name");
-    const rpPersonaDescriptionTa = document.getElementById(
-      "sc-rp-persona-description",
-    );
-    const rpPersonaPersonalityTa = document.getElementById(
-      "sc-rp-persona-personality",
-    );
-    const rpAutosaveEl = document.getElementById("sc-rp-autosave");
 
     const rpRewriteInfo = document.getElementById("sc-rp-rewrite-info");
     const rpRewriteLabelEl = document.getElementById("sc-rp-rewrite-label");
@@ -69,138 +55,6 @@
     const rewriteRunBtn = document.getElementById("sc-rp-rewrite-run");
     const rewriteStatusEl = document.getElementById("sc-rp-rewrite-status");
     const rewriteAutosaveEl = document.getElementById("sc-rp-rewrite-autosave");
-
-    const ctxContextTa = document.getElementById("sc-rp-ctx-context");
-    const ctxPrevSceneTa = document.getElementById("sc-rp-ctx-prevscene");
-    const ctxLocationInput = document.getElementById("sc-rp-ctx-location");
-    const ctxClothesInput = document.getElementById("sc-rp-ctx-clothes");
-    const ctxStatusInput = document.getElementById("sc-rp-ctx-status");
-    const ctxDialogueTa = document.getElementById("sc-rp-ctx-dialogue");
-    const ctxAutosaveEl = document.getElementById("sc-rp-ctx-autosave");
-    const ctxParseNotice = document.getElementById("sc-rp-ctx-parse-notice");
-
-    let rpSaveTimer = null;
-    let rpAutosaveTimer = null;
-
-    let drawerPersonas = Array.from({ length: 10 }, () => ({
-      label: "",
-      name: "",
-      description: "",
-      personality: "",
-    }));
-    let drawerActiveIdx = -1;
-
-    function buildDrawerPersonaPills() {
-      if (!rpPersonaPillsEl) return;
-      rpPersonaPillsEl.innerHTML = "";
-      drawerPersonas.forEach((p, idx) => {
-        const btn = document.createElement("button");
-        btn.className =
-          "sc-persona-pill" + (idx === drawerActiveIdx ? " active" : "");
-        btn.dataset.idx = idx;
-        const label = (p.label || "").trim() || String(idx + 1);
-        btn.textContent = label.length > 9 ? label.slice(0, 8) + "…" : label;
-        btn.addEventListener("click", () => {
-          drawerActiveIdx = drawerActiveIdx === idx ? -1 : idx;
-          chrome.storage.sync.set({ rpActivePersonaIndex: drawerActiveIdx });
-          buildDrawerPersonaPills();
-          showDrawerPersonaEditor();
-          triggerPersonaAutosave();
-        });
-        rpPersonaPillsEl.appendChild(btn);
-      });
-    }
-
-    function showDrawerPersonaEditor() {
-      if (!rpPersonaEditorEl) return;
-      if (drawerActiveIdx < 0) {
-        rpPersonaEditorEl.style.display = "none";
-      } else {
-        rpPersonaEditorEl.style.display = "";
-        const p = drawerPersonas[drawerActiveIdx];
-        rpPersonaLabelInput.value = p.label || "";
-        rpPersonaNameInput.value = p.name || "";
-        rpPersonaDescriptionTa.value = p.description || "";
-        rpPersonaPersonalityTa.value = p.personality || "";
-      }
-    }
-
-    function savePersona() {
-      if (drawerActiveIdx >= 0) {
-        drawerPersonas[drawerActiveIdx] = {
-          label: rpPersonaLabelInput.value,
-          name: rpPersonaNameInput.value,
-          description: rpPersonaDescriptionTa.value,
-          personality: rpPersonaPersonalityTa.value,
-        };
-        buildDrawerPersonaPills();
-      }
-      chrome.storage.sync.set({
-        rpPersonas: drawerPersonas,
-        rpActivePersonaIndex: drawerActiveIdx,
-      });
-      rpAutosaveEl.classList.add("visible");
-      clearTimeout(rpAutosaveTimer);
-      rpAutosaveTimer = setTimeout(
-        () => rpAutosaveEl.classList.remove("visible"),
-        1800,
-      );
-    }
-
-    function triggerPersonaAutosave() {
-      savePersona();
-    }
-
-    function schedulePersonaSave() {
-      clearTimeout(rpSaveTimer);
-      rpSaveTimer = setTimeout(savePersona, 600);
-    }
-
-    rpPersonaLabelInput.addEventListener("input", schedulePersonaSave);
-    rpPersonaNameInput.addEventListener("input", schedulePersonaSave);
-    rpPersonaDescriptionTa.addEventListener("input", schedulePersonaSave);
-    rpPersonaPersonalityTa.addEventListener("input", schedulePersonaSave);
-
-    chrome.storage.sync.get(
-      [
-        "rpPersonas",
-        "rpActivePersonaIndex",
-        "rpPersonaEnabled",
-        "rpPersonaName",
-        "rpPersonaPrepend",
-      ],
-      (data) => {
-        if (Array.isArray(data.rpPersonas) && data.rpPersonas.length > 0) {
-          drawerPersonas = data.rpPersonas.slice(0, 10).map((p) => ({
-            label: p.label || "",
-            name: p.name || "",
-            description: p.description || p.prepend || "",
-            personality: p.personality || "",
-          }));
-          while (drawerPersonas.length < 10)
-            drawerPersonas.push({
-              label: "",
-              name: "",
-              description: "",
-              personality: "",
-            });
-          drawerActiveIdx =
-            typeof data.rpActivePersonaIndex === "number"
-              ? data.rpActivePersonaIndex
-              : -1;
-        } else if (data.rpPersonaName || data.rpPersonaPrepend) {
-          drawerPersonas[0] = {
-            label: data.rpPersonaName || "Persona 1",
-            name: data.rpPersonaName || "",
-            description: data.rpPersonaPrepend || "",
-            personality: "",
-          };
-          drawerActiveIdx = data.rpPersonaEnabled === true ? 0 : -1;
-        }
-        buildDrawerPersonaPills();
-        showDrawerPersonaEditor();
-      },
-    );
 
     function showRewriteState(detail) {
       rpEmptyEl.style.display = "none";
@@ -300,119 +154,6 @@
       }
     });
 
-    let ctxSaveTimer = null;
-    let ctxAutosaveTimer = null;
-
-    function saveSceneContext() {
-      chrome.storage.local.set({
-        [REWRITE_CTX_KEY]: {
-          prevScene: ctxPrevSceneTa.value,
-          context: ctxContextTa.value,
-          location: ctxLocationInput.value,
-          clothes: ctxClothesInput.value,
-          status: ctxStatusInput.value,
-          dialogueStyle: ctxDialogueTa.value,
-        },
-      });
-      ctxAutosaveEl.classList.add("visible");
-      clearTimeout(ctxAutosaveTimer);
-      ctxAutosaveTimer = setTimeout(
-        () => ctxAutosaveEl.classList.remove("visible"),
-        1800,
-      );
-    }
-
-    function scheduleSceneContextSave() {
-      clearTimeout(ctxSaveTimer);
-      ctxSaveTimer = setTimeout(saveSceneContext, 500);
-    }
-
-    [
-      ctxPrevSceneTa,
-      ctxContextTa,
-      ctxLocationInput,
-      ctxClothesInput,
-      ctxStatusInput,
-      ctxDialogueTa,
-    ].forEach((el) => el.addEventListener("input", scheduleSceneContextSave));
-
-    let ctxParseNoticeTimer = null;
-
-    function parseSceneBracket(text) {
-      const m = text.match(/\[([^\[\]]*\|[^\[\]]*)\]/);
-      if (!m) return null;
-      const parts = m[1].split("|").map((s) => s.trim());
-      if (parts.length < 2) return null;
-      return {
-        status: parts[0] || "",
-        location: parts[1] || "",
-        clothes: parts.length >= 4 ? parts[3] : "",
-      };
-    }
-
-    function showCtxParseNotice(fields, sourceLabel) {
-      ctxParseNotice.textContent =
-        "✨ Auto-filled " +
-        fields.join(", ") +
-        " from " +
-        (sourceLabel || "pasted scene");
-      ctxParseNotice.classList.add("visible");
-      clearTimeout(ctxParseNoticeTimer);
-      ctxParseNoticeTimer = setTimeout(
-        () => ctxParseNotice.classList.remove("visible"),
-        3200,
-      );
-    }
-
-    function applySceneHeaderParse(sceneText, sourceLabel) {
-      const parsed = parseSceneBracket(sceneText);
-      if (!parsed) return;
-      const changed = [];
-      if (parsed.status) {
-        ctxStatusInput.value = parsed.status;
-        changed.push("status");
-      }
-      if (parsed.location) {
-        ctxLocationInput.value = parsed.location;
-        changed.push("location");
-      }
-      if (parsed.clothes) {
-        ctxClothesInput.value = parsed.clothes;
-        changed.push("clothes");
-      }
-      if (!changed.length) return;
-      saveSceneContext();
-      showCtxParseNotice(changed, sourceLabel);
-    }
-
-    ctxPrevSceneTa.addEventListener("paste", () => {
-      setTimeout(() => {
-        applySceneHeaderParse(ctxPrevSceneTa.value, "pasted scene");
-      }, 0);
-    });
-
-    document.addEventListener(
-      "sc-rp-set-prev-scene",
-      (e) => {
-        const txt = String(e?.detail?.text || "").trim();
-        if (!txt) return;
-        ctxPrevSceneTa.value = txt;
-        saveSceneContext();
-        applySceneHeaderParse(txt, "chat message");
-      },
-      listenerOptions,
-    );
-
-    chrome.storage.local.get(REWRITE_CTX_KEY, (data) => {
-      const c = data[REWRITE_CTX_KEY] || {};
-      ctxPrevSceneTa.value = c.prevScene || "";
-      ctxContextTa.value = c.context || "";
-      ctxLocationInput.value = c.location || "";
-      ctxClothesInput.value = c.clothes || "";
-      ctxStatusInput.value = c.status || "";
-      ctxDialogueTa.value = c.dialogueStyle || "";
-    });
-
     document.addEventListener(
       "sc-rp-input-stats",
       (e) => {
@@ -432,7 +173,7 @@
       listenerOptions,
     );
 
-    const MAX_SNIPPETS = 5;
+    const MAX_SNIPPETS = 10;
     let rpSnippets = Array.from({ length: MAX_SNIPPETS }, () => ({
       label: "",
       text: "",
@@ -544,7 +285,7 @@
       renderSnippetChips();
     });
 
-    let drawerRewrites = Array.from({ length: 5 }, () => ({
+    let drawerRewrites = Array.from({ length: 10 }, () => ({
       name: "",
       prompt: "",
     }));
@@ -557,7 +298,7 @@
       drawerRewrites.forEach((r, idx) => {
         const btn = document.createElement("button");
         btn.className =
-          "sc-persona-pill" + (idx === rewriteActiveIdx ? " active" : "");
+          "sc-rewrite-pill" + (idx === rewriteActiveIdx ? " active" : "");
         btn.dataset.idx = idx;
         const label = (r.name || "").trim() || String(idx + 1);
         btn.textContent = label.length > 9 ? label.slice(0, 8) + "…" : label;
@@ -662,11 +403,11 @@
 
     chrome.storage.sync.get(["rpRewrites", "rpActiveRewriteIndex"], (data) => {
       if (Array.isArray(data.rpRewrites) && data.rpRewrites.length > 0) {
-        drawerRewrites = data.rpRewrites.slice(0, 5).map((r) => ({
+        drawerRewrites = data.rpRewrites.slice(0, 10).map((r) => ({
           name: r.name || "",
           prompt: r.prompt || "",
         }));
-        while (drawerRewrites.length < 5)
+        while (drawerRewrites.length < 10)
           drawerRewrites.push({ name: "", prompt: "" });
       }
       rewriteActiveIdx =

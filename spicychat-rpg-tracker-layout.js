@@ -936,11 +936,6 @@
       opacity: 0; transition: opacity 0.3s; height: 14px;
     }
     .rp-autosave.visible { opacity: 1; }
-    .rp-parse-notice {
-      font-size: 11px; color: var(--sc-accent-2); margin-top: 6px;
-      opacity: 0; transition: opacity 0.3s; min-height: 14px;
-    }
-    .rp-parse-notice.visible { opacity: 1; }
     .rp-toggle { position: relative; width: 32px; height: 18px; flex-shrink: 0; cursor: pointer; }
     .rp-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
     .rp-toggle-track {
@@ -956,9 +951,9 @@
     }
     .rp-toggle input:checked ~ .rp-toggle-track { background: rgba(var(--sc-accent-rgb), 0.35); border-color: rgba(var(--sc-accent-rgb), 0.6); }
     .rp-toggle input:checked ~ .rp-toggle-track::after { transform: translateX(14px); background: var(--sc-accent-2); }
-    .sc-persona-pill { display:inline-flex; align-items:center; justify-content:center; min-width:36px; padding:3px 9px; border-radius:16px; font-size:11.5px; font-weight:600; cursor:pointer; border:1.5px solid rgba(var(--sc-accent-rgb), 0.3); background:transparent; color:var(--sc-slate-500); transition:background 0.15s,border-color 0.15s,color 0.15s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:82px; }
-    .sc-persona-pill:hover { border-color:rgba(var(--sc-accent-rgb), 0.6); color:var(--sc-slate-300); background:rgba(var(--sc-accent-rgb), 0.12); }
-    .sc-persona-pill.active { background:rgba(var(--sc-accent-rgb), 0.22); border-color:var(--sc-accent); color:var(--sc-accent-2); }
+    .sc-rewrite-pill { display:inline-flex; align-items:center; justify-content:center; min-width:36px; padding:3px 9px; border-radius:16px; font-size:11.5px; font-weight:600; cursor:pointer; border:1.5px solid rgba(var(--sc-accent-rgb), 0.3); background:transparent; color:var(--sc-slate-500); transition:background 0.15s,border-color 0.15s,color 0.15s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:82px; }
+    .sc-rewrite-pill:hover { border-color:rgba(var(--sc-accent-rgb), 0.6); color:var(--sc-slate-300); background:rgba(var(--sc-accent-rgb), 0.12); }
+    .sc-rewrite-pill.active { background:rgba(var(--sc-accent-rgb), 0.22); border-color:var(--sc-accent); color:var(--sc-accent-2); }
     .rp-rewrite-meta { font-size: 11px; color: var(--sc-slate-500); display: flex; align-items: center; justify-content: space-between; }
     .rp-rewrite-label { font-weight: 600; color: var(--sc-accent-2); }
     .rp-diff-block { display: flex; flex-direction: column; gap: 6px; }
@@ -1272,7 +1267,7 @@
           </div>
           <div class="rp-section-label">Rewrites</div>
           <div class="rp-card" style="padding-bottom:10px;">
-            <div class="rp-hint" style="margin-bottom:8px;">Five saved rewrite presets. Tap a slot to make it active — Ctrl+N (or Run) applies the active preset to the focused chat input. Persona &amp; Scene Context are injected automatically.</div>
+            <div class="rp-hint" style="margin-bottom:8px;">Ten saved rewrite presets. Tap a slot to make it active — Ctrl+N (or Run) applies the active preset to the focused chat input.</div>
             <div id="sc-rp-rewrite-pills" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;"></div>
             <div id="sc-rp-rewrite-editor" style="display:none;">
               <div style="margin-bottom:6px;">
@@ -1292,68 +1287,6 @@
               </div>
             </div>
             <div class="rp-autosave" id="sc-rp-rewrite-autosave">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              Saved
-            </div>
-          </div>
-          <div class="rp-section-label">Scene Context</div>
-          <div class="rp-card">
-            <div class="rp-hint" style="margin-bottom:8px;">Saved per chat. Woven into every rewrite to keep details consistent.</div>
-            <div style="margin-bottom:6px;">
-              <div class="rp-hint" style="margin-bottom:4px;">Previous scene &mdash; paste recent messages for context</div>
-              <textarea id="sc-rp-ctx-prevscene" class="rp-input rp-textarea" style="min-height:120px;" placeholder="Paste the previous scene or recent messages here so the rewrite has immediate context to continue from…" data-ai-rewriter-ignore="1"></textarea>
-              <div class="rp-parse-notice" id="sc-rp-ctx-parse-notice"></div>
-            </div>
-            <div style="margin-bottom:6px;">
-              <div class="rp-hint" style="margin-bottom:4px;">Character background &amp; long-term events</div>
-              <textarea id="sc-rp-ctx-context" class="rp-input rp-textarea" style="min-height:56px;" placeholder="e.g. {{user}} is a retired thief who owes a debt to the guild; they betrayed their old partner months ago" data-ai-rewriter-ignore="1"></textarea>
-            </div>
-            <div style="margin-bottom:6px;">
-              <div class="rp-hint" style="margin-bottom:4px;">Location</div>
-              <input type="text" id="sc-rp-ctx-location" class="rp-input" placeholder="e.g. A rain-soaked alley in the old quarter" data-ai-rewriter-ignore="1" />
-            </div>
-            <div style="margin-bottom:6px;">
-              <div class="rp-hint" style="margin-bottom:4px;">Clothes / appearance</div>
-              <input type="text" id="sc-rp-ctx-clothes" class="rp-input" placeholder="e.g. A torn leather jacket, soaked through" data-ai-rewriter-ignore="1" />
-            </div>
-            <div style="margin-bottom:6px;">
-              <div class="rp-hint" style="margin-bottom:4px;">Status / condition</div>
-              <input type="text" id="sc-rp-ctx-status" class="rp-input" placeholder="e.g. Exhausted, nursing a bruised rib" data-ai-rewriter-ignore="1" />
-            </div>
-            <div>
-              <div class="rp-hint" style="margin-bottom:4px;">Dialogue style</div>
-              <textarea id="sc-rp-ctx-dialogue" class="rp-input rp-textarea" style="min-height:56px;" placeholder="e.g. Clipped, sardonic, rarely uses contractions" data-ai-rewriter-ignore="1"></textarea>
-            </div>
-            <div class="rp-autosave" id="sc-rp-ctx-autosave">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              Saved
-            </div>
-          </div>
-          <div class="rp-section-label">Persona</div>
-          <div class="rp-card" style="padding-bottom:10px;">
-            <div class="rp-hint" style="margin-bottom:8px;">Tap a slot to activate it — tap again to deactivate. The active persona's name &amp; personality are injected into every rewrite.</div>
-            <!-- Persona slot pills -->
-            <div id="sc-rp-persona-pills" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;"></div>
-            <!-- Active persona editor -->
-            <div id="sc-rp-persona-editor" style="display:none;">
-              <div style="margin-bottom:6px;">
-                <div class="rp-hint" style="margin-bottom:4px;">Slot label</div>
-                <input type="text" id="sc-rp-persona-label" class="rp-input" placeholder="e.g. Aria" data-ai-rewriter-ignore="1" />
-              </div>
-              <div style="margin-bottom:6px;">
-                <div class="rp-hint" style="margin-bottom:4px;">Persona name &mdash; replaces <code style="background:rgba(var(--sc-accent-rgb), 0.15);padding:1px 5px;border-radius:3px;font-size:10.5px;color:var(--sc-accent-2);">{{user}}</code></div>
-                <input type="text" id="sc-rp-persona-name" class="rp-input" placeholder="Your persona name…" data-ai-rewriter-ignore="1" />
-              </div>
-              <div style="margin-bottom:6px;">
-                <div class="rp-hint" style="margin-bottom:4px;">{{user}} description &mdash; who they are</div>
-                <textarea id="sc-rp-persona-description" class="rp-input rp-textarea" placeholder="e.g. {{user}} is a weathered ex-detective in their forties, now working as a private investigator." data-ai-rewriter-ignore="1"></textarea>
-              </div>
-              <div>
-                <div class="rp-hint" style="margin-bottom:4px;">{{user}} personality &mdash; how they think, speak and behave</div>
-                <textarea id="sc-rp-persona-personality" class="rp-input rp-textarea" placeholder="e.g. {{user}} is dry-witted and guarded, speaks in short clipped sentences, and rarely shows fear." data-ai-rewriter-ignore="1"></textarea>
-              </div>
-            </div>
-            <div class="rp-autosave" id="sc-rp-autosave">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
               Saved
             </div>

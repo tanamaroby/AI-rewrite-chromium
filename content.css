@@ -178,46 +178,6 @@
   flex-shrink: 0;
 }
 
-/* Per-message quick action (SpicyChat AI bubble) */
-.ai-scene-action-slot {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
-}
-
-.ai-scene-fill-btn {
-  height: 30px;
-  border-radius: 999px;
-  border: 1px solid rgba(var(--sc-accent-rgb), 0.42);
-  background: rgba(var(--sc-overlay-bg-rgb), 0.88);
-  color: var(--sc-lavender-soft);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  padding: 0 10px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition:
-    transform 0.12s ease,
-    border-color 0.15s ease,
-    background 0.15s ease,
-    color 0.15s ease;
-}
-
-.ai-scene-fill-btn:hover {
-  border-color: rgba(var(--sc-accent-2-rgb), 0.72);
-  background: rgba(var(--sc-accent-rgb), 0.28);
-  color: var(--sc-lavender-white);
-  transform: translateY(-1px);
-}
-
-.ai-scene-fill-btn:active {
-  transform: translateY(0) scale(0.97);
-}
-
 /* ── Markdown table rendering in AI messages ──────────────────────────────── */
 
 .ai-md-table-wrapper {

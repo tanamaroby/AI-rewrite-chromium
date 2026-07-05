@@ -190,7 +190,6 @@ const RPG_SECTIONS = [
   { key: "sc_npc_v1_", label: "NPCs", type: "array" },
   { key: "sc_rumour_v1_", label: "Rumours", type: "array" },
   { key: "sc_dice_mod_v1_", label: "Dice Mods", type: "array" },
-  { key: "sc_rpctx_v1_", label: "Scene Context", type: "object" },
 ];
 
 const RPG_LEGACY_PREFIXES = ["sc_inv_v1_"];
@@ -266,7 +265,6 @@ function renderNotesList(chats) {
             npcs: items[`sc_npc_v1_${chatId}`] || [],
             rumours: items[`sc_rumour_v1_${chatId}`] || [],
             diceMods: items[`sc_dice_mod_v1_${chatId}`] || [],
-            sceneContext: items[`sc_rpctx_v1_${chatId}`] || {},
           },
           null,
           2,
@@ -363,13 +361,6 @@ scRpgImportBtn.addEventListener("click", () => {
     toSet[`sc_rumour_v1_${chatId}`] = data.rumours;
   if (Array.isArray(data.diceMods))
     toSet[`sc_dice_mod_v1_${chatId}`] = data.diceMods;
-  if (
-    data.sceneContext &&
-    typeof data.sceneContext === "object" &&
-    !Array.isArray(data.sceneContext)
-  ) {
-    toSet[`sc_rpctx_v1_${chatId}`] = data.sceneContext;
-  }
   chrome.storage.local.set(toSet, () => {
     scRpgImportArea.value = "";
     showFeedback(
@@ -490,288 +481,34 @@ saveFormatterBtn.addEventListener("click", () => {
     showFeedback(formatterSaveFeedback, "✓ Saved!", true);
   });
 });
-// ─── RP Persona (10 slots) ───────────────────────────────────────────────────
-
-const rpPersonaSlotsEl = document.getElementById("rpPersonaSlots");
-const rpPersonaPillsEl = document.getElementById("rpPersonaPills");
-const saveRpPersonasBtn = document.getElementById("saveRpPersonas");
-const rpPersonaSaveFeedback = document.getElementById("rpPersonaSaveFeedback");
-const rpActivePersonaStatus = document.getElementById("rpActivePersonaStatus");
-
-const DEFAULT_PERSONAS = Array.from({ length: 10 }, () => ({
-  label: "",
-  name: "",
-  description: "",
-  personality: "",
-}));
-
-let rpPersonasData = DEFAULT_PERSONAS.map((p) => ({ ...p }));
-let rpActivePersonaIndex = -1;
-
-function buildPersonaSlots() {
-  rpPersonaSlotsEl.innerHTML = "";
-  rpPersonasData.forEach((persona, idx) => {
-    const isActive = idx === rpActivePersonaIndex;
-    const card = document.createElement("div");
-    card.className = `persona-card${isActive ? " active" : ""}`;
-    card.dataset.idx = idx;
-    card.innerHTML = `
-      <div class="persona-card-header">
-        <span class="persona-slot-num">#${idx + 1}</span>
-        <input type="text" class="persona-label-input" placeholder="Slot label (e.g. Aria)" value="${escHtml(persona.label)}" data-field="label" />
-        <span class="persona-active-badge">ACTIVE</span>
-        <button class="persona-toggle-btn">${isActive ? "Deactivate" : "Activate"}</button>
-      </div>
-      <div class="form-group" style="margin: 0 0 8px;">
-        <label class="form-label" style="font-size:11.5px;">Persona Name</label>
-        <input type="text" class="form-input" style="padding: 6px 10px;" placeholder="e.g. Aria" value="${escHtml(persona.name)}" data-field="name" spellcheck="false" />
-        <p class="form-hint">Replaces <code>{{user}}</code> in the description and personality text.</p>
-      </div>
-      <div class="form-group" style="margin: 0 0 8px;">
-        <label class="form-label" style="font-size:11.5px;">{{user}} Description</label>
-        <textarea class="form-input" rows="4" style="resize:vertical;font-family:ui-monospace,monospace;font-size:11.5px;" placeholder="e.g. {{user}} is a weathered ex-detective in their forties, now working as a private investigator." data-field="description">${escHtml(persona.description)}</textarea>
-        <p class="form-hint">Describes who <code>{{user}}</code> is. Injected before every Rewrite on SpicyChat only.</p>
-      </div>
-      <div class="form-group" style="margin: 0;">
-        <label class="form-label" style="font-size:11.5px;">{{user}} Personality</label>
-        <textarea class="form-input" rows="4" style="resize:vertical;font-family:ui-monospace,monospace;font-size:11.5px;" placeholder="e.g. {{user}} is witty, guarded, and slow to trust. Speaks in short, dry sentences." data-field="personality">${escHtml(persona.personality)}</textarea>
-        <p class="form-hint">How <code>{{user}}</code> thinks, speaks and behaves. Injected after the description.</p>
-      </div>`;
-    rpPersonaSlotsEl.appendChild(card);
-
-    // Live-update data on input
-    card.querySelectorAll("[data-field]").forEach((el) => {
-      el.addEventListener("input", () => {
-        rpPersonasData[idx][el.dataset.field] = el.value;
-        updatePersonaStatus();
-      });
-    });
-
-    // Activate / deactivate toggle
-    card.querySelector(".persona-toggle-btn").addEventListener("click", () => {
-      rpActivePersonaIndex = rpActivePersonaIndex === idx ? -1 : idx;
-      saveRpActiveIndex();
-      buildPersonaSlots();
-      updatePersonaPills();
-      updatePersonaStatus();
-    });
-  });
-}
-
-function updatePersonaPills() {
-  rpPersonaPillsEl.querySelectorAll(".persona-pill").forEach((btn) => {
-    const idx = parseInt(btn.dataset.idx, 10);
-    const label = rpPersonasData[idx].label.trim() || String(idx + 1);
-    btn.textContent = label.length > 10 ? label.slice(0, 9) + "…" : label;
-    btn.classList.toggle("active", idx === rpActivePersonaIndex);
-  });
-}
-
-function updatePersonaStatus() {
-  if (rpActivePersonaIndex < 0) {
-    rpActivePersonaStatus.textContent = "None";
-  } else {
-    const p = rpPersonasData[rpActivePersonaIndex];
-    rpActivePersonaStatus.textContent =
-      p.label.trim() || `Slot ${rpActivePersonaIndex + 1}`;
-  }
-}
-
-function saveRpActiveIndex() {
-  chrome.storage.sync.set({ rpActivePersonaIndex });
-}
-
-// Load persona data
-chrome.storage.sync.get(
-  [
-    "rpPersonas",
-    "rpActivePersonaIndex",
-    "rpPersonaEnabled",
-    "rpPersonaName",
-    "rpPersonaPrepend",
-  ],
-  (data) => {
-    if (Array.isArray(data.rpPersonas) && data.rpPersonas.length > 0) {
-      // New multi-persona storage
-      rpPersonasData = data.rpPersonas.slice(0, 10).map((p) => ({
-        label: p.label || "",
-        name: p.name || "",
-        description: p.description || p.prepend || "",
-        personality: p.personality || "",
-      }));
-      while (rpPersonasData.length < 10)
-        rpPersonasData.push({
-          label: "",
-          name: "",
-          description: "",
-          personality: "",
-        });
-      rpActivePersonaIndex =
-        typeof data.rpActivePersonaIndex === "number"
-          ? data.rpActivePersonaIndex
-          : -1;
-    } else if (data.rpPersonaName || data.rpPersonaPrepend) {
-      // Migrate old single-persona storage → slot 0
-      rpPersonasData[0] = {
-        label: data.rpPersonaName || "Persona 1",
-        name: data.rpPersonaName || "",
-        description: data.rpPersonaPrepend || "",
-        personality: "",
-      };
-      rpActivePersonaIndex = data.rpPersonaEnabled === true ? 0 : -1;
-    }
-    buildPersonaSlots();
-    updatePersonaPills();
-    updatePersonaStatus();
-  },
-);
-
-// Pill click → activate / deactivate
-rpPersonaPillsEl.addEventListener("click", (e) => {
-  const btn = e.target.closest(".persona-pill");
-  if (!btn) return;
-  const idx = parseInt(btn.dataset.idx, 10);
-  rpActivePersonaIndex = rpActivePersonaIndex === idx ? -1 : idx;
-  saveRpActiveIndex();
-  buildPersonaSlots();
-  updatePersonaPills();
-  updatePersonaStatus();
-});
-
-// Save all personas
-saveRpPersonasBtn.addEventListener("click", () => {
-  chrome.storage.sync.set(
-    { rpPersonas: rpPersonasData, rpActivePersonaIndex },
-    () => {
-      showFeedback(rpPersonaSaveFeedback, "✓ Saved!", true);
-    },
-  );
-});
 
 // Export config for mobile
 document
   .getElementById("export-mobile-config-btn")
   .addEventListener("click", () => {
     const fb = document.getElementById("export-mobile-config-fb");
-    chrome.storage.sync.get(
-      [
-        "rpPersonas",
-        "rpActivePersonaIndex",
-        "rpRewrites",
-        "rpActiveRewriteIndex",
-      ],
-      (data) => {
-        const personas = (Array.isArray(data.rpPersonas) ? data.rpPersonas : [])
-          .slice(0, 10)
-          .map((p) => ({
-            label: p.label || "",
-            name: p.name || "",
-            description: p.description || p.prepend || "",
-            personality: p.personality || "",
-          }));
-        while (personas.length < 10)
-          personas.push({
-            label: "",
-            name: "",
-            description: "",
-            personality: "",
-          });
+    chrome.storage.sync.get(["rpRewrites", "rpActiveRewriteIndex"], (data) => {
+      const rewrites = (Array.isArray(data.rpRewrites) ? data.rpRewrites : [])
+        .slice(0, 10)
+        .map((r) => ({ name: r.name || "", prompt: r.prompt || "" }));
+      while (rewrites.length < 10) rewrites.push({ name: "", prompt: "" });
 
-        const rewrites = (Array.isArray(data.rpRewrites) ? data.rpRewrites : [])
-          .slice(0, 5)
-          .map((r) => ({ name: r.name || "", prompt: r.prompt || "" }));
-        while (rewrites.length < 5) rewrites.push({ name: "", prompt: "" });
+      const config = {
+        version: 1,
+        type: "config",
+        rewrites,
+        activeRewriteIdx:
+          typeof data.rpActiveRewriteIndex === "number"
+            ? data.rpActiveRewriteIndex
+            : -1,
+      };
 
-        const config = {
-          version: 1,
-          type: "config",
-          personas,
-          activePersonaIdx:
-            typeof data.rpActivePersonaIndex === "number"
-              ? data.rpActivePersonaIndex
-              : -1,
-          rewrites,
-          activeRewriteIdx:
-            typeof data.rpActiveRewriteIndex === "number"
-              ? data.rpActiveRewriteIndex
-              : -1,
-        };
-
-        navigator.clipboard
-          .writeText(JSON.stringify(config, null, 2))
-          .then(() => showFeedback(fb, "✓ Copied to clipboard!", true))
-          .catch(() => showFeedback(fb, "✗ Copy failed", false));
-      },
-    );
+      navigator.clipboard
+        .writeText(JSON.stringify(config, null, 2))
+        .then(() => showFeedback(fb, "✓ Copied to clipboard!", true))
+        .catch(() => showFeedback(fb, "✗ Copy failed", false));
+    });
   });
-
-// Export personas
-document.getElementById("export-personas-btn").addEventListener("click", () => {
-  const fb = document.getElementById("export-personas-fb");
-  const payload = {
-    version: 1,
-    type: "personas",
-    personas: rpPersonasData.map((p) => ({
-      label: p.label || "",
-      name: p.name || "",
-      description: p.description || "",
-      personality: p.personality || "",
-    })),
-    activePersonaIdx: rpActivePersonaIndex,
-  };
-  navigator.clipboard
-    .writeText(JSON.stringify(payload, null, 2))
-    .then(() => showFeedback(fb, "\u2713 Copied!", true))
-    .catch(() => showFeedback(fb, "\u2717 Copy failed", false));
-});
-
-// Import personas
-document.getElementById("import-personas-btn").addEventListener("click", () => {
-  const fb = document.getElementById("import-personas-fb");
-  const area = document.getElementById("import-personas-area");
-  const raw = area.value.trim();
-  if (!raw) {
-    showFeedback(fb, "\u2717 Nothing to import", false);
-    return;
-  }
-  let data;
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    showFeedback(fb, "\u2717 Invalid JSON", false);
-    return;
-  }
-  if (
-    !data ||
-    data.version !== 1 ||
-    data.type !== "personas" ||
-    !Array.isArray(data.personas)
-  ) {
-    showFeedback(fb, "\u2717 Unrecognised format", false);
-    return;
-  }
-  const incoming = data.personas.slice(0, 10).map((p) => ({
-    label: (p && p.label) || "",
-    name: (p && p.name) || "",
-    description: (p && (p.description || p.prepend)) || "",
-    personality: (p && p.personality) || "",
-  }));
-  while (incoming.length < 10)
-    incoming.push({ label: "", name: "", description: "", personality: "" });
-  rpPersonasData = incoming;
-  rpActivePersonaIndex =
-    typeof data.activePersonaIdx === "number" ? data.activePersonaIdx : -1;
-  chrome.storage.sync.set(
-    { rpPersonas: rpPersonasData, rpActivePersonaIndex },
-    () => {
-      buildPersonaSlots();
-      updatePersonaPills();
-      updatePersonaStatus();
-      area.value = "";
-      showFeedback(fb, "\u2713 Imported!", true);
-    },
-  );
-});
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
