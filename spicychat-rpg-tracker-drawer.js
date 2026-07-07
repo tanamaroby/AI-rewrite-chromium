@@ -1594,6 +1594,7 @@
       "scMdTables",
       "scBracketEmphasis",
       "scBracketPipeNewline",
+      "scBracketStyle",
       "scActionStyle",
       "scDialogueStyle",
       "scBoldStyle",
@@ -1618,6 +1619,18 @@
         description:
           "Highlights [scene bracket] content — location, outfit, time, status — with a distinct visual treatment that reads as a system annotation.",
         note: "Toggling off instantly collapses existing brackets back to plain text via CSS.",
+      },
+      {
+        key: "scBracketStyle",
+        type: "variant",
+        name: "Bracket Visual Style",
+        description: "Pick the look for scene bracket annotations.",
+        subOf: "scBracketEmphasis",
+        options: [
+          { value: "scene", label: "Scene" },
+          { value: "card", label: "Card" },
+        ],
+        defaultValue: "scene",
       },
       {
         key: "scBracketPipeNewline",
@@ -1698,56 +1711,76 @@
       card.className = "rp-card";
       card.style.padding = "4px 14px";
 
-      STYLE_FEATURES.forEach(({ key, name, description, note, subOf }) => {
-        const on = d[key] !== false;
-        const parentOn = subOf ? d[subOf] !== false : true;
+      STYLE_FEATURES.forEach(
+        ({ key, type, name, description, note, subOf, options, defaultValue }) => {
+          const parentOn = subOf ? d[subOf] !== false : true;
 
-        const row = document.createElement("div");
-        row.className = "style-feature-row";
-        if (subOf) {
-          row.style.cssText =
-            "margin-left:14px;padding-left:10px;border-left:2px solid rgba(var(--sc-accent-violet-rgb), 0.22);" +
-            (parentOn ? "" : "opacity:0.45;pointer-events:none;");
-        }
+          const row = document.createElement("div");
+          row.className = "style-feature-row";
+          if (subOf) {
+            row.style.cssText =
+              "margin-left:14px;padding-left:10px;border-left:2px solid rgba(var(--sc-accent-violet-rgb), 0.22);" +
+              (parentOn ? "" : "opacity:0.45;pointer-events:none;");
+          }
 
-        const top = document.createElement("div");
-        top.className = "style-feature-top";
+          const top = document.createElement("div");
+          top.className = "style-feature-top";
 
-        const nameEl = document.createElement("span");
-        nameEl.className = "style-feature-name";
-        nameEl.textContent = name;
+          const nameEl = document.createElement("span");
+          nameEl.className = "style-feature-name";
+          nameEl.textContent = name;
 
-        const toggle = document.createElement("label");
-        toggle.className = "rp-toggle";
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.checked = on;
-        checkbox.disabled = subOf ? !parentOn : false;
-        checkbox.setAttribute("data-ai-rewriter-ignore", "1");
-        checkbox.addEventListener("change", () => {
-          chrome.storage.sync.set({ [key]: checkbox.checked });
-        });
-        const track = document.createElement("span");
-        track.className = "rp-toggle-track";
-        toggle.append(checkbox, track);
+          if (type === "variant") {
+            const picker = document.createElement("div");
+            picker.style.cssText = "display:flex;gap:6px;";
+            const current = d[key] || defaultValue;
+            options.forEach(({ value, label }) => {
+              const btn = document.createElement("button");
+              btn.type = "button";
+              btn.className = "rp-micro-btn" + (value === current ? " active" : "");
+              btn.textContent = label;
+              btn.disabled = !parentOn;
+              btn.setAttribute("data-ai-rewriter-ignore", "1");
+              btn.addEventListener("click", () => {
+                chrome.storage.sync.set({ [key]: value });
+              });
+              picker.appendChild(btn);
+            });
+            top.append(nameEl, picker);
+          } else {
+            const on = d[key] !== false;
+            const toggle = document.createElement("label");
+            toggle.className = "rp-toggle";
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.checked = on;
+            checkbox.disabled = subOf ? !parentOn : false;
+            checkbox.setAttribute("data-ai-rewriter-ignore", "1");
+            checkbox.addEventListener("change", () => {
+              chrome.storage.sync.set({ [key]: checkbox.checked });
+            });
+            const track = document.createElement("span");
+            track.className = "rp-toggle-track";
+            toggle.append(checkbox, track);
+            top.append(nameEl, toggle);
+          }
 
-        top.append(nameEl, toggle);
+          const desc = document.createElement("span");
+          desc.className = "style-feature-desc";
+          desc.textContent = description;
 
-        const desc = document.createElement("span");
-        desc.className = "style-feature-desc";
-        desc.textContent = description;
+          row.append(top, desc);
 
-        row.append(top, desc);
+          if (note) {
+            const noteEl = document.createElement("span");
+            noteEl.className = "style-feature-note";
+            noteEl.textContent = note;
+            row.appendChild(noteEl);
+          }
 
-        if (note) {
-          const noteEl = document.createElement("span");
-          noteEl.className = "style-feature-note";
-          noteEl.textContent = note;
-          row.appendChild(noteEl);
-        }
-
-        card.appendChild(row);
-      });
+          card.appendChild(row);
+        },
+      );
 
       stylePanel.appendChild(card);
     }

@@ -39,6 +39,7 @@
   let scMdTables = true;
   let scBracketEmphasis = true;
   let scBracketPipeNewline = true;
+  let scBracketStyle = "scene"; // "scene" | "card"
   let scActionStyle = true;
   let scDialogueStyle = true;
   let scBoldStyle = true;
@@ -82,6 +83,7 @@
     "scMdTables",
     "scBracketEmphasis",
     "scBracketPipeNewline",
+    "scBracketStyle",
     "scActionStyle",
     "scDialogueStyle",
     "scBoldStyle",
@@ -147,6 +149,7 @@
       scMdTables = data.scMdTables !== false;
       scBracketEmphasis = data.scBracketEmphasis !== false;
       scBracketPipeNewline = data.scBracketPipeNewline !== false;
+      scBracketStyle = data.scBracketStyle === "card" ? "card" : "scene";
       document.querySelectorAll(".ai-bracket-scene[data-bracket-raw]").forEach((s) => {
         s.textContent = scBracketPipeNewline
           ? s.dataset.bracketRaw.replace(/ \| /g, "\n")
@@ -167,6 +170,10 @@
           "sc-inject-brackets-hidden",
           !scBracketEmphasis,
         );
+        document.documentElement.classList.toggle(
+          "sc-bracket-style-card",
+          scBracketStyle === "card",
+        );
         document.documentElement.classList.toggle("sc-style-actions", scActionStyle);
         document.documentElement.classList.toggle("sc-style-dialogue", scDialogueStyle);
         document.documentElement.classList.toggle("sc-style-bold", scBoldStyle);
@@ -176,6 +183,7 @@
         document.documentElement.classList.toggle("sc-style-separator", scSeparatorStyle);
         if (scMdTables) mountAiMessageMarkdown();
         if (scBracketEmphasis) mountAiMessageBrackets();
+        if (scBlockquoteStyle) mountAiMessageBlockquotes();
       }
     });
   }
@@ -978,44 +986,207 @@
 
   // ─── Bracket emphasis in AI messages ───────────────────────────────────────
 
-  // Walks text nodes inside an element and wraps [bracket] content in a span.
-  // Skips em/q/strong to avoid double-styling SpicyChat's own markdown.
-  function wrapBracketsInNode(node) {
-    if (node.nodeType === Node.TEXT_NODE) {
-      const text = node.textContent;
-      if (!text.includes("[")) return;
-      const re = /\[([^\[\]]+)\]/g;
-      if (!re.test(text)) return;
-      re.lastIndex = 0;
-
-      const frag = document.createDocumentFragment();
-      let last = 0;
-      let m;
-      while ((m = re.exec(text)) !== null) {
-        if (m.index > last)
-          frag.appendChild(document.createTextNode(text.slice(last, m.index)));
-        const span = document.createElement("span");
-        span.className = "ai-bracket-scene";
-        span.dataset.bracketRaw = m[1];
-        span.textContent = scBracketPipeNewline ? m[1].replace(/ \| /g, "\n") : m[1];
-        frag.appendChild(span);
-        last = m.index + m[0].length;
-      }
-      if (last < text.length)
-        frag.appendChild(document.createTextNode(text.slice(last)));
-      node.parentNode.replaceChild(frag, node);
-      return;
+  // Wraps [bracket] content in a span, spanning across any em/q/strong
+  // elements SpicyChat's own markdown inserts mid-bracket (e.g. a quoted
+  // word inside a scene annotation). A bracket said entirely *within* one
+  // of those elements — i.e. actual in-character dialogue/emphasis that
+  // happens to contain literal brackets — is left untouched.
+  function enclosingInlineMarkup(node, root) {
+    let el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+    while (el && el !== root) {
+      if (el.tagName === "EM" || el.tagName === "Q" || el.tagName === "STRONG")
+        return el;
+      el = el.parentElement;
     }
-    if (node.nodeType === Node.ELEMENT_NODE) {
-      const tag = node.tagName;
-      if (
-        tag === "EM" ||
-        tag === "Q" ||
-        tag === "STRONG" ||
-        node.classList.contains("ai-bracket-scene")
-      )
-        return;
-      Array.from(node.childNodes).forEach(wrapBracketsInNode);
+    return null;
+  }
+
+  // Flattens a cloned DOM fragment to plain text for bracketRaw/textContent.
+  // A single <br> is a soft break (e.g. one raw newline in the AI's text) —
+  // those read as visually "broken" lines for no reason, so it's joined back
+  // onto one line with a separator. A run of 2+ <br> is a real paragraph
+  // break (a blank line) and is kept as one. <q> quote marks, stripped by
+  // SpicyChat and normally re-drawn via CSS, are restored as literal text.
+  function flattenBracketFragment(node) {
+    let out = "";
+    const children = Array.from(node.childNodes);
+    let i = 0;
+    while (i < children.length) {
+      const child = children[i];
+      if (child.nodeType === Node.TEXT_NODE) {
+        out += child.textContent;
+        i++;
+        continue;
+      }
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        if (child.tagName === "BR") {
+          let j = i;
+          while (j < children.length && children[j].nodeType === Node.ELEMENT_NODE && children[j].tagName === "BR")
+            j++;
+          out += j - i === 1 ? " · " : "\n\n";
+          i = j;
+          continue;
+        }
+        if (child.tagName === "Q") {
+          out += '"' + flattenBracketFragment(child) + '"';
+          i++;
+          continue;
+        }
+        out += flattenBracketFragment(child);
+      }
+      i++;
+    }
+    return out;
+  }
+
+  function wrapBracketsInNode(root) {
+    if (root.nodeType !== Node.ELEMENT_NODE) return;
+    if (root.classList.contains("ai-bracket-scene")) return;
+    if (!root.textContent.includes("[")) return;
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const textNodes = [];
+    let n;
+    while ((n = walker.nextNode())) textNodes.push(n);
+    if (!textNodes.length) return;
+
+    let fullText = "";
+    const segments = [];
+    for (const tn of textNodes) {
+      const t = tn.textContent;
+      segments.push({ node: tn, start: fullText.length, end: fullText.length + t.length });
+      fullText += t;
+    }
+    if (!fullText.includes("[")) return;
+
+    const re = /\[([^\[\]]+)\]/g;
+    const matches = [];
+    let m;
+    while ((m = re.exec(fullText)) !== null) matches.push(m);
+    if (!matches.length) return;
+
+    // When an offset falls exactly on the shared boundary between two text
+    // nodes (e.g. two matches separated only by a zero-width <br>), which
+    // node "owns" that point is ambiguous. preferLater picks the start of
+    // the later node instead of the end of the earlier one — needed for a
+    // match's *start* boundary, so its Range doesn't reach backward and
+    // swallow whatever (like a <br> pair) sits between it and the previous
+    // match. The end boundary keeps the default (earlier-segment) behavior
+    // so it doesn't reach forward and swallow what follows.
+    function locate(offset, preferLater) {
+      for (let idx = 0; idx < segments.length; idx++) {
+        const seg = segments[idx];
+        const isLast = idx === segments.length - 1;
+        if (preferLater) {
+          if (offset >= seg.start && (offset < seg.end || isLast))
+            return { node: seg.node, offset: offset - seg.start };
+        } else if (offset >= seg.start && offset <= seg.end) {
+          return { node: seg.node, offset: offset - seg.start };
+        }
+      }
+      const last = segments[segments.length - 1];
+      return { node: last.node, offset: last.node.textContent.length };
+    }
+
+    function buildRawText(startLoc, endLoc) {
+      const r = document.createRange();
+      r.setStart(startLoc.node, startLoc.offset);
+      r.setEnd(endLoc.node, endLoc.offset);
+      return flattenBracketFragment(r.cloneContents());
+    }
+
+    // Process in reverse so earlier match offsets stay valid as the DOM mutates.
+    for (let i = matches.length - 1; i >= 0; i--) {
+      const match = matches[i];
+      const startLoc = locate(match.index, true);
+      const endLoc = locate(match.index + match[0].length);
+
+      const startMarkup = enclosingInlineMarkup(startLoc.node, root);
+      const endMarkup = enclosingInlineMarkup(endLoc.node, root);
+      if (startMarkup && startMarkup === endMarkup) continue;
+
+      const range = document.createRange();
+      try {
+        range.setStart(startLoc.node, startLoc.offset);
+        range.setEnd(endLoc.node, endLoc.offset);
+      } catch {
+        continue;
+      }
+
+      const innerStartLoc = locate(match.index + 1, true);
+      const innerEndLoc = locate(match.index + match[0].length - 1);
+      const rawText = buildRawText(innerStartLoc, innerEndLoc);
+
+      const span = document.createElement("span");
+      span.className = "ai-bracket-scene";
+      span.dataset.bracketRaw = rawText;
+      span.textContent = scBracketPipeNewline ? rawText.replace(/ \| /g, "\n") : rawText;
+
+      range.deleteContents();
+      range.insertNode(span);
+    }
+
+    groupAdjacentBracketScenes(root);
+  }
+
+  function isBracketScene(node) {
+    return node.nodeType === Node.ELEMENT_NODE && node.classList.contains("ai-bracket-scene");
+  }
+
+  function isBr(node) {
+    return node.nodeType === Node.ELEMENT_NODE && node.tagName === "BR";
+  }
+
+  // A whitespace-only text node or a single <br> between two bracket spans
+  // means they were only a single newline apart in the source — treat them
+  // as one thought and merge into a single combined card. A run of 2+ <br>
+  // (a blank line) is a deliberate paragraph break and blocks the merge,
+  // same as real text in between.
+  function isGapNode(node) {
+    if (node.nodeType === Node.TEXT_NODE) return !node.textContent.trim();
+    return isBr(node);
+  }
+
+  // Wraps runs of 2+ adjacent [bracket] spans (only whitespace/a single <br>
+  // between them) in one .ai-bracket-group container, so they render as a
+  // single combined card with each original bracket as an internal row
+  // instead of stacking as separate cards.
+  function groupAdjacentBracketScenes(root) {
+    const children = Array.from(root.childNodes);
+    let i = 0;
+    while (i < children.length) {
+      if (!isBracketScene(children[i])) {
+        i++;
+        continue;
+      }
+      let lastSceneIdx = i;
+      let j = i + 1;
+      while (j < children.length) {
+        let k = j;
+        let brCount = 0;
+        while (k < children.length && isGapNode(children[k]) && brCount < 2) {
+          if (isBr(children[k])) brCount++;
+          k++;
+        }
+        if (brCount >= 2) break; // blank line — a real paragraph break, stop the run
+        if (k < children.length && isBracketScene(children[k])) {
+          lastSceneIdx = k;
+          j = k + 1;
+          continue;
+        }
+        break; // gap wasn't followed by another bracket span — stop
+      }
+      if (lastSceneIdx > i) {
+        const run = children.slice(i, lastSceneIdx + 1);
+        const group = document.createElement("div");
+        group.className = "ai-bracket-group";
+        run[0].parentNode.insertBefore(group, run[0]);
+        for (const node of run) {
+          if (isBracketScene(node)) group.appendChild(node);
+          else node.parentNode?.removeChild(node);
+        }
+      }
+      i = lastSceneIdx + 1;
     }
   }
 
@@ -1039,6 +1210,108 @@
     if (!scBracketEmphasis) return;
     (roots ?? document.querySelectorAll('div[id^="message-"]'))
       .forEach(processAiMessageBrackets);
+  }
+
+  // ─── Blockquote soft-break combining ───────────────────────────────────────
+
+  // A single <br> inside a > blockquote is just one raw newline the AI
+  // typed — not an intentional paragraph split — so it reads as an
+  // arbitrarily "broken" line. Join it back onto one line with a separator.
+  // A run of 2+ <br> (a blank line) is a deliberate paragraph break and is
+  // left alone. Mutates in place, recursing into any wrapper elements
+  // (e.g. <p>), to preserve nested formatting like <strong>/<em>.
+  function combineSoftBreaksInElement(el) {
+    const children = Array.from(el.childNodes);
+    let i = 0;
+    while (i < children.length) {
+      const node = children[i];
+      if (node.nodeType === Node.ELEMENT_NODE && node.tagName === "BR") {
+        let j = i;
+        while (
+          j < children.length &&
+          children[j].nodeType === Node.ELEMENT_NODE &&
+          children[j].tagName === "BR"
+        )
+          j++;
+        if (j - i === 1) el.replaceChild(document.createTextNode(" · "), node);
+        i = j;
+        continue;
+      }
+      if (node.nodeType === Node.ELEMENT_NODE) combineSoftBreaksInElement(node);
+      i++;
+    }
+  }
+
+  // Merges runs of 2+ sibling <blockquote> elements — separated only by
+  // whitespace, i.e. only a single newline apart in the source — into one
+  // .sc-blockquote-group container, so they render as a single combined
+  // card instead of stacking as separate ones. A real gap (anything else
+  // between them) leaves them as distinct blockquotes.
+  function groupAdjacentBlockquotes(root) {
+    const blockquotes = Array.from(root.querySelectorAll("blockquote")).filter(
+      (bq) => !bq.closest(".sc-blockquote-group"),
+    );
+    const parents = new Set(blockquotes.map((bq) => bq.parentNode).filter(Boolean));
+
+    parents.forEach((parent) => {
+      const children = Array.from(parent.childNodes);
+      let i = 0;
+      while (i < children.length) {
+        const isBq = (n) => n.nodeType === Node.ELEMENT_NODE && n.tagName === "BLOCKQUOTE";
+        if (!isBq(children[i])) {
+          i++;
+          continue;
+        }
+        let lastIdx = i;
+        let j = i + 1;
+        while (j < children.length) {
+          const node = children[j];
+          if (isBq(node)) {
+            lastIdx = j;
+            j++;
+          } else if (node.nodeType === Node.TEXT_NODE && !node.textContent.trim()) {
+            j++;
+          } else {
+            break;
+          }
+        }
+        if (lastIdx > i) {
+          const run = children.slice(i, lastIdx + 1);
+          const group = document.createElement("div");
+          group.className = "sc-blockquote-group";
+          run[0].parentNode.insertBefore(group, run[0]);
+          for (const node of run) {
+            if (isBq(node)) group.appendChild(node);
+            else node.parentNode?.removeChild(node);
+          }
+        }
+        i = lastIdx + 1;
+      }
+    });
+  }
+
+  function processAiMessageBlockquotes(messageRoot) {
+    if (!messageRoot) return;
+
+    messageRoot
+      .querySelectorAll("blockquote:not([data-sc-bq-combined])")
+      .forEach((bq) => {
+        bq.dataset.scBqCombined = "1";
+        if (!bq.isConnected) return;
+        try {
+          combineSoftBreaksInElement(bq);
+        } catch {
+          // Blockquote may be detached mid-stream
+        }
+      });
+
+    groupAdjacentBlockquotes(messageRoot);
+  }
+
+  function mountAiMessageBlockquotes(roots) {
+    if (!scBlockquoteStyle) return;
+    (roots ?? document.querySelectorAll('div[id^="message-"]'))
+      .forEach(processAiMessageBlockquotes);
   }
 
   if (isSpicyChat) {
@@ -1102,6 +1375,7 @@
 
         mountAiMessageMarkdown(roots);
         mountAiMessageBrackets(roots);
+        mountAiMessageBlockquotes(roots);
 
         if (atBottom && scroller) scroller.scrollTop = scroller.scrollHeight;
       });
@@ -1109,6 +1383,7 @@
 
     mountAiMessageMarkdown();
     mountAiMessageBrackets();
+    mountAiMessageBlockquotes();
     const obs = new MutationObserver(scheduleMount);
     obs.observe(document.body, { childList: true, subtree: true });
   }

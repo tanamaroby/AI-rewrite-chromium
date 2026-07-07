@@ -165,6 +165,10 @@
   --sc-blockquote-bg-rgb: 20, 10, 45;
   --sc-violet-glow-rgb: 109, 40, 217; /* inset glow under bracket/blockquote */
 
+  /* ---- Bracket emphasis: "Card" style variant (modern dark card) ---- */
+  --sc-card-bg-rgb: 24, 24, 28; /* charcoal, card gradient top stop */
+  --sc-card-bg-2-rgb: 15, 15, 18; /* near-black, card gradient bottom stop */
+
   --sc-lavender-soft: #ddd6fe; /* blockquote & scene-fill-btn text, table header text */
   --sc-lavender-bright: #ede9fe; /* bold-emphasis text */
   --sc-lavender-white: #f5f3ff; /* scene-fill-btn hover text */

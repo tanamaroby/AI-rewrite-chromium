@@ -289,6 +289,220 @@ span.leading-6[data-ai-md-table] {
   );
 }
 
+/* Bracket style variant: Card — modern dark card with corner-bracket accents
+   (viewfinder-style tick marks in each corner) instead of a full border.
+   Alternative look for [scene bracket] annotations, picked in the Style
+   panel; overrides the default look above when html.sc-bracket-style-card. */
+html.sc-bracket-style-card .ai-bracket-scene {
+  position: relative;
+  padding: 14px 18px;
+  border-radius: 6px;
+  background: linear-gradient(
+    155deg,
+    rgba(var(--sc-card-bg-rgb), 0.97) 0%,
+    rgba(var(--sc-card-bg-2-rgb), 0.97) 100%
+  );
+  border: 1px solid rgba(var(--sc-accent-rgb), 0.14);
+  color: var(--sc-slate-200);
+  font-family: var(--sc-ui-font);
+  font-weight: 500;
+  font-size: 0.88em;
+  letter-spacing: 0.01em;
+  text-shadow: none;
+  box-shadow:
+    0 1px 2px rgba(var(--sc-black-rgb), 0.18),
+    0 10px 24px rgba(var(--sc-black-rgb), 0.32);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+html.sc-bracket-style-card .ai-bracket-scene:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 4px rgba(var(--sc-black-rgb), 0.22),
+    0 14px 30px rgba(var(--sc-black-rgb), 0.38);
+}
+
+/* Four L-shaped corner ticks, inset from the edges — replaces the border-heavy
+   look of the default Scene style with a lighter, more modern frame accent. */
+html.sc-bracket-style-card .ai-bracket-scene::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  height: auto; /* base .ai-bracket-scene::before sets height: 1px — must reset,
+                   or top+bottom+height being all constrained collapses this box */
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-image:
+    linear-gradient(to right, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to bottom, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to left, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to bottom, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to right, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to top, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to left, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to top, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px);
+  background-size:
+    18px 2.5px, 2.5px 18px,
+    18px 2.5px, 2.5px 18px,
+    18px 2.5px, 2.5px 18px,
+    18px 2.5px, 2.5px 18px;
+  background-position:
+    top left, top left,
+    top right, top right,
+    bottom left, bottom left,
+    bottom right, bottom right;
+}
+
+html.sc-bracket-style-card .ai-bracket-scene::after {
+  content: none;
+}
+
+/* Adjacent [bracket] annotations only a single newline apart in the source
+   (see groupAdjacentBracketScenes in content.js) are wrapped in one
+   .ai-bracket-group container so they read as one combined card, each
+   original bracket becoming an internal row rather than a separate card. */
+.ai-bracket-group {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--sc-bracket-bg-rgb), 0.93) 0%,
+    rgba(var(--sc-bracket-bg-2-rgb), 0.86) 100%
+  );
+  border-left: 2px solid rgba(var(--sc-accent-2-rgb), 0.8);
+  border-right: 1px solid rgba(var(--sc-accent-violet-rgb), 0.08);
+  box-shadow:
+    inset 0 0 28px rgba(var(--sc-violet-glow-rgb), 0.09),
+    0 2px 10px rgba(var(--sc-black-rgb), 0.28);
+}
+
+.ai-bracket-group::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    rgba(var(--sc-accent-2-rgb), 0.7) 0%,
+    rgba(var(--sc-accent-violet-rgb), 0.25) 40%,
+    transparent 75%
+  );
+}
+
+.ai-bracket-group::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    rgba(var(--sc-accent-violet-rgb), 0.45) 0%,
+    rgba(var(--sc-accent-violet-rgb), 0.12) 40%,
+    transparent 70%
+  );
+}
+
+/* Rows inside a group lose their own card chrome — only the group draws it */
+.ai-bracket-group .ai-bracket-scene {
+  width: auto;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: none;
+  padding: 6px 14px;
+}
+
+.ai-bracket-group .ai-bracket-scene:not(:first-child) {
+  border-top: 1px solid rgba(var(--sc-accent-violet-rgb), 0.15);
+}
+
+.ai-bracket-group .ai-bracket-scene::before,
+.ai-bracket-group .ai-bracket-scene::after {
+  content: none;
+}
+
+/* Card style variant: same group treatment, dark charcoal card + corner ticks */
+html.sc-bracket-style-card .ai-bracket-group {
+  border-radius: 6px;
+  background: linear-gradient(
+    155deg,
+    rgba(var(--sc-card-bg-rgb), 0.97) 0%,
+    rgba(var(--sc-card-bg-2-rgb), 0.97) 100%
+  );
+  border: 1px solid rgba(var(--sc-accent-rgb), 0.14);
+  box-shadow:
+    0 1px 2px rgba(var(--sc-black-rgb), 0.18),
+    0 10px 24px rgba(var(--sc-black-rgb), 0.32);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+html.sc-bracket-style-card .ai-bracket-group:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 4px rgba(var(--sc-black-rgb), 0.22),
+    0 14px 30px rgba(var(--sc-black-rgb), 0.38);
+}
+
+html.sc-bracket-style-card .ai-bracket-group::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  height: auto;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-image:
+    linear-gradient(to right, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to bottom, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to left, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to bottom, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to right, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to top, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to left, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to top, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px);
+  background-size:
+    18px 2.5px, 2.5px 18px,
+    18px 2.5px, 2.5px 18px,
+    18px 2.5px, 2.5px 18px,
+    18px 2.5px, 2.5px 18px;
+  background-position:
+    top left, top left,
+    top right, top right,
+    bottom left, bottom left,
+    bottom right, bottom right;
+}
+
+html.sc-bracket-style-card .ai-bracket-group::after {
+  content: none;
+}
+
+html.sc-bracket-style-card .ai-bracket-group .ai-bracket-scene {
+  padding: 8px 18px;
+  transition: none;
+}
+
+html.sc-bracket-style-card .ai-bracket-group .ai-bracket-scene:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+html.sc-bracket-style-card .ai-bracket-group .ai-bracket-scene:not(:first-child) {
+  border-top: 1px solid rgba(var(--sc-accent-rgb), 0.14);
+}
+
+html.sc-bracket-style-card .ai-bracket-group .ai-bracket-scene::before,
+html.sc-bracket-style-card .ai-bracket-group .ai-bracket-scene::after {
+  content: none;
+}
+
 /* ── Chat text style overrides ───────────────────────────────────────────── */
 
 /* Action / narration — muted lavender */
@@ -344,6 +558,38 @@ html.sc-style-blockquote div[id^="message-"] blockquote::before {
 
 html.sc-style-blockquote div[id^="message-"] blockquote p {
   margin: 0;
+}
+
+/* Adjacent > quotes only a single newline apart in the source (see
+   groupAdjacentBlockquotes in content.js) are wrapped in one
+   .sc-blockquote-group container so they read as one combined card, each
+   original blockquote becoming an internal row rather than a separate card. */
+html.sc-style-blockquote div[id^="message-"] .sc-blockquote-group {
+  position: relative;
+  margin: 8px 0;
+  background: rgba(var(--sc-blockquote-bg-rgb), 0.72);
+  border-left: 2px solid rgba(var(--sc-accent-2-rgb), 0.75);
+  border-top: 1px solid rgba(var(--sc-accent-violet-rgb), 0.18);
+  border-bottom: 1px solid rgba(var(--sc-accent-violet-rgb), 0.18);
+  border-right: 1px solid rgba(var(--sc-accent-violet-rgb), 0.08);
+  border-radius: 0 5px 5px 0;
+  box-shadow:
+    inset 0 0 28px rgba(var(--sc-violet-glow-rgb), 0.08),
+    0 2px 10px rgba(var(--sc-black-rgb), 0.28);
+  display: flex;
+  flex-direction: column;
+}
+
+html.sc-style-blockquote div[id^="message-"] .sc-blockquote-group blockquote {
+  margin: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+html.sc-style-blockquote div[id^="message-"] .sc-blockquote-group blockquote:not(:first-child) {
+  border-top: 1px solid rgba(var(--sc-accent-violet-rgb), 0.15);
 }
 
 /* Bullet points — custom glowing diamond marker */
@@ -455,5 +701,19 @@ html.sc-inject-brackets-hidden .ai-bracket-scene {
 
 html.sc-inject-brackets-hidden .ai-bracket-scene::before,
 html.sc-inject-brackets-hidden .ai-bracket-scene::after {
+  content: none !important;
+}
+
+/* Un-box the group wrapper too, so its rows collapse the same way individual
+   brackets do rather than leaving an empty styled container behind. */
+html.sc-inject-brackets-hidden .ai-bracket-group {
+  display: contents !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+html.sc-inject-brackets-hidden .ai-bracket-group::before,
+html.sc-inject-brackets-hidden .ai-bracket-group::after {
   content: none !important;
 }
