@@ -50,6 +50,7 @@
   let stylerBoldEnabled = true;
   let stylerItalicEnabled = true;
   let stylerStrikethroughEnabled = true;
+  let stylerEmphasizeEnabled = true;
   const isSpicyChat = location.hostname.includes("spicychat.ai");
   const REWRITE_SHORTCUT_KEY = "n";
   const SYNC_SETTINGS_KEYS = [
@@ -94,6 +95,7 @@
     "stylerBoldEnabled",
     "stylerItalicEnabled",
     "stylerStrikethroughEnabled",
+    "stylerEmphasizeEnabled",
   ];
   const SYNC_SETTINGS_KEY_SET = new Set(SYNC_SETTINGS_KEYS);
   let settingsReloadTimer = null;
@@ -165,6 +167,7 @@
       stylerBoldEnabled = data.stylerBoldEnabled !== false;
       stylerItalicEnabled = data.stylerItalicEnabled !== false;
       stylerStrikethroughEnabled = data.stylerStrikethroughEnabled !== false;
+      stylerEmphasizeEnabled = data.stylerEmphasizeEnabled !== false;
       if (isSpicyChat) {
         document.documentElement.classList.toggle(
           "sc-inject-brackets-hidden",
@@ -756,6 +759,173 @@
     toggleMark(el, STRIKETHROUGH_MARK);
   }
 
+  // ─── Emphasize paragraph (strip asterisks + terminal punctuation, no selection needed) ──
+
+  // Strips markdown emphasis markers, collapses internal line breaks into
+  // spaces, and trims only the terminal punctuation run at the very start/end
+  // (leaving mid-sentence punctuation like commas and apostrophes intact) —
+  // the manual cleanup the user does right before bolding a whole line/paragraph.
+  function cleanEmphasizeText(text) {
+    let out = text.replace(/\*/g, "");
+    out = out.replace(/\n+/g, " ");
+    out = out.replace(/[ \t]+/g, " ").trim();
+    out = out.replace(/^[.,!?]+\s*/, "");
+    out = out.replace(/\s*[.,!?]+$/, "");
+    return out.trim();
+  }
+
+  function emphasizeParagraphTextInput(el) {
+    const { value } = el;
+    const cursor = el.selectionStart;
+    const breakRe = /\n{2,}/g;
+    let start = 0;
+    let end = value.length;
+    let m;
+    while ((m = breakRe.exec(value)) !== null) {
+      const bStart = m.index;
+      const bEnd = m.index + m[0].length;
+      if (bEnd <= cursor) {
+        start = bEnd;
+      } else if (bStart >= cursor) {
+        end = bStart;
+        break;
+      } else {
+        start = bEnd;
+        end = bEnd;
+        break;
+      }
+    }
+    const cleaned = cleanEmphasizeText(value.slice(start, end));
+    el.value = value.slice(0, start) + cleaned + value.slice(end);
+    el.selectionStart = start;
+    el.selectionEnd = start + cleaned.length;
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  // Maps a contenteditable's text nodes to offsets in a flattened plain-text
+  // coordinate space, and records the offsets where a run of 2+ <br> (a real
+  // blank-line paragraph break, matching the convention used elsewhere in
+  // this file) sits. A single <br> is just a soft line wrap and isn't a break.
+  function buildParagraphTextMap(root) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ALL, {
+      acceptNode(n) {
+        if (n.nodeType === Node.TEXT_NODE) return NodeFilter.FILTER_ACCEPT;
+        if (n.nodeType === Node.ELEMENT_NODE && n.tagName === "BR")
+          return NodeFilter.FILTER_ACCEPT;
+        return NodeFilter.FILTER_SKIP;
+      },
+    });
+    const segments = [];
+    const breaks = [];
+    let offset = 0;
+    let brRun = 0;
+    let node;
+    while ((node = walker.nextNode())) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (brRun >= 2) breaks.push(offset);
+        brRun = 0;
+        const len = node.textContent.length;
+        segments.push({ node, start: offset, end: offset + len });
+        offset += len;
+      } else {
+        brRun++;
+      }
+    }
+    if (brRun >= 2) breaks.push(offset);
+    return { segments, breaks, length: offset };
+  }
+
+  // Locates a flat-text offset back to a DOM node+offset. Boundary offsets
+  // that sit exactly between two segments (e.g. either side of a <br> run)
+  // are ambiguous; preferLater picks the start of the later segment instead
+  // of the end of the earlier one, so a paragraph's start doesn't reach
+  // backward into the previous paragraph's break.
+  function locateParagraphOffset(segments, offset, preferLater) {
+    for (let idx = 0; idx < segments.length; idx++) {
+      const seg = segments[idx];
+      const isLast = idx === segments.length - 1;
+      if (preferLater) {
+        if (offset >= seg.start && (offset < seg.end || isLast))
+          return { node: seg.node, offset: offset - seg.start };
+      } else if (offset >= seg.start && offset <= seg.end) {
+        return { node: seg.node, offset: offset - seg.start };
+      }
+    }
+    if (!segments.length) return null;
+    const last = segments[segments.length - 1];
+    return { node: last.node, offset: last.node.textContent.length };
+  }
+
+  // Flattens a cloned paragraph fragment to plain text, turning each <br>
+  // (necessarily a soft break within the paragraph, since the range was cut
+  // at the real 2+ break points) into a space rather than dropping it.
+  function flattenParagraphFragment(node) {
+    let out = "";
+    for (const child of Array.from(node.childNodes)) {
+      if (child.nodeType === Node.TEXT_NODE) {
+        out += child.textContent;
+      } else if (child.nodeType === Node.ELEMENT_NODE) {
+        out += child.tagName === "BR" ? " " : flattenParagraphFragment(child);
+      }
+    }
+    return out;
+  }
+
+  function emphasizeParagraphContentEditable(el) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const caretRange = sel.getRangeAt(0);
+    if (!el.contains(caretRange.startContainer)) return;
+
+    const { segments, breaks, length } = buildParagraphTextMap(el);
+    if (!segments.length) return;
+
+    const preRange = document.createRange();
+    preRange.selectNodeContents(el);
+    preRange.setEnd(caretRange.startContainer, caretRange.startOffset);
+    const caretOffset = preRange.toString().length;
+
+    let start = 0;
+    let end = length;
+    for (const b of breaks) {
+      if (b <= caretOffset) start = b;
+      else {
+        end = b;
+        break;
+      }
+    }
+
+    const startLoc = locateParagraphOffset(segments, start, true);
+    const endLoc = locateParagraphOffset(segments, end, false);
+    if (!startLoc || !endLoc) return;
+
+    const range = document.createRange();
+    range.setStart(startLoc.node, startLoc.offset);
+    range.setEnd(endLoc.node, endLoc.offset);
+
+    const cleaned = cleanEmphasizeText(
+      flattenParagraphFragment(range.cloneContents()),
+    );
+
+    range.deleteContents();
+    const textNode = document.createTextNode(cleaned);
+    range.insertNode(textNode);
+
+    const newSel = window.getSelection();
+    newSel.removeAllRanges();
+    const selRange = document.createRange();
+    selRange.selectNodeContents(textNode);
+    newSel.addRange(selRange);
+
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  function emphasizeParagraph(el) {
+    if (el.isContentEditable) emphasizeParagraphContentEditable(el);
+    else emphasizeParagraphTextInput(el);
+  }
+
   // ─── Keyboard shortcuts (format + rewrite) ────────────────────────────────────
 
   document.addEventListener(
@@ -775,6 +945,11 @@
       if (stylerStrikethroughEnabled && matchShortcut(e, "x", true)) {
         e.preventDefault();
         toggleStrikethrough(document.activeElement);
+        return;
+      }
+      if (stylerEmphasizeEnabled && matchShortcut(e, "e", true)) {
+        e.preventDefault();
+        emphasizeParagraph(document.activeElement);
         return;
       }
       const action = getShortcutAction(e);

@@ -505,20 +505,38 @@ html.sc-bracket-style-card .ai-bracket-group .ai-bracket-scene::after {
 
 /* ── Chat text style overrides ───────────────────────────────────────────── */
 
-/* Action / narration — muted lavender */
+/* Action / narration — muted lavender, upright (no italic), distinctive
+   humanist sans so it reads as its own voice next to dialogue and body text */
 html.sc-style-actions div[id^="message-"] em {
   color: var(--sc-accent-3) !important;
+  font-style: normal !important;
+  font-family: Optima, Candara, "Noto Sans", "Segoe UI", sans-serif;
+  letter-spacing: 0.015em;
 }
 
-/* Dialogue — modern geometric font, slightly larger, with a soft purple glow */
+/* Dialogue — warm, easy-reading serif with oversized glowing curly quotes for
+   a distinct "spoken aloud" look instead of plain straight marks */
 html.sc-style-dialogue div[id^="message-"] q {
-  font-family: Avenir, "Avenir Next", "Helvetica Neue", Helvetica, sans-serif;
-  letter-spacing: 0.015em;
-  font-size: 1.04em;
+  quotes: "\201C" "\201D" "\2018" "\2019";
+  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  letter-spacing: 0.01em;
+  font-size: 1.05em;
   line-height: inherit;
   text-shadow:
     0 0 12px rgba(var(--sc-accent-2-rgb), 0.22),
     0 0 28px rgba(var(--sc-accent-violet-rgb), 0.1);
+}
+
+html.sc-style-dialogue div[id^="message-"] q::before,
+html.sc-style-dialogue div[id^="message-"] q::after {
+  color: var(--sc-accent-2);
+  font-family: Georgia, serif;
+  font-size: 1.25em;
+  font-weight: 700;
+  vertical-align: -0.06em;
+  text-shadow:
+    0 0 8px rgba(var(--sc-accent-2-rgb), 0.55),
+    0 0 18px rgba(var(--sc-accent-violet-rgb), 0.3);
 }
 
 /* Blockquote — incoming transmission / system log feed */

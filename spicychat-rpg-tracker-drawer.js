@@ -1802,6 +1802,7 @@
       "stylerBoldEnabled",
       "stylerItalicEnabled",
       "stylerStrikethroughEnabled",
+      "stylerEmphasizeEnabled",
     ];
 
     const STYLER_FEATURES = [
@@ -1825,6 +1826,13 @@
         shortcut: "Ctrl+Shift+X",
         description:
           "Wraps the selected text in ~~double tildes~~ so it renders struck through. Press again on struck-through text to remove it. With no selection, drops markers at the cursor.",
+      },
+      {
+        key: "stylerEmphasizeEnabled",
+        name: "Emphasize Paragraph",
+        shortcut: "Ctrl+Shift+E",
+        description:
+          "No selection needed — cleans up whichever paragraph the cursor is in: strips every asterisk, trims leading/trailing terminal punctuation (. , ! ?), and joins any wrapped lines back into one. Selects the cleaned paragraph afterward so a follow-up Ctrl+B bolds it right away.",
       },
     ];
 
