@@ -1,4 +1,4 @@
-# GitHub Copilot Instructions
+# Claude Code Instructions
 
 ## Project overview
 
@@ -246,7 +246,7 @@ Open `mobile/toolbar-preview.html` in any browser to interactively test the tool
 - SpicyChat drawer uses `#0f0e1a` background with `rgba(108, 99, 255, 0.28)` border
 - Mobile toolbar: deep dark `rgba(8,5,20,0.97)` base, teal (`#34d399`) for Format, violet (`#a78bfa`) for AI commands, glow `box-shadow` on active states
 
-## Copilot behaviour rules
+## Claude behaviour rules
 
 - **After any edit to `mobile/ai-rewriter-mobile.user.js`**, always ask: _"Do you want to deploy to iPhone? (`./deploy-mobile.sh [patch|minor|major]`)"_ before ending the response.
 - For RPG tracker changes, route edits to the most relevant module first:
