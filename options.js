@@ -403,6 +403,7 @@ const FMT_TOGGLES = [
   "fmtNormaliseNewlines",
   "fmtCapitaliseSentences",
   "fmtPreserveLists",
+  "fmtPreserveBlockquotes",
   "fmtUnwrapBrackets",
   "fmtRepairAsterisks",
   "fmtActionPunctuation",

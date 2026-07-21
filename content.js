@@ -18,6 +18,7 @@
   let fmtNormaliseNewlines = true;
   let fmtCapitaliseSentences = true;
   let fmtPreserveLists = true;
+  let fmtPreserveBlockquotes = true;
   let fmtUnwrapBrackets = true;
   let fmtExtraDelimiters = "";
   let fmtRepairAsterisks = true;
@@ -68,6 +69,7 @@
     "fmtNormaliseNewlines",
     "fmtCapitaliseSentences",
     "fmtPreserveLists",
+    "fmtPreserveBlockquotes",
     "fmtUnwrapBrackets",
     "fmtExtraDelimiters",
     "fmtRepairAsterisks",
@@ -125,6 +127,7 @@
       fmtNormaliseNewlines = data.fmtNormaliseNewlines !== false;
       fmtCapitaliseSentences = data.fmtCapitaliseSentences !== false;
       fmtPreserveLists = data.fmtPreserveLists !== false;
+      fmtPreserveBlockquotes = data.fmtPreserveBlockquotes !== false;
       fmtUnwrapBrackets = data.fmtUnwrapBrackets !== false;
       fmtExtraDelimiters = data.fmtExtraDelimiters || "";
       fmtRepairAsterisks = data.fmtRepairAsterisks !== false;
@@ -388,6 +391,7 @@
       fmtNormaliseNewlines,
       fmtCapitaliseSentences,
       fmtPreserveLists,
+      fmtPreserveBlockquotes,
       fmtUnwrapBrackets,
       fmtExtraDelimiters,
       fmtRepairAsterisks,

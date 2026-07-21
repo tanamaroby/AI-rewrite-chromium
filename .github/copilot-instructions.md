@@ -77,6 +77,8 @@ Pure formatter logic lives in `content-utils.js` (`formatText(text, opts)`) and 
 - `fmtNormaliseNewlines` — collapse multiple blank lines to one
 - `fmtCapitaliseSentences` — first letter of paragraphs and after `.!?`
 - `fmtUnwrapBrackets` — wraps non-quoted, non-bracket text in `*…*`
+- `fmtPreserveLists` — leaves `- item` / `1. item` lines unwrapped and un-spaced
+- `fmtPreserveBlockquotes` — leaves `> quoted` lines unwrapped and un-spaced
 - `fmtExtraDelimiters` — user-defined character pairs (string of even length) treated like brackets
 
 `autoFormatAfterRewrite` — if true, runs the formatter automatically after every AI Rewrite.

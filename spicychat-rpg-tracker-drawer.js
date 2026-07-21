@@ -1290,6 +1290,7 @@
       "fmtNormaliseNewlines",
       "fmtCapitaliseSentences",
       "fmtPreserveLists",
+      "fmtPreserveBlockquotes",
       "fmtUnwrapBrackets",
       "fmtExtraDelimiters",
       "fmtRepairAsterisks",
@@ -1399,6 +1400,13 @@
             b: "- item one",
             a: "- item one",
             hint: "Bullet and numbered list lines are left unwrapped and paragraph-spacing won't insert blank lines between them",
+          },
+          {
+            key: "fmtPreserveBlockquotes",
+            name: "Preserve blockquotes (> lines)",
+            b: "> she said quietly",
+            a: "> she said quietly",
+            hint: "Lines starting with > are left unwrapped and paragraph-spacing won't insert blank lines between them",
           },
           {
             key: "fmtUnwrapBrackets",

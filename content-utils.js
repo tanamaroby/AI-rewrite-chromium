@@ -9,11 +9,18 @@
     return /^-\s/.test(t) || /^\d+\.\s/.test(t);
   }
 
+  function isBlockquoteLine(line) {
+    const t = line.trimStart();
+    return /^>/.test(t);
+  }
+
   function wrapOutsideText(str, opts) {
     return str.replace(/[^\n]+/g, (chunk) => {
       const trimmed = chunk.trim();
       if (!trimmed) return chunk;
       if (opts && opts.fmtPreserveLists && isListLine(trimmed)) return chunk;
+      if (opts && opts.fmtPreserveBlockquotes && isBlockquoteLine(trimmed))
+        return chunk;
       const leadWS = chunk.slice(0, chunk.length - chunk.trimStart().length);
       const trailWS = chunk.slice(chunk.trimEnd().length);
       return leadWS + "*" + trimmed + "*" + trailWS;
@@ -96,7 +103,7 @@
     }
 
     if (options.fmtNormaliseNewlines) {
-      if (options.fmtPreserveLists) {
+      if (options.fmtPreserveLists || options.fmtPreserveBlockquotes) {
         const rawLines = text.split("\n");
         const outLines = [];
         for (let i = 0; i < rawLines.length; i++) {
@@ -106,7 +113,13 @@
           const curBlank = cur.trim() === "";
           const prevBlank = prev.trim() === "";
           if (curBlank && prevBlank) continue;
-          if (!curBlank && !prevBlank && isListLine(cur) && isListLine(prev)) {
+          const sameList =
+            options.fmtPreserveLists && isListLine(cur) && isListLine(prev);
+          const sameQuote =
+            options.fmtPreserveBlockquotes &&
+            isBlockquoteLine(cur) &&
+            isBlockquoteLine(prev);
+          if (!curBlank && !prevBlank && (sameList || sameQuote)) {
             outLines.push(cur);
           } else if (!curBlank && !prevBlank) {
             outLines.push("");
