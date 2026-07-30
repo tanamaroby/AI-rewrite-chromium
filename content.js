@@ -189,7 +189,6 @@
         document.documentElement.classList.toggle("sc-style-separator", scSeparatorStyle);
         if (scMdTables) mountAiMessageMarkdown();
         if (scBracketEmphasis) mountAiMessageBrackets();
-        if (scBlockquoteStyle) mountAiMessageBlockquotes();
       }
     });
   }
@@ -1296,77 +1295,54 @@
       const innerEndLoc = locate(match.index + match[0].length - 1);
       const rawText = buildRawText(innerStartLoc, innerEndLoc);
 
+      const isInline =
+        hasInlineTextBefore(startLoc.node, startLoc.offset, root) ||
+        hasInlineTextAfter(endLoc.node, endLoc.offset, root);
+
       const span = document.createElement("span");
-      span.className = "ai-bracket-scene";
+      span.className = isInline ? "ai-bracket-scene ai-bracket-scene--inline" : "ai-bracket-scene";
       span.dataset.bracketRaw = rawText;
       span.textContent = scBracketPipeNewline ? rawText.replace(/ \| /g, "\n") : rawText;
 
       range.deleteContents();
       range.insertNode(span);
     }
-
-    groupAdjacentBracketScenes(root);
   }
 
-  function isBracketScene(node) {
-    return node.nodeType === Node.ELEMENT_NODE && node.classList.contains("ai-bracket-scene");
-  }
-
-  function isBr(node) {
-    return node.nodeType === Node.ELEMENT_NODE && node.tagName === "BR";
-  }
-
-  // A whitespace-only text node or a single <br> between two bracket spans
-  // means they were only a single newline apart in the source — treat them
-  // as one thought and merge into a single combined card. A run of 2+ <br>
-  // (a blank line) is a deliberate paragraph break and blocks the merge,
-  // same as real text in between.
-  function isGapNode(node) {
-    if (node.nodeType === Node.TEXT_NODE) return !node.textContent.trim();
-    return isBr(node);
-  }
-
-  // Wraps runs of 2+ adjacent [bracket] spans (only whitespace/a single <br>
-  // between them) in one .ai-bracket-group container, so they render as a
-  // single combined card with each original bracket as an internal row
-  // instead of stacking as separate cards.
-  function groupAdjacentBracketScenes(root) {
-    const children = Array.from(root.childNodes);
-    let i = 0;
-    while (i < children.length) {
-      if (!isBracketScene(children[i])) {
-        i++;
-        continue;
+  // True if there's real (non-whitespace) content sharing the same source
+  // line before `offset` in `node`, walking back through preceding siblings
+  // up to `root` and stopping at the first <br> (a real line break). Used to
+  // tell a [bracket] that shares its line with other text (rendered as an
+  // inline chip, see .ai-bracket-scene--inline) from one alone on its own
+  // line (rendered as the full-width block card).
+  function hasInlineTextBefore(node, offset, root) {
+    if (node.nodeType === Node.TEXT_NODE && node.textContent.slice(0, offset).trim()) return true;
+    let cur = node;
+    while (cur && cur !== root) {
+      let sib = cur.previousSibling;
+      while (sib) {
+        if (sib.nodeType === Node.ELEMENT_NODE && sib.tagName === "BR") return false;
+        if (sib.textContent && sib.textContent.trim()) return true;
+        sib = sib.previousSibling;
       }
-      let lastSceneIdx = i;
-      let j = i + 1;
-      while (j < children.length) {
-        let k = j;
-        let brCount = 0;
-        while (k < children.length && isGapNode(children[k]) && brCount < 2) {
-          if (isBr(children[k])) brCount++;
-          k++;
-        }
-        if (brCount >= 2) break; // blank line — a real paragraph break, stop the run
-        if (k < children.length && isBracketScene(children[k])) {
-          lastSceneIdx = k;
-          j = k + 1;
-          continue;
-        }
-        break; // gap wasn't followed by another bracket span — stop
-      }
-      if (lastSceneIdx > i) {
-        const run = children.slice(i, lastSceneIdx + 1);
-        const group = document.createElement("div");
-        group.className = "ai-bracket-group";
-        run[0].parentNode.insertBefore(group, run[0]);
-        for (const node of run) {
-          if (isBracketScene(node)) group.appendChild(node);
-          else node.parentNode?.removeChild(node);
-        }
-      }
-      i = lastSceneIdx + 1;
+      cur = cur.parentNode;
     }
+    return false;
+  }
+
+  function hasInlineTextAfter(node, offset, root) {
+    if (node.nodeType === Node.TEXT_NODE && node.textContent.slice(offset).trim()) return true;
+    let cur = node;
+    while (cur && cur !== root) {
+      let sib = cur.nextSibling;
+      while (sib) {
+        if (sib.nodeType === Node.ELEMENT_NODE && sib.tagName === "BR") return false;
+        if (sib.textContent && sib.textContent.trim()) return true;
+        sib = sib.nextSibling;
+      }
+      cur = cur.parentNode;
+    }
+    return false;
   }
 
   function processAiMessageBrackets(messageRoot) {
@@ -1389,108 +1365,6 @@
     if (!scBracketEmphasis) return;
     (roots ?? document.querySelectorAll('div[id^="message-"]'))
       .forEach(processAiMessageBrackets);
-  }
-
-  // ─── Blockquote soft-break combining ───────────────────────────────────────
-
-  // A single <br> inside a > blockquote is just one raw newline the AI
-  // typed — not an intentional paragraph split — so it reads as an
-  // arbitrarily "broken" line. Join it back onto one line with a separator.
-  // A run of 2+ <br> (a blank line) is a deliberate paragraph break and is
-  // left alone. Mutates in place, recursing into any wrapper elements
-  // (e.g. <p>), to preserve nested formatting like <strong>/<em>.
-  function combineSoftBreaksInElement(el) {
-    const children = Array.from(el.childNodes);
-    let i = 0;
-    while (i < children.length) {
-      const node = children[i];
-      if (node.nodeType === Node.ELEMENT_NODE && node.tagName === "BR") {
-        let j = i;
-        while (
-          j < children.length &&
-          children[j].nodeType === Node.ELEMENT_NODE &&
-          children[j].tagName === "BR"
-        )
-          j++;
-        if (j - i === 1) el.replaceChild(document.createTextNode(" · "), node);
-        i = j;
-        continue;
-      }
-      if (node.nodeType === Node.ELEMENT_NODE) combineSoftBreaksInElement(node);
-      i++;
-    }
-  }
-
-  // Merges runs of 2+ sibling <blockquote> elements — separated only by
-  // whitespace, i.e. only a single newline apart in the source — into one
-  // .sc-blockquote-group container, so they render as a single combined
-  // card instead of stacking as separate ones. A real gap (anything else
-  // between them) leaves them as distinct blockquotes.
-  function groupAdjacentBlockquotes(root) {
-    const blockquotes = Array.from(root.querySelectorAll("blockquote")).filter(
-      (bq) => !bq.closest(".sc-blockquote-group"),
-    );
-    const parents = new Set(blockquotes.map((bq) => bq.parentNode).filter(Boolean));
-
-    parents.forEach((parent) => {
-      const children = Array.from(parent.childNodes);
-      let i = 0;
-      while (i < children.length) {
-        const isBq = (n) => n.nodeType === Node.ELEMENT_NODE && n.tagName === "BLOCKQUOTE";
-        if (!isBq(children[i])) {
-          i++;
-          continue;
-        }
-        let lastIdx = i;
-        let j = i + 1;
-        while (j < children.length) {
-          const node = children[j];
-          if (isBq(node)) {
-            lastIdx = j;
-            j++;
-          } else if (node.nodeType === Node.TEXT_NODE && !node.textContent.trim()) {
-            j++;
-          } else {
-            break;
-          }
-        }
-        if (lastIdx > i) {
-          const run = children.slice(i, lastIdx + 1);
-          const group = document.createElement("div");
-          group.className = "sc-blockquote-group";
-          run[0].parentNode.insertBefore(group, run[0]);
-          for (const node of run) {
-            if (isBq(node)) group.appendChild(node);
-            else node.parentNode?.removeChild(node);
-          }
-        }
-        i = lastIdx + 1;
-      }
-    });
-  }
-
-  function processAiMessageBlockquotes(messageRoot) {
-    if (!messageRoot) return;
-
-    messageRoot
-      .querySelectorAll("blockquote:not([data-sc-bq-combined])")
-      .forEach((bq) => {
-        bq.dataset.scBqCombined = "1";
-        if (!bq.isConnected) return;
-        try {
-          combineSoftBreaksInElement(bq);
-        } catch {
-          // Blockquote may be detached mid-stream
-        }
-      });
-
-    groupAdjacentBlockquotes(messageRoot);
-  }
-
-  function mountAiMessageBlockquotes(roots) {
-    if (!scBlockquoteStyle) return;
-    (roots ?? document.querySelectorAll('div[id^="message-"]'))
-      .forEach(processAiMessageBlockquotes);
   }
 
   if (isSpicyChat) {
@@ -1554,7 +1428,6 @@
 
         mountAiMessageMarkdown(roots);
         mountAiMessageBrackets(roots);
-        mountAiMessageBlockquotes(roots);
 
         if (atBottom && scroller) scroller.scrollTop = scroller.scrollHeight;
       });
@@ -1562,7 +1435,6 @@
 
     mountAiMessageMarkdown();
     mountAiMessageBrackets();
-    mountAiMessageBlockquotes();
     const obs = new MutationObserver(scheduleMount);
     obs.observe(document.body, { childList: true, subtree: true });
   }
