@@ -538,6 +538,13 @@
       cursor: pointer; transition: background 0.12s, border-color 0.12s;
     }
     .af-submit:hover { background: rgba(var(--sc-accent-rgb), 0.25); border-color: rgba(var(--sc-accent-rgb), 0.6); }
+    .af-gen-btn {
+      flex-shrink: 0; padding: 5px 9px; border-radius: 5px;
+      background: rgba(var(--sc-gold-rgb), 0.14); border: 1px solid rgba(var(--sc-gold-rgb), 0.4);
+      color: var(--sc-gold-mid); font-size: 12px; font-family: inherit;
+      cursor: pointer; transition: background 0.12s, border-color 0.12s;
+    }
+    .af-gen-btn:hover { background: rgba(var(--sc-gold-rgb), 0.24); border-color: rgba(var(--sc-gold-rgb), 0.6); }
 
     /* ── Item display / edit toggle ── */
     .item-disp-name {

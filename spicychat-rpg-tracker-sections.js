@@ -1212,12 +1212,23 @@
         dispSel.appendChild(opt);
       });
       dispSel.value = "neutral";
+      const genBtn = document.createElement("button");
+      genBtn.className = "af-gen-btn";
+      genBtn.title = "Generate a random name";
+      genBtn.textContent = "🎲";
+      genBtn.addEventListener("click", () => {
+        const gen = window.SCRPGTrackerGenerators;
+        if (!gen) return;
+        nameIn.value = gen.randomNpcName();
+        if (!noteIn.value.trim()) noteIn.value = gen.randomNpcTrait();
+        nameIn.focus();
+      });
       const submitBtn = document.createElement("button");
       submitBtn.className = "af-submit";
       submitBtn.textContent = "+ Add NPC";
       const row1 = document.createElement("div");
       row1.className = "af-row";
-      row1.append(nameIn, dispSel, submitBtn);
+      row1.append(nameIn, dispSel, genBtn, submitBtn);
       form.append(row1, noteIn);
       npcListEl.parentNode.insertBefore(form, npcListEl);
       const doAdd = () => {

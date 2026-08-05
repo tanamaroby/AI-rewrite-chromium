@@ -18,6 +18,7 @@
       "matches": ["https://spicychat.ai/*"],
       "js": [
         "spicychat-rpg-tracker-layout.js",
+        "spicychat-rpg-tracker-generators.js",
         "spicychat-rpg-tracker-sections.js",
         "spicychat-rpg-tracker-activity-exports.js",
         "spicychat-rpg-tracker-rp-tools.js",

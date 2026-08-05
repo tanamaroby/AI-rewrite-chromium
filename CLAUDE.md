@@ -16,6 +16,7 @@ content.css                Styles for loading overlay, formatter overlay, toast 
 popup.html/css/js          Toolbar popup — API key status, model pill, Rewrites list, quick toggles
 options.html/css/js        Settings page — sidebar nav: API Key, Model, SpicyChat RPG Tracker, Formatter
 spicychat-rpg-tracker-layout.js Drawer CSS + HTML template payloads (styles/markup only)
+spicychat-rpg-tracker-generators.js Word banks + random NPC name/trait and quest hook/twist generators (pure functions, no DOM)
 spicychat-rpg-tracker-sections.js Resources/Abilities/Party/NPCs/Rumours section factories
 spicychat-rpg-tracker-activity-exports.js Activity log strip + Insert/Export wiring
 spicychat-rpg-tracker-rp-tools.js RP Tools tab logic (Persona, Rewrites, Scene Context, snippets, input stats, rewrite log)
@@ -40,7 +41,7 @@ deploy-mobile.sh           Bumps @version in the userscript and copies it to iCl
 - **Messaging**: content → background via `chrome.runtime.sendMessage({ type: "REWRITE_TEXT", ... })`
 - **Storage**:
   - `chrome.storage.sync`: `apiKey`, `model`, all formatter settings (`fmt*`), `formatterEnabled`, `autoFormatAfterRewrite`, `fmtShortcut`, `fmtNoTrackerShortcut`, `rpRewrites[]` (5 × `{name,prompt}`), `rpActiveRewriteIndex`, `rpPersonas[]` (10 × `{label,name,description,personality}`), `rpActivePersonaIndex`, `spicychatNotesEnabled`
-  - `chrome.storage.local`: RPG tracker data keyed as `sc_quests_v1_<chatId>`, `sc_res_v1_<chatId>`, `sc_abl_v1_<chatId>`, `sc_party_v1_<chatId>`, `sc_npc_v1_<chatId>`, `sc_rumour_v1_<chatId>`, `sc_dice_mod_v1_<chatId>`; `sc_rpctx_v1_<chatId>` (Scene Context: `{context,location,clothes,status,dialogueStyle}`); `sc_last_rewrite` (last rewrite for undo); `sc_note_width_v1` (drawer width)
+  - `chrome.storage.local`: RPG tracker data keyed as `sc_quests_v1_<chatId>`, `sc_res_v1_<chatId>`, `sc_abl_v1_<chatId>`, `sc_party_v1_<chatId>`, `sc_npc_v1_<chatId>`, `sc_rumour_v1_<chatId>`; `sc_rpctx_v1_<chatId>` (Scene Context: `{context,location,clothes,status,dialogueStyle}`); `sc_last_rewrite` (last rewrite for undo); `sc_note_width_v1` (drawer width)
 - **Retry logic**: `MAX_RETRIES = 3`, `RETRY_DELAY_MS = 2000`, exponential backoff, honors `Retry-After` header
 - **Runtime diagnostics** (`background.js`): in-memory counters/events for requests, retries, timeouts, rate limits, etc., exposed via runtime messages: `GET_RUNTIME_DIAGNOSTICS` and `RESET_RUNTIME_DIAGNOSTICS`
 - **Default model**: `openrouter/free` — auto-routes to any available free model
@@ -107,10 +108,11 @@ Two content scripts run on `spicychat.ai`:
 #### Drawer module map
 
 - `spicychat-rpg-tracker-layout.js`: visual shell only (styles + markup templates)
+- `spicychat-rpg-tracker-generators.js`: random-content word banks (`window.SCRPGTrackerGenerators.randomNpcName/randomNpcTrait/randomQuestHook`) — no DOM, no storage, safe to extend with more generators
 - `spicychat-rpg-tracker-sections.js`: tracker section logic for Resources/Abilities/Party/NPCs/Rumours
 - `spicychat-rpg-tracker-activity-exports.js`: activity log behavior and Insert/Export formatting
 - `spicychat-rpg-tracker-rp-tools.js`: RP tools behavior (persona, rewrites, scene context, snippets, rewrite telemetry)
-- `spicychat-rpg-tracker-drawer.js`: orchestrator only (boot, wiring, quest+dice logic, resize, tab state)
+- `spicychat-rpg-tracker-drawer.js`: orchestrator only (boot, wiring, quest logic, resize, tab state)
 
 #### Change-routing rule (important)
 
@@ -128,12 +130,11 @@ Two content scripts run on `spicychat.ai`:
 | Party     | `sc_party_v1_<id>`    | name, status (default Healthy; supports freeform values)     |
 | NPCs      | `sc_npc_v1_<id>`      | name, note, disposition (friendly/neutral/hostile)           |
 | Rumours   | `sc_rumour_v1_<id>`   | text, done (bool)                                            |
-| Dice Mod  | `sc_dice_mod_v1_<id>` | persistent modifier value + note label                       |
 
 #### Activity log strip
 
 - Fixed strip below the drawer header, max 10 entries, expands when entries exist
-- Every event (add, remove, change, roll, resource adjust) auto-inserts into the last focused chat input via `sc-rp-inject` CustomEvent with `{ silent: true }` — no toast, no clipboard
+- Every event (add, remove, change, resource adjust) auto-inserts into the last focused chat input via `sc-rp-inject` CustomEvent with `{ silent: true }` — no toast, no clipboard
 - Each log entry has a `⎘` button to manually re-insert that line
 
 #### Insert buttons (⎘)
@@ -141,7 +142,6 @@ Two content scripts run on `spicychat.ai`:
 - Every section has an "⎘ Insert" button that injects the section export into the chat input
 - "⎘ Insert All" at the top injects all sections at once
 - All exports are **single-line** `[Section: item | item | …]` format — safe from the asterisk formatter
-- Dice roller has "⎘ Insert Last" for the most recent roll
 
 #### Smart add-logging
 
@@ -254,4 +254,4 @@ Open `mobile/toolbar-preview.html` in any browser to interactively test the tool
   - Resources/Abilities/Party/NPCs/Rumours: `spicychat-rpg-tracker-sections.js`
   - Activity log and Insert/Export actions: `spicychat-rpg-tracker-activity-exports.js`
   - RP tools tab (Persona/Rewrites/Scene Context/Snippets/Last Log): `spicychat-rpg-tracker-rp-tools.js`
-  - Core orchestration/quest+dice/resize/lifecycle: `spicychat-rpg-tracker-drawer.js`
+  - Core orchestration/quest/resize/lifecycle: `spicychat-rpg-tracker-drawer.js`
