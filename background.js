@@ -74,7 +74,13 @@ chrome.runtime.onInstalled.addListener(async () => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "REWRITE_TEXT") {
     runtimeDiagnostics.requests += 1;
-    handleRewrite(message.text, message.prompt, message.apiKey, message.model)
+    handleRewrite(
+      message.text,
+      message.prompt,
+      message.apiKey,
+      message.model,
+      message.maxTokens,
+    )
       .then((result) => {
         runtimeDiagnostics.successes += 1;
         runtimeDiagnostics.lastSuccessAt = new Date().toISOString();
@@ -170,7 +176,7 @@ async function fetchWithTimeout(url, options, timeoutMs) {
   }
 }
 
-async function handleRewrite(text, prompt, apiKey, model) {
+async function handleRewrite(text, prompt, apiKey, model, maxTokens) {
   if (!apiKey) {
     throw new Error(
       "No API key set. Please configure your OpenRouter API key in the extension options.",
@@ -178,6 +184,8 @@ async function handleRewrite(text, prompt, apiKey, model) {
   }
 
   const resolvedModel = model || "openrouter/free";
+  const resolvedMaxTokens =
+    typeof maxTokens === "number" && maxTokens > 0 ? maxTokens : 2048;
   let lastError;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
@@ -200,7 +208,7 @@ async function handleRewrite(text, prompt, apiKey, model) {
               { role: "user", content: text },
             ],
             temperature: 0.7,
-            max_tokens: 2048,
+            max_tokens: resolvedMaxTokens,
           }),
         },
         REQUEST_TIMEOUT_MS,

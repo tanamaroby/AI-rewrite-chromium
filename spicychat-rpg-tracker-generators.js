@@ -1,123 +1,131 @@
 (function () {
   "use strict";
 
-  function pick(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
-  }
-
-  const NPC_FIRST_NAMES = [
-    "Aelric", "Branwen", "Corvin", "Dessa", "Elara", "Finnick", "Ghislaine",
-    "Halvard", "Iselin", "Joren", "Kessia", "Leofric", "Maren", "Nyssa",
-    "Orin", "Perrin", "Quintara", "Rosalind", "Soren", "Talia", "Ulric",
-    "Vesna", "Wrenna", "Yorick", "Zephra", "Cassian", "Dorotea", "Eamon",
-    "Fenna", "Garrick",
-  ];
-
-  const NPC_SURNAMES = [
-    "Ashgate", "Blackmoor", "Duskwhisper", "Emberfall", "Foxglove",
-    "Graywick", "Hollowmere", "Ironvale", "Larkspur", "Moonhollow",
-    "Nightshade", "Oakhart", "Ravensworth", "Silverbrook", "Thornfield",
-    "Underhill", "Vaelstrom", "Whitlock", "Wynmoor", "Cinderfell",
-  ];
-
-  const NPC_EPITHETS = [
-    "the Wary", "the Quiet", "the Bold", "the Cunning", "the Unlucky",
-    "the Wanderer", "the Merchant", "the Exile", "the Gambler",
-    "the Faithful", "the Scarred", "the Hollow", "the Nameless",
-  ];
-
-  const NPC_TRAITS = [
-    "Sells rare goods and never haggles down",
-    "Distrusts outsiders but warms up quickly to kindness",
-    "Owes a debt they won't talk about",
-    "Knows everyone's business in town",
-    "Carries an old weapon they claim was a gift",
-    "Speaks in riddles when nervous",
-    "Recently lost someone close and hides the grief",
-    "Collects strange trinkets from travelers",
-    "Has a secret they'd do almost anything to protect",
-    "Fiercely loyal once trust is earned",
-    "Superstitious about bad omens",
-    "Quick with a joke to defuse tension",
-    "Watches newcomers a little too closely",
-    "Used to be someone important, before",
-    "Offers help, but always expects something in return",
-  ];
-
-  const QUEST_OBJECTS = [
-    "a sealed letter", "an heirloom blade", "a stolen ledger",
-    "a missing shipment", "an ancient relic", "a forged signature",
-    "a vial of rare poison", "a locked chest", "a family portrait",
-    "a set of stolen keys",
-  ];
-
-  const QUEST_LOCATIONS = [
-    "the old harbor district", "an abandoned watchtower",
-    "the merchant's quarter", "a smugglers' den beneath the tavern",
-    "the ruins outside town", "a noble's private estate",
-    "the underground archive", "a fog-bound crossroads",
-    "the back rooms of the guildhall", "a caravan camp on the road",
-  ];
-
-  const QUEST_FACTIONS = [
-    "the city guard", "a rival merchant house", "a secretive cult",
-    "the local thieves' guild", "a band of mercenaries",
-    "an exiled noble family", "a traveling caravan of traders",
-    "the temple's inner circle",
-  ];
-
-  const QUEST_ROLES = [
-    "a frightened informant", "an injured courier", "a runaway apprentice",
-    "a reluctant witness", "a disgraced noble", "a wandering scholar",
-  ];
-
-  const QUEST_TEMPLATES = [
-    () =>
-      `Retrieve ${pick(QUEST_OBJECTS)} from ${pick(QUEST_LOCATIONS)} before ${pick(QUEST_FACTIONS)} gets there first.`,
-    () =>
-      `Investigate strange disappearances near ${pick(QUEST_LOCATIONS)}.`,
-    () =>
-      `Escort ${pick(QUEST_ROLES)} safely through ${pick(QUEST_LOCATIONS)}.`,
-    () =>
-      `Uncover who is smuggling ${pick(QUEST_OBJECTS)} through ${pick(QUEST_LOCATIONS)}.`,
-    () =>
-      `Broker a truce between ${pick(QUEST_FACTIONS)} and ${pick(QUEST_FACTIONS)} before it turns to bloodshed.`,
-    () =>
-      `Track down ${pick(QUEST_OBJECTS)} that vanished from ${pick(QUEST_LOCATIONS)}.`,
-    () =>
-      `Root out an informant working for ${pick(QUEST_FACTIONS)} inside ${pick(QUEST_LOCATIONS)}.`,
-  ];
-
-  const QUEST_TWISTS = [
-    "Twist: the one who hired you is the real culprit.",
-    "Twist: the target isn't what it seems.",
-    "Twist: an old ally stands on the other side this time.",
-    "Twist: the trail leads somewhere far more dangerous than expected.",
-    "Twist: someone else is already hunting the same lead.",
-    "Twist: the reward comes with strings no one mentioned.",
-    "Twist: the truth would hurt more than the lie.",
-    "",
-    "",
-  ];
-
-  function randomNpcName() {
-    const name = `${pick(NPC_FIRST_NAMES)} ${pick(NPC_SURNAMES)}`;
-    return Math.random() < 0.25 ? `${name} ${pick(NPC_EPITHETS)}` : name;
-  }
-
-  function randomNpcTrait() {
-    return pick(NPC_TRAITS);
-  }
-
-  function randomQuestHook() {
-    const title = pick(QUEST_TEMPLATES)();
-    const notes = pick(QUEST_TWISTS);
-    return { title, notes };
-  }
-
-  window.SCRPGTrackerGenerators = {
-    randomNpcName,
-    randomNpcTrait,
-    randomQuestHook,
+  const TYPE_LABELS = {
+    character: "Character",
+    item: "Item",
+    equipment: "Equipment",
   };
+
+  const SYSTEM_PROMPTS = {
+    character:
+      'You invent a single character concept for a tabletop-style roleplay tracker. Reply with exactly one line in the form "Name — description". The description is at most 2 sentences, vivid and specific, no markdown, no quotation marks, no preamble or extra commentary. If the user gives a name, use it as given; if they give a short idea instead, build the character around it. If neither is given, invent one freely in the requested style.',
+    item:
+      'You invent a single notable item for a tabletop-style roleplay tracker — a general object, trinket, tool, curiosity, or quest object (not weapons or armor). Reply with exactly one line in the form "Item name — description". The description is at most 2 sentences, vivid and specific, no markdown, no quotation marks, no preamble or extra commentary. Build around any name or idea the user gives; otherwise invent freely in the requested style.',
+    equipment:
+      'You invent a single piece of wearable gear or a weapon for a tabletop-style roleplay tracker. Reply with exactly one line in the form "Equipment name — description". The description is at most 2 sentences covering what it is and one notable trait, no markdown, no quotation marks, no preamble or extra commentary. Build around any name or idea the user gives; otherwise invent freely in the requested style.',
+  };
+
+  const MAX_TOKENS = 150;
+
+  function buildUserMessage(seed, flavor) {
+    const seedTrim = (seed || "").trim();
+    const flavorTrim = (flavor || "").trim();
+    if (!seedTrim && !flavorTrim) return "No specific idea — invent freely.";
+    const parts = [];
+    if (seedTrim) parts.push(`Idea or name: ${seedTrim}`);
+    if (flavorTrim) parts.push(`Style/flavor: ${flavorTrim}`);
+    return parts.join("\n");
+  }
+
+  function cleanResult(raw) {
+    return String(raw || "")
+      .replace(/\s*\n+\s*/g, " ")
+      .trim()
+      .replace(/^["'“]+|["'”]+$/g, "")
+      .trim();
+  }
+
+  function createGeneratorSection(deps) {
+    const flashCopyBtnLabel = deps.flashCopyBtnLabel;
+
+    const typeButtons = Array.from(
+      document.querySelectorAll(".gen-type-btn"),
+    );
+    const seedInput = document.getElementById("sc-np-gen-seed");
+    const flavorInput = document.getElementById("sc-np-gen-flavor");
+    const runBtn = document.getElementById("sc-np-gen-run");
+    const regenBtn = document.getElementById("sc-np-gen-regen");
+    const insertBtn = document.getElementById("sc-np-gen-insert");
+    const statusEl = document.getElementById("sc-np-gen-status");
+    const resultEl = document.getElementById("sc-np-gen-result");
+    const resultTextEl = document.getElementById("sc-np-gen-result-text");
+
+    if (!runBtn || !seedInput || !flavorInput) return {};
+
+    let activeType = "character";
+    let lastResultText = "";
+    let requestInFlight = false;
+
+    typeButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        activeType = btn.dataset.genType;
+        typeButtons.forEach((b) => b.classList.toggle("active", b === btn));
+      });
+    });
+
+    function setStatus(msg, isErr) {
+      statusEl.textContent = msg || "";
+      statusEl.classList.toggle("err", !!isErr);
+    }
+
+    function setLoading(loading) {
+      requestInFlight = loading;
+      runBtn.disabled = loading;
+      if (regenBtn) regenBtn.disabled = loading;
+    }
+
+    function runGenerate() {
+      if (requestInFlight) return;
+      setLoading(true);
+      setStatus("Generating…", false);
+
+      const prompt = SYSTEM_PROMPTS[activeType];
+      const text = buildUserMessage(seedInput.value, flavorInput.value);
+
+      document.addEventListener(
+        "sc-rp-generate-result",
+        (e) => {
+          setLoading(false);
+          const detail = e.detail || {};
+          if (!detail.ok) {
+            setStatus(detail.error || "Generation failed.", true);
+            return;
+          }
+          lastResultText = cleanResult(detail.text);
+          resultTextEl.textContent = lastResultText;
+          resultEl.style.display = "";
+          setStatus("", false);
+        },
+        { once: true },
+      );
+
+      document.dispatchEvent(
+        new CustomEvent("sc-rp-run-generate", {
+          detail: { prompt, text, maxTokens: MAX_TOKENS },
+        }),
+      );
+    }
+
+    runBtn.addEventListener("click", runGenerate);
+    if (regenBtn) regenBtn.addEventListener("click", runGenerate);
+
+    if (insertBtn) {
+      insertBtn.addEventListener("click", () => {
+        if (!lastResultText) return;
+        const label = TYPE_LABELS[activeType] || "Generated";
+        const line = `[${label}: ${lastResultText}]`;
+        document.dispatchEvent(
+          new CustomEvent("sc-rp-inject", {
+            detail: { text: "\n" + line, silent: true },
+          }),
+        );
+        flashCopyBtnLabel(insertBtn);
+      });
+    }
+
+    return {};
+  }
+
+  window.SCRPGTrackerGenerators = { createGeneratorSection };
 })();

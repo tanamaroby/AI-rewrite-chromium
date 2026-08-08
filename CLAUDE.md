@@ -16,7 +16,7 @@ content.css                Styles for loading overlay, formatter overlay, toast 
 popup.html/css/js          Toolbar popup — API key status, model pill, Rewrites list, quick toggles
 options.html/css/js        Settings page — sidebar nav: API Key, Model, SpicyChat RPG Tracker, Formatter
 spicychat-rpg-tracker-layout.js Drawer CSS + HTML template payloads (styles/markup only)
-spicychat-rpg-tracker-generators.js Word banks + random NPC name/trait and quest hook/twist generators (pure functions, no DOM)
+spicychat-rpg-tracker-generators.js AI Generator section (Character/Item/Equipment) — prompt composition + result UI, no storage
 spicychat-rpg-tracker-sections.js Resources/Abilities/Party/NPCs/Rumours section factories
 spicychat-rpg-tracker-activity-exports.js Activity log strip + Insert/Export wiring
 spicychat-rpg-tracker-rp-tools.js RP Tools tab logic (Persona, Rewrites, Scene Context, snippets, input stats, rewrite log)
@@ -43,6 +43,7 @@ deploy-mobile.sh           Bumps @version in the userscript and copies it to iCl
   - `chrome.storage.sync`: `apiKey`, `model`, all formatter settings (`fmt*`), `formatterEnabled`, `autoFormatAfterRewrite`, `fmtShortcut`, `fmtNoTrackerShortcut`, `rpRewrites[]` (5 × `{name,prompt}`), `rpActiveRewriteIndex`, `rpPersonas[]` (10 × `{label,name,description,personality}`), `rpActivePersonaIndex`, `spicychatNotesEnabled`
   - `chrome.storage.local`: RPG tracker data keyed as `sc_quests_v1_<chatId>`, `sc_res_v1_<chatId>`, `sc_abl_v1_<chatId>`, `sc_party_v1_<chatId>`, `sc_npc_v1_<chatId>`, `sc_rumour_v1_<chatId>`; `sc_rpctx_v1_<chatId>` (Scene Context: `{context,location,clothes,status,dialogueStyle}`); `sc_last_rewrite` (last rewrite for undo); `sc_note_width_v1` (drawer width)
 - **Retry logic**: `MAX_RETRIES = 3`, `RETRY_DELAY_MS = 2000`, exponential backoff, honors `Retry-After` header
+- **REWRITE_TEXT** accepts an optional `maxTokens` (defaults to 2048 in `background.js`'s `handleRewrite`); the RPG tracker's AI Generator passes a smaller cap (150) to keep generated character/item/equipment blurbs short
 - **Runtime diagnostics** (`background.js`): in-memory counters/events for requests, retries, timeouts, rate limits, etc., exposed via runtime messages: `GET_RUNTIME_DIAGNOSTICS` and `RESET_RUNTIME_DIAGNOSTICS`
 - **Default model**: `openrouter/free` — auto-routes to any available free model
 - **No build tools** — no npm, no bundler, no TypeScript. Keep it plain JS
@@ -108,7 +109,7 @@ Two content scripts run on `spicychat.ai`:
 #### Drawer module map
 
 - `spicychat-rpg-tracker-layout.js`: visual shell only (styles + markup templates)
-- `spicychat-rpg-tracker-generators.js`: random-content word banks (`window.SCRPGTrackerGenerators.randomNpcName/randomNpcTrait/randomQuestHook`) — no DOM, no storage, safe to extend with more generators
+- `spicychat-rpg-tracker-generators.js`: AI Generator section (`window.SCRPGTrackerGenerators.createGeneratorSection`) — Character/Item/Equipment type pills + optional name/idea and style/flavor inputs, calls the AI via `sc-rp-run-generate`/`sc-rp-generate-result`, no storage
 - `spicychat-rpg-tracker-sections.js`: tracker section logic for Resources/Abilities/Party/NPCs/Rumours
 - `spicychat-rpg-tracker-activity-exports.js`: activity log behavior and Insert/Export formatting
 - `spicychat-rpg-tracker-rp-tools.js`: RP tools behavior (persona, rewrites, scene context, snippets, rewrite telemetry)
@@ -130,6 +131,13 @@ Two content scripts run on `spicychat.ai`:
 | Party     | `sc_party_v1_<id>`    | name, status (default Healthy; supports freeform values)     |
 | NPCs      | `sc_npc_v1_<id>`      | name, note, disposition (friendly/neutral/hostile)           |
 | Rumours   | `sc_rumour_v1_<id>`   | text, done (bool)                                            |
+
+#### AI Generator (Quest Log tab, directly under Thoughts — not persisted)
+
+- Three type pills — Character / Item / Equipment — plus two optional free-text inputs: a name/idea seed and a style/flavor tag (e.g. "elven", "dwarvish", "German-sounding", any free text)
+- "✨ Generate" dispatches `sc-rp-run-generate` with a type-specific system prompt (from `SYSTEM_PROMPTS` in `spicychat-rpg-tracker-generators.js`) instructing the model to reply with one line, `Name — description`, description capped at 2 sentences, no markdown
+- Result renders in a card with "⎘ Insert" (formats as `[Character: …]` / `[Item: …]` / `[Equipment: …]`, single-line bracket format like other sections) and "↻ Regenerate" (re-rolls with the same type/seed/flavor)
+- Ephemeral — no `chrome.storage` key; state resets when the drawer/page reloads
 
 #### Activity log strip
 
@@ -166,6 +174,7 @@ All "Add" actions log **on blur** (after the user fills in the name/text), so th
 - **Rewrite undo**: listens for `sc-rp-undo` → restores pre-rewrite text, dispatches `sc-rp-undo-done`
 - **Snippet inject**: listens for `sc-rp-inject { text, silent? }` → appends text to last focused input; if `silent: true`, suppresses the toast and strips a leading `\n` when the input is empty
 - **One-shot/preset rewrite**: listens for `sc-rp-run-rewrite { index }` → runs that Rewrite preset on the current input, dispatches `sc-rp-rewrite-result` and `sc-rp-rewrite-done`
+- **AI Generator**: listens for `sc-rp-run-generate { prompt, text, maxTokens }` (dispatched by the drawer's Generator section) → calls `REWRITE_TEXT` directly (no focused input required), dispatches `sc-rp-generate-result { ok, text, model, error }`
 - Last rewrite stored in `chrome.storage.local` as `sc_last_rewrite { before, after, label, ts }`
 - `lastFocusedEl` tracks the last focused editable on SpicyChat for inject/rewrite targets
 

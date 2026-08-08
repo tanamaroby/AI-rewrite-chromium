@@ -538,13 +538,30 @@
       cursor: pointer; transition: background 0.12s, border-color 0.12s;
     }
     .af-submit:hover { background: rgba(var(--sc-accent-rgb), 0.25); border-color: rgba(var(--sc-accent-rgb), 0.6); }
-    .af-gen-btn {
-      flex-shrink: 0; padding: 5px 9px; border-radius: 5px;
-      background: rgba(var(--sc-gold-rgb), 0.14); border: 1px solid rgba(var(--sc-gold-rgb), 0.4);
-      color: var(--sc-gold-mid); font-size: 12px; font-family: inherit;
-      cursor: pointer; transition: background 0.12s, border-color 0.12s;
+
+    /* ── AI Generator ── */
+    .gen-card { display: flex; flex-direction: column; gap: 8px; }
+    .gen-type-row { display: flex; gap: 6px; }
+    .gen-type-btn {
+      flex: 1; padding: 6px 4px; border-radius: 6px;
+      border: 1px solid rgba(var(--sc-accent-rgb), 0.18); background: rgba(var(--sc-black-rgb), 0.2);
+      color: var(--sc-slate-400); font-size: 11.5px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: background 0.12s, border-color 0.12s, color 0.12s;
     }
-    .af-gen-btn:hover { background: rgba(var(--sc-gold-rgb), 0.24); border-color: rgba(var(--sc-gold-rgb), 0.6); }
+    .gen-type-btn:hover { border-color: rgba(var(--sc-accent-rgb), 0.4); color: var(--sc-slate-200); }
+    .gen-type-btn.active {
+      background: rgba(var(--sc-accent-rgb), 0.18); border-color: rgba(var(--sc-accent-rgb), 0.55);
+      color: var(--sc-accent-2);
+    }
+    .gen-actions-row { display: flex; align-items: center; gap: 10px; }
+    .gen-status { font-size: 11px; color: var(--sc-slate-600); }
+    .gen-status.err { color: var(--sc-danger-light); }
+    .gen-result {
+      display: flex; flex-direction: column; gap: 8px; padding: 8px 10px; border-radius: 6px;
+      background: rgba(var(--sc-gold-rgb), 0.08); border: 1px solid rgba(var(--sc-gold-rgb), 0.28);
+    }
+    .gen-result-text { font-size: 12px; color: var(--sc-slate-200); line-height: 1.5; }
+    .gen-result-actions { display: flex; gap: 6px; }
 
     /* ── Item display / edit toggle ── */
     .item-disp-name {
@@ -1134,6 +1151,30 @@
           <div class="ql-thought-row">
             <input id="sc-np-thought-input" type="text" class="ql-thought-input" placeholder="Jot a quick thought…" maxlength="240" data-ai-rewriter-ignore="1" />
             <button id="sc-np-thought-insert-btn" class="ql-copy-btn">⎘ Insert</button>
+          </div>
+          <!-- AI Generator -->
+          <div class="ql-section-header" style="margin-top:4px;">
+            <span class="ql-section-label">Generator</span>
+          </div>
+          <div class="rp-card gen-card">
+            <div class="gen-type-row">
+              <button type="button" class="gen-type-btn active" data-gen-type="character">Character</button>
+              <button type="button" class="gen-type-btn" data-gen-type="item">Item</button>
+              <button type="button" class="gen-type-btn" data-gen-type="equipment">Equipment</button>
+            </div>
+            <input id="sc-np-gen-seed" type="text" class="af-input" placeholder="Name or idea (optional)…" maxlength="120" data-ai-rewriter-ignore="1" />
+            <input id="sc-np-gen-flavor" type="text" class="af-input" placeholder="Style / flavor (optional)… e.g. elven, dwarvish, noir, German-sounding" maxlength="80" data-ai-rewriter-ignore="1" />
+            <div class="gen-actions-row">
+              <button id="sc-np-gen-run" class="rp-action-btn">✨ Generate</button>
+              <span id="sc-np-gen-status" class="gen-status"></span>
+            </div>
+            <div id="sc-np-gen-result" class="gen-result" style="display:none;">
+              <div id="sc-np-gen-result-text" class="gen-result-text"></div>
+              <div class="gen-result-actions">
+                <button id="sc-np-gen-insert" class="ql-copy-btn">⎘ Insert</button>
+                <button id="sc-np-gen-regen" class="rp-action-btn">↻ Regenerate</button>
+              </div>
+            </div>
           </div>
           <!-- Quest Log -->
           <div class="ql-section-header" style="margin-top:4px;">

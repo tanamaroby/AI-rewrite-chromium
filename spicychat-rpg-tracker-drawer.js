@@ -1004,25 +1004,12 @@
       notesIn.rows = 1;
       notesIn.placeholder = "Notes (optional)\u2026";
       notesIn.setAttribute("data-ai-rewriter-ignore", "1");
-      const genBtn = document.createElement("button");
-      genBtn.className = "af-gen-btn";
-      genBtn.title = "Generate a random quest hook";
-      genBtn.textContent = "🎲";
-      genBtn.addEventListener("click", () => {
-        const gen = window.SCRPGTrackerGenerators;
-        if (!gen) return;
-        const hook = gen.randomQuestHook();
-        titleIn.value = hook.title;
-        if (!notesIn.value.trim() && hook.notes) notesIn.value = hook.notes;
-        autoResizeTextarea(notesIn);
-        titleIn.focus();
-      });
       const submitBtn = document.createElement("button");
       submitBtn.className = "af-submit";
       submitBtn.textContent = "+ Add Quest";
       const row = document.createElement("div");
       row.className = "af-row";
-      row.append(titleIn, genBtn, submitBtn);
+      row.append(titleIn, submitBtn);
       form.append(row, notesIn);
       questListEl.parentNode.insertBefore(form, questListEl);
       const doAdd = () => {
@@ -1198,6 +1185,13 @@
         stats = Array.isArray(next) ? next : [];
       },
     });
+
+    /* ── AI Generator ── */
+    const generatorFactory = window.SCRPGTrackerGenerators || {};
+    if (typeof generatorFactory.createGeneratorSection !== "function") {
+      throw new Error("RPG tracker generator module failed to load.");
+    }
+    generatorFactory.createGeneratorSection({ flashCopyBtnLabel });
 
     /* ── Open / close ── */
     function setOpen(val) {

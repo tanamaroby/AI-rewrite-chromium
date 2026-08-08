@@ -1047,6 +1047,47 @@
     await runRewrite(idx);
   });
 
+  // ─── AI Generator (triggered by RPG tracker drawer) ─────────────────────────
+
+  document.addEventListener("sc-rp-run-generate", async (e) => {
+    if (!isSpicyChat) return;
+    const { prompt, text, maxTokens } = e.detail || {};
+    try {
+      const result = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(
+          {
+            type: "REWRITE_TEXT",
+            text: text || ".",
+            prompt,
+            apiKey,
+            model,
+            maxTokens,
+          },
+          (response) => {
+            if (chrome.runtime.lastError) {
+              reject(new Error(chrome.runtime.lastError.message));
+            } else if (response.success) {
+              resolve(response);
+            } else {
+              reject(new Error(response.error));
+            }
+          },
+        );
+      });
+      document.dispatchEvent(
+        new CustomEvent("sc-rp-generate-result", {
+          detail: { ok: true, text: result.text, model: result.model },
+        }),
+      );
+    } catch (err) {
+      document.dispatchEvent(
+        new CustomEvent("sc-rp-generate-result", {
+          detail: { ok: false, error: err.message },
+        }),
+      );
+    }
+  });
+
   function isAiMessageBlock(messageRoot) {
     if (!messageRoot) return false;
     const hasVoiceBtn = !!messageRoot.querySelector(
