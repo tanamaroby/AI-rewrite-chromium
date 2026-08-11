@@ -14,12 +14,19 @@
     return /^>/.test(t);
   }
 
+  function isSpeakerTagLine(line) {
+    const t = line.trimStart();
+    return /^\*\*[^*\n]+:\*\*/.test(t);
+  }
+
   function wrapOutsideText(str, opts) {
     return str.replace(/[^\n]+/g, (chunk) => {
       const trimmed = chunk.trim();
       if (!trimmed) return chunk;
       if (opts && opts.fmtPreserveLists && isListLine(trimmed)) return chunk;
       if (opts && opts.fmtPreserveBlockquotes && isBlockquoteLine(trimmed))
+        return chunk;
+      if (opts && opts.fmtPreserveSpeakerTags && isSpeakerTagLine(trimmed))
         return chunk;
       const leadWS = chunk.slice(0, chunk.length - chunk.trimStart().length);
       const trailWS = chunk.slice(chunk.trimEnd().length);
@@ -72,7 +79,16 @@
         .join("\n");
     }
 
-    if (options.fmtStripAsterisks) text = text.replace(/\*/g, "");
+    if (options.fmtStripAsterisks) {
+      text = text
+        .split("\n")
+        .map((line) =>
+          options.fmtPreserveSpeakerTags && isSpeakerTagLine(line)
+            ? line
+            : line.replace(/\*/g, ""),
+        )
+        .join("\n");
+    }
     if (options.fmtNormaliseQuotes) text = text.replace(/[\u201C\u201D]/g, '"');
     if (options.fmtNormaliseApostrophes)
       text = text.replace(/[\u2018\u2019]/g, "'");
@@ -103,7 +119,11 @@
     }
 
     if (options.fmtNormaliseNewlines) {
-      if (options.fmtPreserveLists || options.fmtPreserveBlockquotes) {
+      if (
+        options.fmtPreserveLists ||
+        options.fmtPreserveBlockquotes ||
+        options.fmtPreserveSpeakerTags
+      ) {
         const rawLines = text.split("\n");
         const outLines = [];
         for (let i = 0; i < rawLines.length; i++) {
@@ -119,7 +139,11 @@
             options.fmtPreserveBlockquotes &&
             isBlockquoteLine(cur) &&
             isBlockquoteLine(prev);
-          if (!curBlank && !prevBlank && (sameList || sameQuote)) {
+          const sameSpeakerTag =
+            options.fmtPreserveSpeakerTags &&
+            isSpeakerTagLine(cur) &&
+            isSpeakerTagLine(prev);
+          if (!curBlank && !prevBlank && (sameList || sameQuote || sameSpeakerTag)) {
             outLines.push(cur);
           } else if (!curBlank && !prevBlank) {
             outLines.push("");

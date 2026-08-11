@@ -456,6 +456,13 @@
           </div>
           <div class="toggle-row" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
             <div class="toggle-info">
+              <span class="toggle-label">Preserve speaker tags</span>
+              <span class="toggle-hint">Leave lines starting with a <code>**Name:**</code> tag untouched — asterisks aren't stripped, the line isn't wrapped in extra asterisks, and paragraph-spacing won't insert blank lines between consecutive tagged lines</span>
+            </div>
+            <label class="toggle-switch"><input type="checkbox" id="fmtPreserveSpeakerTags" /><span class="toggle-track"></span></label>
+          </div>
+          <div class="toggle-row" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
+            <div class="toggle-info">
               <span class="toggle-label">Leave <code>[ ]</code> square brackets unwrapped</span>
               <span class="toggle-hint">Text inside [brackets] is kept bare, not wrapped in asterisks</span>
             </div>

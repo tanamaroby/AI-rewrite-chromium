@@ -81,6 +81,7 @@ Pure formatter logic lives in `content-utils.js` (`formatText(text, opts)`) and 
 - `fmtUnwrapBrackets` — wraps non-quoted, non-bracket text in `*…*`
 - `fmtPreserveLists` — leaves `- item` / `1. item` lines unwrapped and un-spaced
 - `fmtPreserveBlockquotes` — leaves `> quoted` lines unwrapped and un-spaced
+- `fmtPreserveSpeakerTags` — leaves `**Name:** message` lines untouched: asterisks in the `**Name:**` tag survive `fmtStripAsterisks`, the line is skipped by the auto-wrap-in-asterisks pass, and paragraph-spacing won't insert blank lines between consecutive tagged lines
 - `fmtExtraDelimiters` — user-defined character pairs (string of even length) treated like brackets
 
 `autoFormatAfterRewrite` — if true, runs the formatter automatically after every AI Rewrite.

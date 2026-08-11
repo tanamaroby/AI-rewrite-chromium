@@ -1298,6 +1298,7 @@
       "fmtCapitaliseSentences",
       "fmtPreserveLists",
       "fmtPreserveBlockquotes",
+      "fmtPreserveSpeakerTags",
       "fmtUnwrapBrackets",
       "fmtExtraDelimiters",
       "fmtRepairAsterisks",
@@ -1414,6 +1415,13 @@
             b: "> she said quietly",
             a: "> she said quietly",
             hint: "Lines starting with > are left unwrapped and paragraph-spacing won't insert blank lines between them",
+          },
+          {
+            key: "fmtPreserveSpeakerTags",
+            name: "Preserve speaker tags (**Name:**)",
+            b: "**Aria:** Hello there",
+            a: "**Aria:** Hello there",
+            hint: "Lines starting with a **Name:** tag keep their asterisks, aren't wrapped in extra asterisks, and paragraph-spacing won't insert blank lines between consecutive tagged lines",
           },
           {
             key: "fmtUnwrapBrackets",

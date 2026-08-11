@@ -19,6 +19,7 @@
   let fmtCapitaliseSentences = true;
   let fmtPreserveLists = true;
   let fmtPreserveBlockquotes = true;
+  let fmtPreserveSpeakerTags = true;
   let fmtUnwrapBrackets = true;
   let fmtExtraDelimiters = "";
   let fmtRepairAsterisks = true;
@@ -70,6 +71,7 @@
     "fmtCapitaliseSentences",
     "fmtPreserveLists",
     "fmtPreserveBlockquotes",
+    "fmtPreserveSpeakerTags",
     "fmtUnwrapBrackets",
     "fmtExtraDelimiters",
     "fmtRepairAsterisks",
@@ -128,6 +130,7 @@
       fmtCapitaliseSentences = data.fmtCapitaliseSentences !== false;
       fmtPreserveLists = data.fmtPreserveLists !== false;
       fmtPreserveBlockquotes = data.fmtPreserveBlockquotes !== false;
+      fmtPreserveSpeakerTags = data.fmtPreserveSpeakerTags !== false;
       fmtUnwrapBrackets = data.fmtUnwrapBrackets !== false;
       fmtExtraDelimiters = data.fmtExtraDelimiters || "";
       fmtRepairAsterisks = data.fmtRepairAsterisks !== false;
@@ -391,6 +394,7 @@
       fmtCapitaliseSentences,
       fmtPreserveLists,
       fmtPreserveBlockquotes,
+      fmtPreserveSpeakerTags,
       fmtUnwrapBrackets,
       fmtExtraDelimiters,
       fmtRepairAsterisks,
