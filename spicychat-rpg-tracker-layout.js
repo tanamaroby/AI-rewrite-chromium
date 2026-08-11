@@ -1152,6 +1152,22 @@
             <input id="sc-np-thought-input" type="text" class="ql-thought-input" placeholder="Jot a quick thought…" maxlength="240" data-ai-rewriter-ignore="1" />
             <button id="sc-np-thought-insert-btn" class="ql-copy-btn">⎘ Insert</button>
           </div>
+          <!-- System Message -->
+          <div class="ql-section-header" style="margin-top:4px;">
+            <span class="ql-section-label">System Message</span>
+          </div>
+          <div class="ql-thought-row">
+            <select id="sc-np-sysmsg-category" class="stat-select" style="flex:0 0 104px;" data-ai-rewriter-ignore="1">
+              <option value="Scene">Scene</option>
+              <option value="Time Skip">Time Skip</option>
+              <option value="Status">Status</option>
+              <option value="Event">Event</option>
+              <option value="Combat">Combat</option>
+              <option value="Note">Note</option>
+            </select>
+            <input id="sc-np-sysmsg-input" type="text" class="ql-thought-input" placeholder="System message text…" maxlength="240" data-ai-rewriter-ignore="1" />
+            <button id="sc-np-sysmsg-insert-btn" class="ql-copy-btn">⎘ Insert</button>
+          </div>
           <!-- AI Generator -->
           <div class="ql-section-header" style="margin-top:4px;">
             <span class="ql-section-label">Generator</span>

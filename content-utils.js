@@ -165,6 +165,7 @@
 
     const patterns = ['"[^"]*"'];
     if (options.fmtUnwrapBrackets) patterns.push("\\[[^\\]]*\\]");
+    if (options.fmtUnwrapParens) patterns.push("\\([^)]*\\)");
 
     for (const [open, close] of parseDelimiterPairs(
       options.fmtExtraDelimiters || "",

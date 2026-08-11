@@ -79,6 +79,7 @@ Pure formatter logic lives in `content-utils.js` (`formatText(text, opts)`) and 
 - `fmtNormaliseNewlines` — collapse multiple blank lines to one
 - `fmtCapitaliseSentences` — first letter of paragraphs and after `.!?`
 - `fmtUnwrapBrackets` — wraps non-quoted, non-bracket text in `*…*`
+- `fmtUnwrapParens` — leaves `(parenthetical)` text unwrapped, same mechanism as `fmtUnwrapBrackets`; keeps Thoughts and OOC asides from being swallowed into an `*action*` wrap
 - `fmtPreserveLists` — leaves `- item` / `1. item` lines unwrapped and un-spaced
 - `fmtPreserveBlockquotes` — leaves `> quoted` lines unwrapped and un-spaced
 - `fmtPreserveSpeakerTags` — leaves `**Name:** message` lines untouched: asterisks in the `**Name:**` tag survive `fmtStripAsterisks`, the line is skipped by the auto-wrap-in-asterisks pass, and paragraph-spacing won't insert blank lines between consecutive tagged lines
@@ -133,7 +134,12 @@ Two content scripts run on `spicychat.ai`:
 | NPCs      | `sc_npc_v1_<id>`      | name, note, disposition (friendly/neutral/hostile)           |
 | Rumours   | `sc_rumour_v1_<id>`   | text, done (bool)                                            |
 
-#### AI Generator (Quest Log tab, directly under Thoughts — not persisted)
+#### Quick Thought & System Message (Quest Log tab, between Export All and AI Generator — not persisted)
+
+- **Thoughts** — free-text input + "⎘ Insert" wired in `spicychat-rpg-tracker-drawer.js`, inserts `(text)` via `addLog`. Deliberately round brackets, not `[square brackets]`, so inner-monologue asides never collide with the System Message format below. `fmtUnwrapParens` (in `content-utils.js`) keeps the autoformatter from wrapping `(…)` in `*…*`; the "Thought Parentheses" Style toggle (`scThoughtStyle`) renders a standalone `(thought)` line in rendered chat messages as an italic bubble (see `.ai-thought-bubble` in `content.css`) — only when the parenthetical is alone on its own line, never mid-sentence.
+- **System Message** — category `<select>` (Scene / Time Skip / Status / Event / Combat / Note) + free-text input + "⎘ Insert", also wired in `spicychat-rpg-tracker-drawer.js`, inserts `[Category: text]` — the `[square bracket]` format Thoughts used to share. Already covered by the existing "Bracket Emphasis" Style feature (`scBracketEmphasis`), same as every other `[…]` export.
+
+#### AI Generator (Quest Log tab, directly under System Message — not persisted)
 
 - Three type pills — Character / Item / Equipment — plus two optional free-text inputs: a name/idea seed and a style/flavor tag (e.g. "elven", "dwarvish", "German-sounding", any free text)
 - "✨ Generate" dispatches `sc-rp-run-generate` with a type-specific system prompt (from `SYSTEM_PROMPTS` in `spicychat-rpg-tracker-generators.js`) instructing the model to reply with one line, `Name — description`, description capped at 2 sentences, no markdown

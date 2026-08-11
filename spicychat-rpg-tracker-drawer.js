@@ -128,6 +128,11 @@
     const thoughtInsertBtn = document.getElementById(
       "sc-np-thought-insert-btn",
     );
+    const sysMsgCategory = document.getElementById("sc-np-sysmsg-category");
+    const sysMsgInput = document.getElementById("sc-np-sysmsg-input");
+    const sysMsgInsertBtn = document.getElementById(
+      "sc-np-sysmsg-insert-btn",
+    );
     const rpPanel = document.getElementById("sc-np-rp-panel");
     const fmtPanel = document.getElementById("sc-np-fmt-panel");
     const stylePanel = document.getElementById("sc-np-style-panel");
@@ -1038,18 +1043,42 @@
       notesIn.addEventListener("input", () => autoResizeTextarea(notesIn));
     })();
 
-    // Quick Thought insert
+    // Quick Thought insert — round brackets, not [square brackets], so
+    // thoughts never get mixed up with the [Category: ...] system-message
+    // format below (see fmtUnwrapParens in content-utils.js and the
+    // "Thought Parentheses" Style toggle, which render (this) as an
+    // inner-monologue bubble in the chat).
     (function () {
       if (!thoughtInput || !thoughtInsertBtn) return;
       const doInsert = () => {
         const txt = thoughtInput.value.trim();
         if (!txt) return;
-        addLog(`[Thought: ${txt}]`);
+        addLog(`(${txt})`);
         flashCopyBtnLabel(thoughtInsertBtn);
         thoughtInput.value = "";
       };
       thoughtInsertBtn.addEventListener("click", doInsert);
       thoughtInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          doInsert();
+        }
+      });
+    })();
+
+    // System Message insert — [Category: text], the [square bracket] format
+    // Thoughts used to share before it moved to round brackets above.
+    (function () {
+      if (!sysMsgCategory || !sysMsgInput || !sysMsgInsertBtn) return;
+      const doInsert = () => {
+        const txt = sysMsgInput.value.trim();
+        if (!txt) return;
+        addLog(`[${sysMsgCategory.value}: ${txt}]`);
+        flashCopyBtnLabel(sysMsgInsertBtn);
+        sysMsgInput.value = "";
+      };
+      sysMsgInsertBtn.addEventListener("click", doInsert);
+      sysMsgInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
           e.preventDefault();
           doInsert();
@@ -1300,6 +1329,7 @@
       "fmtPreserveBlockquotes",
       "fmtPreserveSpeakerTags",
       "fmtUnwrapBrackets",
+      "fmtUnwrapParens",
       "fmtExtraDelimiters",
       "fmtRepairAsterisks",
       "fmtActionPunctuation",
@@ -1428,6 +1458,13 @@
             name: "Leave [ ] square brackets unwrapped",
             b: "[aside] walk",
             a: "[aside] *walk.*",
+          },
+          {
+            key: "fmtUnwrapParens",
+            name: "Leave ( ) round brackets unwrapped",
+            b: "(quiet thought) walk",
+            a: "(quiet thought) *walk.*",
+            hint: "Used by Thoughts and OOC asides so they never get swallowed into an *action* wrap",
           },
         ],
       },
@@ -1625,6 +1662,7 @@
       "scBlockquoteStyle",
       "scNumberedListStyle",
       "scSeparatorStyle",
+      "scThoughtStyle",
     ];
 
     // Each entry describes one injectable style feature and maps to a storage key.
@@ -1661,6 +1699,13 @@
         description:
           "Renders \" | \" separators inside brackets as newlines so [TRACKER | Dani | Mimi] displays as a multi-line block instead of a single dense line.",
         subOf: "scBracketEmphasis",
+      },
+      {
+        key: "scThoughtStyle",
+        name: "Thought Parentheses",
+        description:
+          "Highlights a standalone (round bracket) thought with a soft, italic inner-monologue bubble — distinct from [scene bracket] system messages. Only applies when the parenthetical is alone on its own line; parentheses used mid-sentence are always left untouched.",
+        note: "Toggling off instantly collapses existing thought bubbles back to plain text via CSS.",
       },
       {
         key: "scActionStyle",

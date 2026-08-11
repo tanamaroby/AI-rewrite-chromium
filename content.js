@@ -21,6 +21,7 @@
   let fmtPreserveBlockquotes = true;
   let fmtPreserveSpeakerTags = true;
   let fmtUnwrapBrackets = true;
+  let fmtUnwrapParens = true;
   let fmtExtraDelimiters = "";
   let fmtRepairAsterisks = true;
   let fmtOocBrackets = true;
@@ -49,6 +50,7 @@
   let scBlockquoteStyle = true;
   let scNumberedListStyle = true;
   let scSeparatorStyle = true;
+  let scThoughtStyle = true;
   let stylerBoldEnabled = true;
   let stylerItalicEnabled = true;
   let stylerStrikethroughEnabled = true;
@@ -73,6 +75,7 @@
     "fmtPreserveBlockquotes",
     "fmtPreserveSpeakerTags",
     "fmtUnwrapBrackets",
+    "fmtUnwrapParens",
     "fmtExtraDelimiters",
     "fmtRepairAsterisks",
     "fmtOocBrackets",
@@ -96,6 +99,7 @@
     "scBlockquoteStyle",
     "scNumberedListStyle",
     "scSeparatorStyle",
+    "scThoughtStyle",
     "stylerBoldEnabled",
     "stylerItalicEnabled",
     "stylerStrikethroughEnabled",
@@ -132,6 +136,7 @@
       fmtPreserveBlockquotes = data.fmtPreserveBlockquotes !== false;
       fmtPreserveSpeakerTags = data.fmtPreserveSpeakerTags !== false;
       fmtUnwrapBrackets = data.fmtUnwrapBrackets !== false;
+      fmtUnwrapParens = data.fmtUnwrapParens !== false;
       fmtExtraDelimiters = data.fmtExtraDelimiters || "";
       fmtRepairAsterisks = data.fmtRepairAsterisks !== false;
       fmtOocBrackets = data.fmtOocBrackets !== false;
@@ -170,6 +175,7 @@
       scBlockquoteStyle = data.scBlockquoteStyle !== false;
       scNumberedListStyle = data.scNumberedListStyle !== false;
       scSeparatorStyle = data.scSeparatorStyle !== false;
+      scThoughtStyle = data.scThoughtStyle !== false;
       stylerBoldEnabled = data.stylerBoldEnabled !== false;
       stylerItalicEnabled = data.stylerItalicEnabled !== false;
       stylerStrikethroughEnabled = data.stylerStrikethroughEnabled !== false;
@@ -190,8 +196,13 @@
         document.documentElement.classList.toggle("sc-style-blockquote", scBlockquoteStyle);
         document.documentElement.classList.toggle("sc-style-numbered", scNumberedListStyle);
         document.documentElement.classList.toggle("sc-style-separator", scSeparatorStyle);
+        document.documentElement.classList.toggle(
+          "sc-inject-thoughts-hidden",
+          !scThoughtStyle,
+        );
         if (scMdTables) mountAiMessageMarkdown();
         if (scBracketEmphasis) mountAiMessageBrackets();
+        if (scThoughtStyle) mountAiMessageThoughts();
       }
     });
   }
@@ -396,6 +407,7 @@
       fmtPreserveBlockquotes,
       fmtPreserveSpeakerTags,
       fmtUnwrapBrackets,
+      fmtUnwrapParens,
       fmtExtraDelimiters,
       fmtRepairAsterisks,
       fmtOocBrackets,
@@ -1207,7 +1219,32 @@
       .forEach(processAiMessageMarkdown);
   }
 
-  // ─── Bracket emphasis in AI messages ───────────────────────────────────────
+  // ─── Bracket / thought-paren emphasis in AI messages ───────────────────────
+
+  // [Scene bracket] annotations — always wrapped, whether they share a line
+  // with other text (inline chip) or stand alone (full-width block card).
+  const BRACKET_CFG = {
+    openChar: "[",
+    regex: /\[([^\[\]]+)\]/g,
+    blockClass: "ai-bracket-scene",
+    inlineClass: "ai-bracket-scene ai-bracket-scene--inline",
+    allowInline: true,
+    dataKey: "bracketRaw",
+    formatText: (raw) => (scBracketPipeNewline ? raw.replace(/ \| /g, "\n") : raw),
+  };
+
+  // (Thought) parentheses — only wrapped when the parenthetical is alone on
+  // its own line. Round brackets are common inside ordinary prose (a quick
+  // aside mid-sentence), so a match sharing its line with other text is left
+  // completely untouched rather than downgraded to an inline chip — unlike
+  // [brackets], which are an unambiguous signal wherever they appear.
+  const THOUGHT_CFG = {
+    openChar: "(",
+    regex: /\(([^()]+)\)/g,
+    blockClass: "ai-thought-bubble",
+    allowInline: false,
+    dataKey: "thoughtRaw",
+  };
 
   // Wraps [bracket] content in a span, spanning across any em/q/strong
   // elements SpicyChat's own markdown inserts mid-bracket (e.g. a quoted
@@ -1224,13 +1261,14 @@
     return null;
   }
 
-  // Flattens a cloned DOM fragment to plain text for bracketRaw/textContent.
-  // A single <br> is a soft break (e.g. one raw newline in the AI's text) —
-  // those read as visually "broken" lines for no reason, so it's joined back
-  // onto one line with a separator. A run of 2+ <br> is a real paragraph
-  // break (a blank line) and is kept as one. <q> quote marks, stripped by
-  // SpicyChat and normally re-drawn via CSS, are restored as literal text.
-  function flattenBracketFragment(node) {
+  // Flattens a cloned DOM fragment to plain text for bracketRaw/thoughtRaw/
+  // textContent. A single <br> is a soft break (e.g. one raw newline in the
+  // AI's text) — those read as visually "broken" lines for no reason, so
+  // it's joined back onto one line with a separator. A run of 2+ <br> is a
+  // real paragraph break (a blank line) and is kept as one. <q> quote marks,
+  // stripped by SpicyChat and normally re-drawn via CSS, are restored as
+  // literal text.
+  function flattenInlineFragment(node) {
     let out = "";
     const children = Array.from(node.childNodes);
     let i = 0;
@@ -1251,21 +1289,25 @@
           continue;
         }
         if (child.tagName === "Q") {
-          out += '"' + flattenBracketFragment(child) + '"';
+          out += '"' + flattenInlineFragment(child) + '"';
           i++;
           continue;
         }
-        out += flattenBracketFragment(child);
+        out += flattenInlineFragment(child);
       }
       i++;
     }
     return out;
   }
 
-  function wrapBracketsInNode(root) {
+  // Generic version of the bracket-wrapping algorithm, parameterized by a
+  // config (see BRACKET_CFG / THOUGHT_CFG above) so [square brackets] and
+  // (round-bracket thoughts) share one implementation instead of two nearly
+  // identical copies.
+  function wrapDelimitedInNode(root, cfg) {
     if (root.nodeType !== Node.ELEMENT_NODE) return;
-    if (root.classList.contains("ai-bracket-scene")) return;
-    if (!root.textContent.includes("[")) return;
+    if (root.classList.contains(cfg.blockClass)) return;
+    if (!root.textContent.includes(cfg.openChar)) return;
 
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const textNodes = [];
@@ -1280,12 +1322,12 @@
       segments.push({ node: tn, start: fullText.length, end: fullText.length + t.length });
       fullText += t;
     }
-    if (!fullText.includes("[")) return;
+    if (!fullText.includes(cfg.openChar)) return;
 
-    const re = /\[([^\[\]]+)\]/g;
+    cfg.regex.lastIndex = 0;
     const matches = [];
     let m;
-    while ((m = re.exec(fullText)) !== null) matches.push(m);
+    while ((m = cfg.regex.exec(fullText)) !== null) matches.push(m);
     if (!matches.length) return;
 
     // When an offset falls exactly on the shared boundary between two text
@@ -1315,7 +1357,7 @@
       const r = document.createRange();
       r.setStart(startLoc.node, startLoc.offset);
       r.setEnd(endLoc.node, endLoc.offset);
-      return flattenBracketFragment(r.cloneContents());
+      return flattenInlineFragment(r.cloneContents());
     }
 
     // Process in reverse so earlier match offsets stay valid as the DOM mutates.
@@ -1327,6 +1369,11 @@
       const startMarkup = enclosingInlineMarkup(startLoc.node, root);
       const endMarkup = enclosingInlineMarkup(endLoc.node, root);
       if (startMarkup && startMarkup === endMarkup) continue;
+
+      const isInline =
+        hasInlineTextBefore(startLoc.node, startLoc.offset, root) ||
+        hasInlineTextAfter(endLoc.node, endLoc.offset, root);
+      if (isInline && !cfg.allowInline) continue;
 
       const range = document.createRange();
       try {
@@ -1340,14 +1387,10 @@
       const innerEndLoc = locate(match.index + match[0].length - 1);
       const rawText = buildRawText(innerStartLoc, innerEndLoc);
 
-      const isInline =
-        hasInlineTextBefore(startLoc.node, startLoc.offset, root) ||
-        hasInlineTextAfter(endLoc.node, endLoc.offset, root);
-
       const span = document.createElement("span");
-      span.className = isInline ? "ai-bracket-scene ai-bracket-scene--inline" : "ai-bracket-scene";
-      span.dataset.bracketRaw = rawText;
-      span.textContent = scBracketPipeNewline ? rawText.replace(/ \| /g, "\n") : rawText;
+      span.className = isInline ? cfg.inlineClass : cfg.blockClass;
+      span.dataset[cfg.dataKey] = rawText;
+      span.textContent = cfg.formatText ? cfg.formatText(rawText) : rawText;
 
       range.deleteContents();
       range.insertNode(span);
@@ -1357,9 +1400,10 @@
   // True if there's real (non-whitespace) content sharing the same source
   // line before `offset` in `node`, walking back through preceding siblings
   // up to `root` and stopping at the first <br> (a real line break). Used to
-  // tell a [bracket] that shares its line with other text (rendered as an
-  // inline chip, see .ai-bracket-scene--inline) from one alone on its own
-  // line (rendered as the full-width block card).
+  // tell a [bracket] or (thought) that shares its line with other text
+  // (brackets: rendered as an inline chip, see .ai-bracket-scene--inline;
+  // thoughts: left untouched entirely, see THOUGHT_CFG.allowInline) from one
+  // alone on its own line (rendered as the full-width block card).
   function hasInlineTextBefore(node, offset, root) {
     if (node.nodeType === Node.TEXT_NODE && node.textContent.slice(0, offset).trim()) return true;
     let cur = node;
@@ -1399,7 +1443,23 @@
         span.dataset.aiBracket = "1";
         if (!span.isConnected || !span.parentNode) return;
         try {
-          wrapBracketsInNode(span);
+          wrapDelimitedInNode(span, BRACKET_CFG);
+        } catch {
+          // Span may be detached mid-stream
+        }
+      });
+  }
+
+  function processAiMessageThoughts(messageRoot) {
+    if (!messageRoot) return;
+
+    messageRoot
+      .querySelectorAll("span.leading-6:not([data-ai-thought])")
+      .forEach((span) => {
+        span.dataset.aiThought = "1";
+        if (!span.isConnected || !span.parentNode) return;
+        try {
+          wrapDelimitedInNode(span, THOUGHT_CFG);
         } catch {
           // Span may be detached mid-stream
         }
@@ -1410,6 +1470,12 @@
     if (!scBracketEmphasis) return;
     (roots ?? document.querySelectorAll('div[id^="message-"]'))
       .forEach(processAiMessageBrackets);
+  }
+
+  function mountAiMessageThoughts(roots) {
+    if (!scThoughtStyle) return;
+    (roots ?? document.querySelectorAll('div[id^="message-"]'))
+      .forEach(processAiMessageThoughts);
   }
 
   if (isSpicyChat) {
@@ -1473,6 +1539,7 @@
 
         mountAiMessageMarkdown(roots);
         mountAiMessageBrackets(roots);
+        mountAiMessageThoughts(roots);
 
         if (atBottom && scroller) scroller.scrollTop = scroller.scrollHeight;
       });
@@ -1480,6 +1547,7 @@
 
     mountAiMessageMarkdown();
     mountAiMessageBrackets();
+    mountAiMessageThoughts();
     const obs = new MutationObserver(scheduleMount);
     obs.observe(document.body, { childList: true, subtree: true });
   }

@@ -169,6 +169,10 @@
   --sc-card-bg-rgb: 24, 24, 28; /* charcoal, card gradient top stop */
   --sc-card-bg-2-rgb: 15, 15, 18; /* near-black, card gradient bottom stop */
 
+  /* ---- (Thought) parentheses styling — softer/dreamier than [scene bracket] ---- */
+  --sc-thought-bg-rgb: 40, 24, 58; /* thought-bubble background wash */
+  --sc-thought-text: #cbb9f0; /* thought-bubble text + parens */
+
   --sc-lavender-soft: #ddd6fe; /* blockquote & scene-fill-btn text, table header text */
   --sc-lavender-bright: #ede9fe; /* bold-emphasis text */
   --sc-lavender-white: #f5f3ff; /* scene-fill-btn hover text */

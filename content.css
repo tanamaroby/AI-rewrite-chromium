@@ -398,6 +398,75 @@ html.sc-bracket-style-card .ai-bracket-scene--inline:hover {
   box-shadow: 0 0 10px rgba(var(--sc-accent-2-rgb), 0.28);
 }
 
+/* ── (Thought) parentheses in AI messages ────────────────────────────────── */
+
+/* (Round bracket) thought styling — inner monologue / quick aside, softer and
+   dreamier than the hard-edged [scene bracket] system-annotation look above.
+   Only ever mounted on a (parenthetical) that is alone on its own line (see
+   THOUGHT_CFG.allowInline in content.js) — parentheses used mid-sentence for
+   an ordinary aside are left completely untouched, never wrapped. */
+.ai-thought-bubble {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 3px 0;
+  padding: 7px 16px;
+  border-radius: 14px;
+  background: radial-gradient(
+    ellipse at top left,
+    rgba(var(--sc-thought-bg-rgb), 0.55) 0%,
+    rgba(var(--sc-thought-bg-rgb), 0.24) 100%
+  );
+  border: 1px solid rgba(var(--sc-accent-2-rgb), 0.22);
+  color: var(--sc-thought-text);
+  font-style: italic;
+  font-family: var(--sc-ui-font);
+  font-size: 0.93em;
+  letter-spacing: 0.005em;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+/* Parens re-drawn via generated content (the raw "(" ")" are stripped from
+   textContent, same as [brackets] strip their own delimiters) — dimmed so
+   the enclosed thought itself carries the emphasis, not its punctuation. */
+.ai-thought-bubble::before,
+.ai-thought-bubble::after {
+  font-style: normal;
+  opacity: 0.55;
+}
+.ai-thought-bubble::before {
+  content: "( ";
+}
+.ai-thought-bubble::after {
+  content: " )";
+}
+
+/* When thought styling is disabled, collapse spans to plain text instantly —
+   unlike the bracket-hidden fallback, the ( parens ) stay visible via the
+   generated content above so the line still reads naturally as plain text. */
+html.sc-inject-thoughts-hidden .ai-thought-bubble {
+  display: inline !important;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  color: inherit !important;
+  font-style: inherit !important;
+  font-size: inherit !important;
+  font-family: inherit !important;
+  letter-spacing: inherit !important;
+  line-height: inherit !important;
+  white-space: normal !important;
+  width: auto !important;
+}
+html.sc-inject-thoughts-hidden .ai-thought-bubble::before,
+html.sc-inject-thoughts-hidden .ai-thought-bubble::after {
+  opacity: 1 !important;
+}
+
 /* ── Chat text style overrides ───────────────────────────────────────────── */
 
 /* Action / narration — muted lavender, upright (no italic), distinctive

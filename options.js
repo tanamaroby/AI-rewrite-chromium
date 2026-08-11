@@ -406,6 +406,7 @@ const FMT_TOGGLES = [
   "fmtPreserveBlockquotes",
   "fmtPreserveSpeakerTags",
   "fmtUnwrapBrackets",
+  "fmtUnwrapParens",
   "fmtRepairAsterisks",
   "fmtActionPunctuation",
   "fmtOocBrackets",
