@@ -20,6 +20,7 @@
   let fmtPreserveLists = true;
   let fmtPreserveBlockquotes = true;
   let fmtPreserveSpeakerTags = true;
+  let fmtPreserveBold = true;
   let fmtUnwrapBrackets = true;
   let fmtUnwrapParens = true;
   let fmtExtraDelimiters = "";
@@ -74,6 +75,7 @@
     "fmtPreserveLists",
     "fmtPreserveBlockquotes",
     "fmtPreserveSpeakerTags",
+    "fmtPreserveBold",
     "fmtUnwrapBrackets",
     "fmtUnwrapParens",
     "fmtExtraDelimiters",
@@ -135,6 +137,7 @@
       fmtPreserveLists = data.fmtPreserveLists !== false;
       fmtPreserveBlockquotes = data.fmtPreserveBlockquotes !== false;
       fmtPreserveSpeakerTags = data.fmtPreserveSpeakerTags !== false;
+      fmtPreserveBold = data.fmtPreserveBold !== false;
       fmtUnwrapBrackets = data.fmtUnwrapBrackets !== false;
       fmtUnwrapParens = data.fmtUnwrapParens !== false;
       fmtExtraDelimiters = data.fmtExtraDelimiters || "";
@@ -406,6 +409,7 @@
       fmtPreserveLists,
       fmtPreserveBlockquotes,
       fmtPreserveSpeakerTags,
+      fmtPreserveBold,
       fmtUnwrapBrackets,
       fmtUnwrapParens,
       fmtExtraDelimiters,

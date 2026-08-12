@@ -1328,6 +1328,7 @@
       "fmtPreserveLists",
       "fmtPreserveBlockquotes",
       "fmtPreserveSpeakerTags",
+      "fmtPreserveBold",
       "fmtUnwrapBrackets",
       "fmtUnwrapParens",
       "fmtExtraDelimiters",
@@ -1452,6 +1453,13 @@
             b: "**Aria:** Hello there",
             a: "**Aria:** Hello there",
             hint: "Lines starting with a **Name:** tag keep their asterisks, aren't wrapped in extra asterisks, and paragraph-spacing won't insert blank lines between consecutive tagged lines",
+          },
+          {
+            key: "fmtPreserveBold",
+            name: "Preserve **bold** words",
+            b: "This is **important**.",
+            a: "This is **important**.",
+            hint: "A **bold** pair anywhere in a line — mid-sentence too — keeps its asterisks: immune to fmtStripAsterisks and never absorbed into the surrounding single-*wrap*",
           },
           {
             key: "fmtUnwrapBrackets",

@@ -19,6 +19,35 @@
     return /^\*\*[^*\n]+:\*\*/.test(t);
   }
 
+  // Strips stray single asterisks from a line while leaving any **bold**
+  // pairs fully intact — used by fmtStripAsterisks when fmtPreserveBold is
+  // on, so mid-sentence emphasis survives even outside a speaker-tag line.
+  function stripAsterisksPreservingBold(line) {
+    return line.replace(
+      /\*\*[^*\n]+\*\*|\*/g,
+      (m) => (m.length > 1 ? m : ""),
+    );
+  }
+
+  // Wraps `line` in single asterisks while leaving any **bold** pair(s)
+  // inside it completely untouched. Splits on the bold spans first and
+  // wraps only the plain-text runs between them — gluing a fresh wrap
+  // boundary directly onto a bold pair's own ** (e.g. one continuous wrap
+  // with the bold "poking through") would produce an ambiguous run of 3+
+  // asterisks, so each run is wrapped independently instead.
+  function wrapPreservingBold(line) {
+    return line
+      .split(/(\*\*[^*\n]+\*\*)/)
+      .map((part) => {
+        if (/^\*\*[^*\n]+\*\*$/.test(part)) return part;
+        if (!part.trim()) return part;
+        const lead = part.slice(0, part.length - part.trimStart().length);
+        const trail = part.slice(part.trimEnd().length);
+        return lead + "*" + part.trim() + "*" + trail;
+      })
+      .join("");
+  }
+
   function wrapOutsideText(str, opts) {
     return str.replace(/[^\n]+/g, (chunk) => {
       const trimmed = chunk.trim();
@@ -30,6 +59,9 @@
         return chunk;
       const leadWS = chunk.slice(0, chunk.length - chunk.trimStart().length);
       const trailWS = chunk.slice(chunk.trimEnd().length);
+      if (opts && opts.fmtPreserveBold && /\*\*[^*\n]+\*\*/.test(trimmed)) {
+        return leadWS + wrapPreservingBold(trimmed) + trailWS;
+      }
       return leadWS + "*" + trimmed + "*" + trailWS;
     });
   }
@@ -82,11 +114,13 @@
     if (options.fmtStripAsterisks) {
       text = text
         .split("\n")
-        .map((line) =>
-          options.fmtPreserveSpeakerTags && isSpeakerTagLine(line)
-            ? line
-            : line.replace(/\*/g, ""),
-        )
+        .map((line) => {
+          if (options.fmtPreserveSpeakerTags && isSpeakerTagLine(line))
+            return line;
+          return options.fmtPreserveBold
+            ? stripAsterisksPreservingBold(line)
+            : line.replace(/\*/g, "");
+        })
         .join("\n");
     }
     if (options.fmtNormaliseQuotes) text = text.replace(/[\u201C\u201D]/g, '"');
@@ -166,6 +200,12 @@
     const patterns = ['"[^"]*"'];
     if (options.fmtUnwrapBrackets) patterns.push("\\[[^\\]]*\\]");
     if (options.fmtUnwrapParens) patterns.push("\\([^)]*\\)");
+    // Note: **bold** is intentionally NOT added here. Unlike brackets/parens
+    // (whose delimiter chars never collide with the wrap), pulling **bold**
+    // out at this whole-text stage would strip the leading **Name:** off a
+    // speaker-tag line before wrapOutsideText's own isSpeakerTagLine check
+    // ever sees the full line — breaking fmtPreserveSpeakerTags. Bold is
+    // instead handled per-line inside wrapOutsideText (see wrapPreservingBold).
 
     for (const [open, close] of parseDelimiterPairs(
       options.fmtExtraDelimiters || "",
@@ -195,7 +235,10 @@
     let result = parts.join("");
 
     if (options.fmtActionPunctuation) {
-      result = result.replace(/\*([^*\n]+)\*/g, (_, inner) => {
+      // Lookaround excludes the inner span of a **bold** pair \u2014 without it,
+      // the single-* half of each ** would match on its own and could pick
+      // up a stray period, corrupting the pair (see fmtPreserveBold).
+      result = result.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, (_, inner) => {
         const t = inner.trimEnd();
         return /[.!?,:\u2026\u2014\-_]$/.test(t) ? `*${inner}*` : `*${t}.*`;
       });
