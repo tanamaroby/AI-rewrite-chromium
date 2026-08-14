@@ -142,9 +142,9 @@ Two content scripts run on `spicychat.ai`:
 
 #### AI Generator (Quest Log tab, directly under System Message — not persisted)
 
-- Three type pills — Character / Item / Equipment — plus two optional free-text inputs: a name/idea seed and a style/flavor tag (e.g. "elven", "dwarvish", "German-sounding", any free text)
+- Six type pills — Character / Location / Item / Equipment / Creature / Faction — wrapping pill-chip row (same visual language as RP Tools' snippet chips, scales to more types without redesign) plus two optional free-text inputs: a name/idea seed and a style/flavor tag (e.g. "elven", "dwarvish", "German-sounding", any free text)
 - "✨ Generate" dispatches `sc-rp-run-generate` with a type-specific system prompt (from `SYSTEM_PROMPTS` in `spicychat-rpg-tracker-generators.js`) instructing the model to reply with one line, `Name — description`, description capped at 2 sentences, no markdown
-- Result renders in a card with "⎘ Insert" (formats as `[Character: …]` / `[Item: …]` / `[Equipment: …]`, single-line bracket format like other sections) and "↻ Regenerate" (re-rolls with the same type/seed/flavor)
+- Result renders in a card with "⎘ Insert" (formats as `[Character: …]` / `[Location: …]` / `[Item: …]` / `[Equipment: …]` / `[Creature: …]` / `[Faction: …]`, single-line bracket format like other sections) and "↻ Regenerate" (re-rolls with the same type/seed/flavor)
 - Ephemeral — no `chrome.storage` key; state resets when the drawer/page reloads
 
 #### Activity log strip

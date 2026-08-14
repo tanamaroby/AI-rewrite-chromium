@@ -541,14 +541,15 @@
 
     /* ── AI Generator ── */
     .gen-card { display: flex; flex-direction: column; gap: 8px; }
-    .gen-type-row { display: flex; gap: 6px; }
+    .gen-type-row { display: flex; flex-wrap: wrap; gap: 6px; }
     .gen-type-btn {
-      flex: 1; padding: 6px 4px; border-radius: 6px;
+      padding: 5px 12px; border-radius: 100px; white-space: nowrap;
       border: 1px solid rgba(var(--sc-accent-rgb), 0.18); background: rgba(var(--sc-black-rgb), 0.2);
       color: var(--sc-slate-400); font-size: 11.5px; font-weight: 600; font-family: inherit;
-      cursor: pointer; transition: background 0.12s, border-color 0.12s, color 0.12s;
+      cursor: pointer; transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.08s;
     }
     .gen-type-btn:hover { border-color: rgba(var(--sc-accent-rgb), 0.4); color: var(--sc-slate-200); }
+    .gen-type-btn:active { transform: scale(0.94); }
     .gen-type-btn.active {
       background: rgba(var(--sc-accent-rgb), 0.18); border-color: rgba(var(--sc-accent-rgb), 0.55);
       color: var(--sc-accent-2);
@@ -1174,9 +1175,12 @@
           </div>
           <div class="rp-card gen-card">
             <div class="gen-type-row">
-              <button type="button" class="gen-type-btn active" data-gen-type="character">Character</button>
-              <button type="button" class="gen-type-btn" data-gen-type="item">Item</button>
-              <button type="button" class="gen-type-btn" data-gen-type="equipment">Equipment</button>
+              <button type="button" class="gen-type-btn active" data-gen-type="character">🧑 Character</button>
+              <button type="button" class="gen-type-btn" data-gen-type="location">🗺️ Location</button>
+              <button type="button" class="gen-type-btn" data-gen-type="item">🎒 Item</button>
+              <button type="button" class="gen-type-btn" data-gen-type="equipment">⚔️ Equipment</button>
+              <button type="button" class="gen-type-btn" data-gen-type="creature">🐉 Creature</button>
+              <button type="button" class="gen-type-btn" data-gen-type="faction">🏴 Faction</button>
             </div>
             <input id="sc-np-gen-seed" type="text" class="af-input" placeholder="Name or idea (optional)…" maxlength="120" data-ai-rewriter-ignore="1" />
             <input id="sc-np-gen-flavor" type="text" class="af-input" placeholder="Style / flavor (optional)… e.g. elven, dwarvish, noir, German-sounding" maxlength="80" data-ai-rewriter-ignore="1" />

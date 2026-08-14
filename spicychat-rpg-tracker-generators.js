@@ -3,17 +3,26 @@
 
   const TYPE_LABELS = {
     character: "Character",
+    location: "Location",
     item: "Item",
     equipment: "Equipment",
+    creature: "Creature",
+    faction: "Faction",
   };
 
   const SYSTEM_PROMPTS = {
     character:
       'You invent a single character concept for a tabletop-style roleplay tracker. Reply with exactly one line in the form "Name — description". The description is at most 2 sentences, vivid and specific, no markdown, no quotation marks, no preamble or extra commentary. If the user gives a name, use it as given; if they give a short idea instead, build the character around it. If neither is given, invent one freely in the requested style.',
+    location:
+      'You invent a single location for a tabletop-style roleplay tracker — a place, room, building, or landmark worth visiting. Reply with exactly one line in the form "Location name — description". The description is at most 2 sentences, vivid and specific (mood plus one notable detail), no markdown, no quotation marks, no preamble or extra commentary. Build around any name or idea the user gives; otherwise invent freely in the requested style.',
     item:
       'You invent a single notable item for a tabletop-style roleplay tracker — a general object, trinket, tool, curiosity, or quest object (not weapons or armor). Reply with exactly one line in the form "Item name — description". The description is at most 2 sentences, vivid and specific, no markdown, no quotation marks, no preamble or extra commentary. Build around any name or idea the user gives; otherwise invent freely in the requested style.',
     equipment:
       'You invent a single piece of wearable gear or a weapon for a tabletop-style roleplay tracker. Reply with exactly one line in the form "Equipment name — description". The description is at most 2 sentences covering what it is and one notable trait, no markdown, no quotation marks, no preamble or extra commentary. Build around any name or idea the user gives; otherwise invent freely in the requested style.',
+    creature:
+      'You invent a single creature or monster for a tabletop-style roleplay tracker. Reply with exactly one line in the form "Creature name — description". The description is at most 2 sentences covering appearance and one notable trait or threat, no markdown, no quotation marks, no preamble or extra commentary. Build around any name or idea the user gives; otherwise invent freely in the requested style.',
+    faction:
+      'You invent a single faction, guild, or organization for a tabletop-style roleplay tracker. Reply with exactly one line in the form "Faction name — description". The description is at most 2 sentences covering what they do and one notable trait, no markdown, no quotation marks, no preamble or extra commentary. Build around any name or idea the user gives; otherwise invent freely in the requested style.',
   };
 
   const MAX_TOKENS = 150;
