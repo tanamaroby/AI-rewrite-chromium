@@ -225,78 +225,20 @@ span.leading-6[data-ai-md-table] {
   display: block;
 }
 
-/* [Scene bracket] styling — location, outfit, time, status — system message */
+/* [Scene bracket] styling — location, outfit, time, status — system message.
+   A dark card with corner-frame accents (viewfinder-style tick marks) rather
+   than a bordered strip. System voice: a sharp monospace, distinct from the
+   sans/serif fonts used for narration and dialogue elsewhere in the message,
+   so an annotation reads as "the system talking" at a glance — shared with
+   the blockquote and numbered-list system-log styling below. */
 .ai-bracket-scene {
   position: relative;
   display: block;
   box-sizing: border-box;
   width: 100%;
-  padding: 6px 14px 6px 14px;
-  border-radius: 4px;
-  overflow: hidden;
-  background: linear-gradient(
-    135deg,
-    rgba(var(--sc-bracket-bg-rgb), 0.93) 0%,
-    rgba(var(--sc-bracket-bg-2-rgb), 0.86) 100%
-  );
-  border-left: 2px solid rgba(var(--sc-accent-2-rgb), 0.8);
-  border-top: none;
-  border-bottom: none;
-  border-right: 1px solid rgba(var(--sc-accent-violet-rgb), 0.08);
-  color: var(--sc-accent-3);
-  font-size: 0.85em;
-  font-family: ui-monospace, "Cascadia Code", "JetBrains Mono", monospace;
-  font-weight: 400;
-  font-style: normal;
-  letter-spacing: 0.03em;
-  line-height: 1.7;
-  white-space: pre-line;
-  text-shadow: 0 0 10px rgba(var(--sc-accent-violet-rgb), 0.35);
-  box-shadow:
-    inset 0 0 28px rgba(var(--sc-violet-glow-rgb), 0.09),
-    0 2px 10px rgba(var(--sc-black-rgb), 0.28);
-}
-
-/* Gradient top border — bright at the left accent, fades right */
-.ai-bracket-scene::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(
-    to right,
-    rgba(var(--sc-accent-2-rgb), 0.7) 0%,
-    rgba(var(--sc-accent-violet-rgb), 0.25) 40%,
-    transparent 75%
-  );
-}
-
-/* Gradient bottom border — dimmer, same direction */
-.ai-bracket-scene::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(
-    to right,
-    rgba(var(--sc-accent-violet-rgb), 0.45) 0%,
-    rgba(var(--sc-accent-violet-rgb), 0.12) 40%,
-    transparent 70%
-  );
-}
-
-/* Bracket style variant: Card — modern dark card with corner-bracket accents
-   (viewfinder-style tick marks in each corner) instead of a full border.
-   Alternative look for [scene bracket] annotations, picked in the Style
-   panel; overrides the default look above when html.sc-bracket-style-card. */
-html.sc-bracket-style-card .ai-bracket-scene {
-  position: relative;
   padding: 14px 18px;
   border-radius: 6px;
+  overflow: hidden;
   background: linear-gradient(
     155deg,
     rgba(var(--sc-card-bg-rgb), 0.97) 0%,
@@ -304,10 +246,12 @@ html.sc-bracket-style-card .ai-bracket-scene {
   );
   border: 1px solid rgba(var(--sc-accent-rgb), 0.14);
   color: var(--sc-slate-200);
-  font-family: var(--sc-ui-font);
+  font-family: "JetBrains Mono", "Cascadia Code", ui-monospace, "SF Mono", Consolas, monospace;
   font-weight: 500;
-  font-size: 0.88em;
-  letter-spacing: 0.01em;
+  font-size: 0.85em;
+  letter-spacing: 0.035em;
+  line-height: 1.75;
+  white-space: pre-line;
   text-shadow: none;
   box-shadow:
     0 1px 2px rgba(var(--sc-black-rgb), 0.18),
@@ -315,21 +259,19 @@ html.sc-bracket-style-card .ai-bracket-scene {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-html.sc-bracket-style-card .ai-bracket-scene:hover {
+.ai-bracket-scene:hover {
   transform: translateY(-1px);
   box-shadow:
     0 2px 4px rgba(var(--sc-black-rgb), 0.22),
     0 14px 30px rgba(var(--sc-black-rgb), 0.38);
 }
 
-/* Four L-shaped corner ticks, inset from the edges — replaces the border-heavy
-   look of the default Scene style with a lighter, more modern frame accent. */
-html.sc-bracket-style-card .ai-bracket-scene::before {
+/* Four L-shaped corner ticks, inset from the edges — a lightweight frame
+   accent instead of a border-heavy box. */
+.ai-bracket-scene::before {
   content: "";
   position: absolute;
   inset: 7px;
-  height: auto; /* base .ai-bracket-scene::before sets height: 1px — must reset,
-                   or top+bottom+height being all constrained collapses this box */
   pointer-events: none;
   background-repeat: no-repeat;
   background-image:
@@ -353,17 +295,12 @@ html.sc-bracket-style-card .ai-bracket-scene::before {
     bottom right, bottom right;
 }
 
-html.sc-bracket-style-card .ai-bracket-scene::after {
-  content: none;
-}
-
 /* Inline bracket chip — when a [bracket] annotation shares its source line
    with other text (see hasInlineTextBefore/After in content.js), the
    full-width block card would force that text onto its own line below it.
    Render it instead as a small inline pill so the line keeps flowing, with
    the surrounding text styled the same as normal prose either side of it. */
-.ai-bracket-scene--inline,
-html.sc-bracket-style-card .ai-bracket-scene--inline {
+.ai-bracket-scene--inline {
   display: inline-flex;
   align-items: baseline;
   width: auto;
@@ -374,7 +311,7 @@ html.sc-bracket-style-card .ai-bracket-scene--inline {
   border: 1px solid rgba(var(--sc-accent-2-rgb), 0.5);
   box-shadow: 0 0 8px rgba(var(--sc-accent-2-rgb), 0.18);
   color: var(--sc-accent-3);
-  font-family: ui-monospace, "Cascadia Code", "JetBrains Mono", monospace;
+  font-family: "JetBrains Mono", "Cascadia Code", ui-monospace, "SF Mono", Consolas, monospace;
   font-size: 0.82em;
   font-weight: 500;
   font-style: normal;
@@ -387,13 +324,11 @@ html.sc-bracket-style-card .ai-bracket-scene--inline {
 }
 
 .ai-bracket-scene--inline::before,
-.ai-bracket-scene--inline::after,
-html.sc-bracket-style-card .ai-bracket-scene--inline::before,
-html.sc-bracket-style-card .ai-bracket-scene--inline::after {
+.ai-bracket-scene--inline::after {
   content: none;
 }
 
-html.sc-bracket-style-card .ai-bracket-scene--inline:hover {
+.ai-bracket-scene--inline:hover {
   transform: none;
   box-shadow: 0 0 10px rgba(var(--sc-accent-2-rgb), 0.28);
 }
@@ -402,9 +337,12 @@ html.sc-bracket-style-card .ai-bracket-scene--inline:hover {
 
 /* (Round bracket) thought styling — inner monologue / quick aside, softer and
    dreamier than the hard-edged [scene bracket] system-annotation look above.
-   Only ever mounted on a (parenthetical) that is alone on its own line (see
-   THOUGHT_CFG.allowInline in content.js) — parentheses used mid-sentence for
-   an ordinary aside are left completely untouched, never wrapped. */
+   A literary italic serif, deliberately distinct from Dialogue's upright
+   serif below, so an inner thought and a spoken line never read as the same
+   voice even though both are serif. Only ever mounted on a (parenthetical)
+   that is alone on its own line (see THOUGHT_CFG.allowInline in content.js)
+   — parentheses used mid-sentence for an ordinary aside are left completely
+   untouched, never wrapped. */
 .ai-thought-bubble {
   position: relative;
   display: block;
@@ -421,9 +359,9 @@ html.sc-bracket-style-card .ai-bracket-scene--inline:hover {
   border: 1px solid rgba(var(--sc-accent-2-rgb), 0.22);
   color: var(--sc-thought-text);
   font-style: italic;
-  font-family: var(--sc-ui-font);
-  font-size: 0.93em;
-  letter-spacing: 0.005em;
+  font-family: "Big Caslon", Athelas, "Palatino Linotype", "Iowan Old Style", Georgia, serif;
+  font-size: 0.95em;
+  letter-spacing: 0.008em;
   line-height: 1.6;
   white-space: pre-line;
 }
@@ -469,22 +407,24 @@ html.sc-inject-thoughts-hidden .ai-thought-bubble::after {
 
 /* ── Chat text style overrides ───────────────────────────────────────────── */
 
-/* Action / narration — muted lavender, upright (no italic), distinctive
-   humanist sans so it reads as its own voice next to dialogue and body text */
+/* Action / narration — muted lavender, upright (no italic), geometric sans
+   with wide tracking so it reads as a crisp "stage direction" voice next to
+   dialogue's serif and the system-mono of brackets/blockquotes */
 html.sc-style-actions div[id^="message-"] em {
   color: var(--sc-accent-3) !important;
   font-style: normal !important;
-  font-family: Optima, Candara, "Noto Sans", "Segoe UI", sans-serif;
-  letter-spacing: 0.015em;
+  font-family: "Avenir Next", "Century Gothic", "Noto Sans", "Segoe UI", sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.035em;
 }
 
-/* Dialogue — warm, easy-reading serif with oversized glowing curly quotes for
-   a distinct "spoken aloud" look instead of plain straight marks */
+/* Dialogue — warm literary serif with oversized glowing curly quotes for a
+   distinct "spoken aloud" look instead of plain straight marks */
 html.sc-style-dialogue div[id^="message-"] q {
   quotes: "\201C" "\201D" "\2018" "\2019";
-  font-family: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, serif;
-  letter-spacing: 0.01em;
-  font-size: 1.05em;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  letter-spacing: 0.012em;
+  font-size: 1.08em;
   line-height: inherit;
   text-shadow:
     0 0 12px rgba(var(--sc-accent-2-rgb), 0.22),
@@ -494,7 +434,7 @@ html.sc-style-dialogue div[id^="message-"] q {
 html.sc-style-dialogue div[id^="message-"] q::before,
 html.sc-style-dialogue div[id^="message-"] q::after {
   color: var(--sc-accent-2);
-  font-family: Georgia, serif;
+  font-family: "Iowan Old Style", Georgia, serif;
   font-size: 1.25em;
   font-weight: 700;
   vertical-align: -0.06em;
@@ -503,7 +443,9 @@ html.sc-style-dialogue div[id^="message-"] q::after {
     0 0 18px rgba(var(--sc-accent-violet-rgb), 0.3);
 }
 
-/* Blockquote — incoming transmission / system log feed */
+/* Blockquote — incoming transmission / system log feed. Same system-voice
+   monospace as scene brackets and the numbered-list counters below, so all
+   three read as one consistent "the system talking" register. */
 html.sc-style-blockquote div[id^="message-"] blockquote {
   position: relative;
   margin: 8px 0;
@@ -515,10 +457,10 @@ html.sc-style-blockquote div[id^="message-"] blockquote {
   border-right: 1px solid rgba(var(--sc-accent-violet-rgb), 0.08);
   border-radius: 0 5px 5px 0;
   color: var(--sc-lavender-soft);
-  font-family: ui-monospace, "Cascadia Code", "JetBrains Mono", monospace;
+  font-family: "JetBrains Mono", "Cascadia Code", ui-monospace, "SF Mono", Consolas, monospace;
   font-size: 0.83em;
   font-style: normal !important;
-  letter-spacing: 0.035em;
+  letter-spacing: 0.04em;
   line-height: 1.65;
   box-shadow:
     inset 0 0 28px rgba(var(--sc-violet-glow-rgb), 0.08),
@@ -594,7 +536,7 @@ html.sc-style-numbered div[id^="message-"] ol li::before {
   position: absolute;
   left: -2.4em;
   top: 0;
-  font-family: ui-monospace, "Cascadia Code", "JetBrains Mono", monospace;
+  font-family: "JetBrains Mono", "Cascadia Code", ui-monospace, "SF Mono", Consolas, monospace;
   font-size: 0.7em;
   font-weight: 600;
   color: var(--sc-accent-2);
@@ -605,9 +547,12 @@ html.sc-style-numbered div[id^="message-"] ol li::before {
   line-height: 2.3;
 }
 
-/* Bold — bright near-white with a strong purple ambient glow */
+/* Bold — bright near-white with a strong purple ambient glow and a touch of
+   extra weight/tracking so emphasis feels deliberate, not just recolored */
 html.sc-style-bold div[id^="message-"] strong {
   color: var(--sc-lavender-bright) !important;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   text-shadow:
     0 0 10px rgba(var(--sc-accent-2-rgb), 0.65),
     0 0 26px rgba(var(--sc-accent-violet-rgb), 0.32);

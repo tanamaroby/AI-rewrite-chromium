@@ -43,7 +43,6 @@
   let scMdTables = true;
   let scBracketEmphasis = true;
   let scBracketPipeNewline = true;
-  let scBracketStyle = "scene"; // "scene" | "card"
   let scActionStyle = true;
   let scDialogueStyle = true;
   let scBoldStyle = true;
@@ -93,7 +92,6 @@
     "scMdTables",
     "scBracketEmphasis",
     "scBracketPipeNewline",
-    "scBracketStyle",
     "scActionStyle",
     "scDialogueStyle",
     "scBoldStyle",
@@ -165,7 +163,6 @@
       scMdTables = data.scMdTables !== false;
       scBracketEmphasis = data.scBracketEmphasis !== false;
       scBracketPipeNewline = data.scBracketPipeNewline !== false;
-      scBracketStyle = data.scBracketStyle === "card" ? "card" : "scene";
       document.querySelectorAll(".ai-bracket-scene[data-bracket-raw]").forEach((s) => {
         s.textContent = scBracketPipeNewline
           ? s.dataset.bracketRaw.replace(/ \| /g, "\n")
@@ -187,10 +184,6 @@
         document.documentElement.classList.toggle(
           "sc-inject-brackets-hidden",
           !scBracketEmphasis,
-        );
-        document.documentElement.classList.toggle(
-          "sc-bracket-style-card",
-          scBracketStyle === "card",
         );
         document.documentElement.classList.toggle("sc-style-actions", scActionStyle);
         document.documentElement.classList.toggle("sc-style-dialogue", scDialogueStyle);

@@ -160,12 +160,10 @@
   --sc-error-toast-rgb: 255, 80, 80; /* rewrite-toast error border, brighter than --sc-danger */
   --sc-error-toast-bg-rgb: 40, 17, 17;
   --sc-overlay-bg-rgb: 15, 12, 30; /* rewrite overlay / toast / formatter button backgrounds */
-  --sc-bracket-bg-rgb: 14, 9, 32; /* [Scene bracket] gradient, top stop */
-  --sc-bracket-bg-2-rgb: 22, 13, 45; /* [Scene bracket] gradient, bottom stop */
   --sc-blockquote-bg-rgb: 20, 10, 45;
   --sc-violet-glow-rgb: 109, 40, 217; /* inset glow under bracket/blockquote */
 
-  /* ---- Bracket emphasis: "Card" style variant (modern dark card) ---- */
+  /* ---- Bracket emphasis: dark card with corner-frame accents ---- */
   --sc-card-bg-rgb: 24, 24, 28; /* charcoal, card gradient top stop */
   --sc-card-bg-2-rgb: 15, 15, 18; /* near-black, card gradient bottom stop */
 

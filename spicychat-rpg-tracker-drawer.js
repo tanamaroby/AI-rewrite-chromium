@@ -1662,7 +1662,6 @@
       "scMdTables",
       "scBracketEmphasis",
       "scBracketPipeNewline",
-      "scBracketStyle",
       "scActionStyle",
       "scDialogueStyle",
       "scBoldStyle",
@@ -1686,20 +1685,8 @@
         key: "scBracketEmphasis",
         name: "Bracket Emphasis",
         description:
-          "Highlights [scene bracket] content — location, outfit, time, status — with a distinct visual treatment that reads as a system annotation.",
+          "Highlights [scene bracket] content — location, outfit, time, status — as a dark card with corner-frame accents, set in a sharp monospace so it reads as a system annotation rather than prose.",
         note: "Toggling off instantly collapses existing brackets back to plain text via CSS.",
-      },
-      {
-        key: "scBracketStyle",
-        type: "variant",
-        name: "Bracket Visual Style",
-        description: "Pick the look for scene bracket annotations.",
-        subOf: "scBracketEmphasis",
-        options: [
-          { value: "scene", label: "Scene" },
-          { value: "card", label: "Card" },
-        ],
-        defaultValue: "scene",
       },
       {
         key: "scBracketPipeNewline",
@@ -1712,26 +1699,26 @@
         key: "scThoughtStyle",
         name: "Thought Parentheses",
         description:
-          "Highlights a standalone (round bracket) thought with a soft, italic inner-monologue bubble — distinct from [scene bracket] system messages. Only applies when the parenthetical is alone on its own line; parentheses used mid-sentence are always left untouched.",
+          "Highlights a standalone (round bracket) thought with a soft, italic literary-serif inner-monologue bubble — a different voice from both narration and spoken dialogue below. Only applies when the parenthetical is alone on its own line; parentheses used mid-sentence are always left untouched.",
         note: "Toggling off instantly collapses existing thought bubbles back to plain text via CSS.",
       },
       {
         key: "scActionStyle",
-        name: "Action Text Colour",
+        name: "Action Text Style",
         description:
-          "Replaces SpicyChat's sky-blue italic for *action* narration with muted lavender — softer and easier to read across long passages.",
+          "Replaces SpicyChat's sky-blue italic for *action* narration with an upright geometric sans in muted lavender — a distinct 'stage direction' voice, easier to read across long passages.",
       },
       {
         key: "scDialogueStyle",
-        name: "Dialogue Size",
+        name: "Dialogue Style",
         description:
-          "Slightly increases the font size of \"quoted dialogue\" (rendered by SpicyChat as <q> elements) to give spoken lines a touch more visual presence.",
+          "Renders \"quoted dialogue\" (rendered by SpicyChat as <q> elements) in a warmer literary serif at a slightly larger size, with glowing curly quotes for a spoken-aloud feel.",
       },
       {
         key: "scBoldStyle",
         name: "Bold Glow",
         description:
-          "Adds a soft ambient purple glow to **bold** text, making emphasis feel refined rather than blunt.",
+          "Adds a soft ambient purple glow and firmer weight to **bold** text, making emphasis feel refined rather than blunt.",
       },
       {
         key: "scBulletStyle",
@@ -1743,13 +1730,13 @@
         key: "scBlockquoteStyle",
         name: "Blockquote Style",
         description:
-          "Styles > blockquotes as an incoming transmission feed — monospace, dark purple background, glowing ▶ marker — for system updates and log entries.",
+          "Styles > blockquotes as an incoming transmission feed — the same sharp monospace as scene brackets, dark background, glowing ▶ marker — for system updates and log entries.",
       },
       {
         key: "scNumberedListStyle",
         name: "Numbered List Style",
         description:
-          "Replaces plain 1. 2. 3. counters with glowing monospace [01] [02] [03] brackets, matching the extension's terminal aesthetic.",
+          "Replaces plain 1. 2. 3. counters with glowing monospace [01] [02] [03] brackets, in the same system-voice font as brackets and blockquotes.",
       },
       {
         key: "scSeparatorStyle",
@@ -1788,7 +1775,7 @@
       card.style.padding = "4px 14px";
 
       STYLE_FEATURES.forEach(
-        ({ key, type, name, description, note, subOf, options, defaultValue }) => {
+        ({ key, name, description, note, subOf }) => {
           const parentOn = subOf ? d[subOf] !== false : true;
 
           const row = document.createElement("div");
@@ -1806,40 +1793,21 @@
           nameEl.className = "style-feature-name";
           nameEl.textContent = name;
 
-          if (type === "variant") {
-            const picker = document.createElement("div");
-            picker.style.cssText = "display:flex;gap:6px;";
-            const current = d[key] || defaultValue;
-            options.forEach(({ value, label }) => {
-              const btn = document.createElement("button");
-              btn.type = "button";
-              btn.className = "rp-micro-btn" + (value === current ? " active" : "");
-              btn.textContent = label;
-              btn.disabled = !parentOn;
-              btn.setAttribute("data-ai-rewriter-ignore", "1");
-              btn.addEventListener("click", () => {
-                chrome.storage.sync.set({ [key]: value });
-              });
-              picker.appendChild(btn);
-            });
-            top.append(nameEl, picker);
-          } else {
-            const on = d[key] !== false;
-            const toggle = document.createElement("label");
-            toggle.className = "rp-toggle";
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.checked = on;
-            checkbox.disabled = subOf ? !parentOn : false;
-            checkbox.setAttribute("data-ai-rewriter-ignore", "1");
-            checkbox.addEventListener("change", () => {
-              chrome.storage.sync.set({ [key]: checkbox.checked });
-            });
-            const track = document.createElement("span");
-            track.className = "rp-toggle-track";
-            toggle.append(checkbox, track);
-            top.append(nameEl, toggle);
-          }
+          const on = d[key] !== false;
+          const toggle = document.createElement("label");
+          toggle.className = "rp-toggle";
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = on;
+          checkbox.disabled = subOf ? !parentOn : false;
+          checkbox.setAttribute("data-ai-rewriter-ignore", "1");
+          checkbox.addEventListener("change", () => {
+            chrome.storage.sync.set({ [key]: checkbox.checked });
+          });
+          const track = document.createElement("span");
+          track.className = "rp-toggle-track";
+          toggle.append(checkbox, track);
+          top.append(nameEl, toggle);
 
           const desc = document.createElement("span");
           desc.className = "style-feature-desc";
