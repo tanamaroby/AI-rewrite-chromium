@@ -43,6 +43,7 @@
   let scMdTables = true;
   let scBracketEmphasis = true;
   let scBracketPipeNewline = true;
+  let scPlainStyle = true;
   let scActionStyle = true;
   let scDialogueStyle = true;
   let scBoldStyle = true;
@@ -92,6 +93,7 @@
     "scMdTables",
     "scBracketEmphasis",
     "scBracketPipeNewline",
+    "scPlainStyle",
     "scActionStyle",
     "scDialogueStyle",
     "scBoldStyle",
@@ -168,6 +170,7 @@
           ? s.dataset.bracketRaw.replace(/ \| /g, "\n")
           : s.dataset.bracketRaw;
       });
+      scPlainStyle = data.scPlainStyle !== false;
       scActionStyle = data.scActionStyle !== false;
       scDialogueStyle = data.scDialogueStyle !== false;
       scBoldStyle = data.scBoldStyle !== false;
@@ -185,6 +188,7 @@
           "sc-inject-brackets-hidden",
           !scBracketEmphasis,
         );
+        document.documentElement.classList.toggle("sc-style-plain", scPlainStyle);
         document.documentElement.classList.toggle("sc-style-actions", scActionStyle);
         document.documentElement.classList.toggle("sc-style-dialogue", scDialogueStyle);
         document.documentElement.classList.toggle("sc-style-bold", scBoldStyle);

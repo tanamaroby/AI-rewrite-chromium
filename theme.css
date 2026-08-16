@@ -163,16 +163,28 @@
   --sc-blockquote-bg-rgb: 20, 10, 45;
   --sc-violet-glow-rgb: 109, 40, 217; /* inset glow under bracket/blockquote */
 
-  /* ---- Bracket emphasis: dark card with corner-frame accents ---- */
-  --sc-card-bg-rgb: 24, 24, 28; /* charcoal, card gradient top stop */
-  --sc-card-bg-2-rgb: 15, 15, 18; /* near-black, card gradient bottom stop */
+  /* ---- Bracket emphasis: dark card with corner-frame accents — a cool cyan
+     system-readout voice, deliberately colder than the violet brand accent
+     used everywhere else (dialogue, action, the extension's own UI) ---- */
+  --sc-system-accent-rgb: 34, 211, 238; /* #22d3ee cyan — corner ticks, border, glow */
+  --sc-system-bg-rgb: 7, 15, 20; /* cool blue-black, card gradient top stop */
+  --sc-system-bg-2-rgb: 3, 10, 13; /* near-black, card gradient bottom stop */
+  --sc-system-text: #d9f6fb; /* icy pale cyan body text */
 
   /* ---- (Thought) parentheses styling — softer/dreamier than [scene bracket] ---- */
   --sc-thought-bg-rgb: 40, 24, 58; /* thought-bubble background wash */
   --sc-thought-text: #cbb9f0; /* thought-bubble text + parens */
 
+  /* ---- Plain / direct text — ordinary narration with no markdown emphasis
+     at all. A near-white cyan, lighter and airier than the bracket
+     system-voice cyan above, so it reads as "clean" rather than "readout" ---- */
+  --sc-plain-text: #eafdff;
+
+  /* ---- Bold emphasis — blue glow, distinct from the violet used elsewhere ---- */
+  --sc-azure-bright: #d9ecff; /* bold-emphasis text fill */
+  --sc-azure-deep-rgb: 37, 99, 235; /* #2563eb — outer glow stop, paired with --sc-info-rgb for the inner stop */
+
   --sc-lavender-soft: #ddd6fe; /* blockquote & scene-fill-btn text, table header text */
-  --sc-lavender-bright: #ede9fe; /* bold-emphasis text */
   --sc-lavender-white: #f5f3ff; /* scene-fill-btn hover text */
   --sc-pink-soft: #ffcdd2; /* rewrite toast error text */
   --sc-mint-soft: #a7f3d0; /* formatter toast text */

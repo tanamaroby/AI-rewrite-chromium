@@ -1662,6 +1662,7 @@
       "scMdTables",
       "scBracketEmphasis",
       "scBracketPipeNewline",
+      "scPlainStyle",
       "scActionStyle",
       "scDialogueStyle",
       "scBoldStyle",
@@ -1685,7 +1686,7 @@
         key: "scBracketEmphasis",
         name: "Bracket Emphasis",
         description:
-          "Highlights [scene bracket] content — location, outfit, time, status — as a dark card with corner-frame accents, set in a sharp monospace so it reads as a system annotation rather than prose.",
+          "Highlights [scene bracket] content — location, outfit, time, status — as a dark card with a cool cyan corner-frame and a faint scanline texture, set in a sharp monospace so it reads as a system readout rather than prose. Deliberately colder than the violet used everywhere else.",
         note: "Toggling off instantly collapses existing brackets back to plain text via CSS.",
       },
       {
@@ -1703,6 +1704,12 @@
         note: "Toggling off instantly collapses existing thought bubbles back to plain text via CSS.",
       },
       {
+        key: "scPlainStyle",
+        name: "Plain Text Style",
+        description:
+          "Gives ordinary, unmarked text — no *action*, no \"quotes\", no **bold** — a clean neutral sans and a near-white cyan tint, lighter and airier than the bracket system-voice cyan, instead of whatever SpicyChat's default happens to be. Covers things like a plain reply after a **Sender:** tag.",
+      },
+      {
         key: "scActionStyle",
         name: "Action Text Style",
         description:
@@ -1718,7 +1725,8 @@
         key: "scBoldStyle",
         name: "Bold Glow",
         description:
-          "Adds a soft ambient purple glow and firmer weight to **bold** text, making emphasis feel refined rather than blunt.",
+          "Adds a soft ambient blue glow and firmer weight to **bold** text — a different hue from the violet used elsewhere, so emphasis stands out as its own thing instead of blending in.",
+        note: "With Dialogue Style also on, bolded dialogue keeps this blue glow instead of Dialogue's usual violet one, so a bolded quote never quietly blends back into an ordinary one.",
       },
       {
         key: "scBulletStyle",

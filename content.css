@@ -227,10 +227,11 @@ span.leading-6[data-ai-md-table] {
 
 /* [Scene bracket] styling — location, outfit, time, status — system message.
    A dark card with corner-frame accents (viewfinder-style tick marks) rather
-   than a bordered strip. System voice: a sharp monospace, distinct from the
-   sans/serif fonts used for narration and dialogue elsewhere in the message,
-   so an annotation reads as "the system talking" at a glance — shared with
-   the blockquote and numbered-list system-log styling below. */
+   than a bordered strip, in a cool cyan that's deliberately colder than the
+   violet used for dialogue, action, and the extension's own UI — a system
+   readout should feel like a different temperature from the prose around it.
+   Shares its monospace with the blockquote and numbered-list system-log
+   styling below, but keeps this cooler accent to itself. */
 .ai-bracket-scene {
   position: relative;
   display: block;
@@ -241,33 +242,54 @@ span.leading-6[data-ai-md-table] {
   overflow: hidden;
   background: linear-gradient(
     155deg,
-    rgba(var(--sc-card-bg-rgb), 0.97) 0%,
-    rgba(var(--sc-card-bg-2-rgb), 0.97) 100%
+    rgba(var(--sc-system-bg-rgb), 0.97) 0%,
+    rgba(var(--sc-system-bg-2-rgb), 0.97) 100%
   );
-  border: 1px solid rgba(var(--sc-accent-rgb), 0.14);
-  color: var(--sc-slate-200);
+  border: 1px solid rgba(var(--sc-system-accent-rgb), 0.22);
+  color: var(--sc-system-text);
   font-family: "JetBrains Mono", "Cascadia Code", ui-monospace, "SF Mono", Consolas, monospace;
   font-weight: 500;
   font-size: 0.85em;
   letter-spacing: 0.035em;
   line-height: 1.75;
   white-space: pre-line;
-  text-shadow: none;
+  text-shadow: 0 0 12px rgba(var(--sc-system-accent-rgb), 0.22);
   box-shadow:
-    0 1px 2px rgba(var(--sc-black-rgb), 0.18),
-    0 10px 24px rgba(var(--sc-black-rgb), 0.32);
+    0 1px 2px rgba(var(--sc-black-rgb), 0.25),
+    0 10px 26px rgba(var(--sc-black-rgb), 0.4),
+    0 0 26px rgba(var(--sc-system-accent-rgb), 0.07);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .ai-bracket-scene:hover {
   transform: translateY(-1px);
   box-shadow:
-    0 2px 4px rgba(var(--sc-black-rgb), 0.22),
-    0 14px 30px rgba(var(--sc-black-rgb), 0.38);
+    0 2px 4px rgba(var(--sc-black-rgb), 0.28),
+    0 14px 32px rgba(var(--sc-black-rgb), 0.45),
+    0 0 34px rgba(var(--sc-system-accent-rgb), 0.12);
+}
+
+/* Faint horizontal scanlines — a CRT-readout texture that only reads at
+   close range, reinforcing the "system voice" without fighting legibility. */
+.ai-bracket-scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(var(--sc-system-accent-rgb), 0.05) 0px,
+    rgba(var(--sc-system-accent-rgb), 0.05) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: screen;
+  opacity: 0.6;
 }
 
 /* Four L-shaped corner ticks, inset from the edges — a lightweight frame
-   accent instead of a border-heavy box. */
+   accent instead of a border-heavy box. Breathes gently, like an active
+   readout rather than a static label. */
 .ai-bracket-scene::before {
   content: "";
   position: absolute;
@@ -275,14 +297,14 @@ span.leading-6[data-ai-md-table] {
   pointer-events: none;
   background-repeat: no-repeat;
   background-image:
-    linear-gradient(to right, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
-    linear-gradient(to bottom, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
-    linear-gradient(to left, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
-    linear-gradient(to bottom, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
-    linear-gradient(to right, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
-    linear-gradient(to top, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
-    linear-gradient(to left, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px),
-    linear-gradient(to top, rgba(var(--sc-accent-2-rgb), 0.95) 2.5px, transparent 2.5px);
+    linear-gradient(to right, rgba(var(--sc-system-accent-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to bottom, rgba(var(--sc-system-accent-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to left, rgba(var(--sc-system-accent-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to bottom, rgba(var(--sc-system-accent-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to right, rgba(var(--sc-system-accent-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to top, rgba(var(--sc-system-accent-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to left, rgba(var(--sc-system-accent-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to top, rgba(var(--sc-system-accent-rgb), 0.95) 2.5px, transparent 2.5px);
   background-size:
     18px 2.5px, 2.5px 18px,
     18px 2.5px, 2.5px 18px,
@@ -293,6 +315,23 @@ span.leading-6[data-ai-md-table] {
     top right, top right,
     bottom left, bottom left,
     bottom right, bottom right;
+  animation: ai-bracket-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes ai-bracket-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-bracket-scene::before {
+    animation: none;
+  }
 }
 
 /* Inline bracket chip — when a [bracket] annotation shares its source line
@@ -307,10 +346,10 @@ span.leading-6[data-ai-md-table] {
   margin: 0 0.15em;
   padding: 0 8px;
   border-radius: 999px;
-  background: rgba(var(--sc-accent-2-rgb), 0.14);
-  border: 1px solid rgba(var(--sc-accent-2-rgb), 0.5);
-  box-shadow: 0 0 8px rgba(var(--sc-accent-2-rgb), 0.18);
-  color: var(--sc-accent-3);
+  background: rgba(var(--sc-system-accent-rgb), 0.14);
+  border: 1px solid rgba(var(--sc-system-accent-rgb), 0.5);
+  box-shadow: 0 0 8px rgba(var(--sc-system-accent-rgb), 0.2);
+  color: var(--sc-system-text);
   font-family: "JetBrains Mono", "Cascadia Code", ui-monospace, "SF Mono", Consolas, monospace;
   font-size: 0.82em;
   font-weight: 500;
@@ -330,7 +369,7 @@ span.leading-6[data-ai-md-table] {
 
 .ai-bracket-scene--inline:hover {
   transform: none;
-  box-shadow: 0 0 10px rgba(var(--sc-accent-2-rgb), 0.28);
+  box-shadow: 0 0 10px rgba(var(--sc-system-accent-rgb), 0.32);
 }
 
 /* ── (Thought) parentheses in AI messages ────────────────────────────────── */
@@ -407,6 +446,22 @@ html.sc-inject-thoughts-hidden .ai-thought-bubble::after {
 
 /* ── Chat text style overrides ───────────────────────────────────────────── */
 
+/* Plain / direct text — the baseline voice: no *action* italics, no "quoted"
+   dialogue, no **bold**, just a sentence delivered straight. Common after a
+   **Speaker:** tag (a text message, a direct line of address) and easy to
+   overlook since it never gets its own markdown. Everything else in this
+   file is a deliberate departure from this one, so it gets its own clean,
+   neutral grotesque and a near-white cyan tint — lighter and airier than
+   the bracket system-voice cyan, more "clean" than "readout" — instead of
+   whatever SpicyChat's default happens to be. Scoped off blockquote
+   content, which keeps its own dedicated color. */
+html.sc-style-plain div[id^="message-"] span.leading-6:not(blockquote *) {
+  color: var(--sc-plain-text);
+  font-family: "Helvetica Neue", Helvetica, Calibri, Arial, sans-serif;
+  letter-spacing: 0.006em;
+  line-height: 1.65;
+}
+
 /* Action / narration — muted lavender, upright (no italic), geometric sans
    with wide tracking so it reads as a crisp "stage direction" voice next to
    dialogue's serif and the system-mono of brackets/blockquotes */
@@ -419,13 +474,21 @@ html.sc-style-actions div[id^="message-"] em {
 }
 
 /* Dialogue — warm literary serif with oversized glowing curly quotes for a
-   distinct "spoken aloud" look instead of plain straight marks */
+   distinct "spoken aloud" look instead of plain straight marks.
+   line-height is pinned rather than inherited: an unitless line-height
+   inherits as a bare number, so a bigger font-size here would recompute a
+   taller line-height than the surrounding paragraph and puff up whichever
+   line the quote happens to land on. A fixed, tighter value stays shorter
+   than every paragraph line-height in this file, so it never becomes the
+   tallest inline box on the line — the paragraph's own line-height governs,
+   and quotes interjected between narration lines stop throwing off the
+   vertical rhythm. The quote marks below inherit this same fixed value. */
 html.sc-style-dialogue div[id^="message-"] q {
   quotes: "\201C" "\201D" "\2018" "\2019";
   font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
   letter-spacing: 0.012em;
   font-size: 1.08em;
-  line-height: inherit;
+  line-height: 1.15;
   text-shadow:
     0 0 12px rgba(var(--sc-accent-2-rgb), 0.22),
     0 0 28px rgba(var(--sc-accent-violet-rgb), 0.1);
@@ -547,15 +610,46 @@ html.sc-style-numbered div[id^="message-"] ol li::before {
   line-height: 2.3;
 }
 
-/* Bold — bright near-white with a strong purple ambient glow and a touch of
-   extra weight/tracking so emphasis feels deliberate, not just recolored */
+/* Bold — bright icy blue with a strong azure ambient glow and a touch of
+   extra weight/tracking so emphasis feels deliberate, not just recolored.
+   Blue rather than another shade of violet, so emphasis reads as its own
+   thing next to the rest of the (mostly violet) message styling. */
 html.sc-style-bold div[id^="message-"] strong {
-  color: var(--sc-lavender-bright) !important;
+  color: var(--sc-azure-bright) !important;
   font-weight: 700;
   letter-spacing: 0.01em;
   text-shadow:
-    0 0 10px rgba(var(--sc-accent-2-rgb), 0.65),
-    0 0 26px rgba(var(--sc-accent-violet-rgb), 0.32);
+    0 0 10px rgba(var(--sc-info-rgb), 0.7),
+    0 0 26px rgba(var(--sc-azure-deep-rgb), 0.35);
+}
+
+/* Bolded dialogue — **"like this"** or "**like this**" — without this, the
+   two above quietly collapse into each other. text-shadow inherits, but
+   <q> always sets its OWN text-shadow directly, and a directly-set property
+   beats an inherited one no matter which element nests inside the other —
+   so Bold's blue glow never survives contact with a quote, and bolded
+   dialogue renders with Dialogue's ordinary violet glow instead. This gives
+   the combined state its own explicit treatment: still Dialogue's serif and
+   curly quotes (so it reads as speech), but Bold's blue glow instead of
+   violet (so the emphasis stays visible). Covers both nesting orders
+   markdown can produce, and :has() catches the quote marks — which belong
+   to the outer <q> — when a <strong> sits anywhere inside it. */
+html.sc-style-dialogue.sc-style-bold div[id^="message-"] strong q,
+html.sc-style-dialogue.sc-style-bold div[id^="message-"] q strong {
+  color: var(--sc-azure-bright) !important;
+  text-shadow:
+    0 0 12px rgba(var(--sc-info-rgb), 0.4),
+    0 0 28px rgba(var(--sc-azure-deep-rgb), 0.22);
+}
+
+html.sc-style-dialogue.sc-style-bold div[id^="message-"] strong q::before,
+html.sc-style-dialogue.sc-style-bold div[id^="message-"] strong q::after,
+html.sc-style-dialogue.sc-style-bold div[id^="message-"] q:has(strong)::before,
+html.sc-style-dialogue.sc-style-bold div[id^="message-"] q:has(strong)::after {
+  color: var(--sc-azure-bright);
+  text-shadow:
+    0 0 8px rgba(var(--sc-info-rgb), 0.65),
+    0 0 18px rgba(var(--sc-azure-deep-rgb), 0.35);
 }
 
 /* Horizontal rule — restore --- which SpicyChat hides */
