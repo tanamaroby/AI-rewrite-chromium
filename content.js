@@ -52,6 +52,7 @@
   let scNumberedListStyle = true;
   let scSeparatorStyle = true;
   let scThoughtStyle = true;
+  let scScrollbarStyle = true;
   let stylerBoldEnabled = true;
   let stylerItalicEnabled = true;
   let stylerStrikethroughEnabled = true;
@@ -102,6 +103,7 @@
     "scNumberedListStyle",
     "scSeparatorStyle",
     "scThoughtStyle",
+    "scScrollbarStyle",
     "stylerBoldEnabled",
     "stylerItalicEnabled",
     "stylerStrikethroughEnabled",
@@ -179,6 +181,7 @@
       scNumberedListStyle = data.scNumberedListStyle !== false;
       scSeparatorStyle = data.scSeparatorStyle !== false;
       scThoughtStyle = data.scThoughtStyle !== false;
+      scScrollbarStyle = data.scScrollbarStyle !== false;
       stylerBoldEnabled = data.stylerBoldEnabled !== false;
       stylerItalicEnabled = data.stylerItalicEnabled !== false;
       stylerStrikethroughEnabled = data.stylerStrikethroughEnabled !== false;
@@ -196,6 +199,7 @@
         document.documentElement.classList.toggle("sc-style-blockquote", scBlockquoteStyle);
         document.documentElement.classList.toggle("sc-style-numbered", scNumberedListStyle);
         document.documentElement.classList.toggle("sc-style-separator", scSeparatorStyle);
+        document.documentElement.classList.toggle("sc-style-scrollbar", scScrollbarStyle);
         document.documentElement.classList.toggle(
           "sc-inject-thoughts-hidden",
           !scThoughtStyle,
@@ -1496,11 +1500,39 @@
           (style.overflowY === "auto" || style.overflowY === "scroll")
         ) {
           chatScroller = el;
+          el.classList.add("ai-chat-scroller");
           return el;
         }
         el = el.parentElement;
       }
       return null;
+    }
+
+    // Tags the newest message with .ai-message-latest so CSS can scope
+    // costlier looping animations (bracket pulse, dialogue quote glow) to
+    // just that one message instead of every message in the whole loaded
+    // scrollback — the cost then stays flat regardless of chat length.
+    // Only ever re-tags on an actual promotion, so classList churn (and any
+    // animation restart) happens once per new message, not once per
+    // mutation batch during streaming.
+    let latestMessageEl = null;
+    function markLatestMessage(candidates) {
+      if (latestMessageEl && !latestMessageEl.isConnected) latestMessageEl = null;
+      let newest = latestMessageEl;
+      for (const el of candidates) {
+        if (!el?.isConnected) continue;
+        if (
+          !newest ||
+          (newest.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)
+        ) {
+          newest = el;
+        }
+      }
+      if (newest && newest !== latestMessageEl) {
+        latestMessageEl?.classList.remove("ai-message-latest");
+        newest.classList.add("ai-message-latest");
+        latestMessageEl = newest;
+      }
     }
 
     const scheduleMount = (mutations) => {
@@ -1541,6 +1573,7 @@
         mountAiMessageMarkdown(roots);
         mountAiMessageBrackets(roots);
         mountAiMessageThoughts(roots);
+        markLatestMessage(roots ?? document.querySelectorAll('div[id^="message-"]'));
 
         if (atBottom && scroller) scroller.scrollTop = scroller.scrollHeight;
       });
@@ -1549,6 +1582,7 @@
     mountAiMessageMarkdown();
     mountAiMessageBrackets();
     mountAiMessageThoughts();
+    markLatestMessage(document.querySelectorAll('div[id^="message-"]'));
     const obs = new MutationObserver(scheduleMount);
     obs.observe(document.body, { childList: true, subtree: true });
   }

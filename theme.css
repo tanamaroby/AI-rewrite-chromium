@@ -184,6 +184,11 @@
   --sc-azure-bright: #d9ecff; /* bold-emphasis text fill */
   --sc-azure-deep-rgb: 37, 99, 235; /* #2563eb — outer glow stop, paired with --sc-info-rgb for the inner stop */
 
+  /* ---- Dialogue quotation marks — hot pink, swapped in for the default
+     violet for a sultrier "spoken aloud" accent ---- */
+  --sc-hotpink-rgb: 255, 45, 141; /* #ff2d8d */
+  --sc-hotpink-deep-rgb: 219, 39, 119; /* #db2777 — deeper outer-glow stop */
+
   --sc-lavender-soft: #ddd6fe; /* blockquote & scene-fill-btn text, table header text */
   --sc-lavender-white: #f5f3ff; /* scene-fill-btn hover text */
   --sc-pink-soft: #ffcdd2; /* rewrite toast error text */

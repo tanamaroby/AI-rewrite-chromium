@@ -1671,6 +1671,7 @@
       "scNumberedListStyle",
       "scSeparatorStyle",
       "scThoughtStyle",
+      "scScrollbarStyle",
     ];
 
     // Each entry describes one injectable style feature and maps to a storage key.
@@ -1687,7 +1688,7 @@
         name: "Bracket Emphasis",
         description:
           "Highlights [scene bracket] content — location, outfit, time, status — as a dark card with a cool cyan corner-frame and a faint scanline texture, set in a sharp monospace so it reads as a system readout rather than prose. Deliberately colder than the violet used everywhere else.",
-        note: "Toggling off instantly collapses existing brackets back to plain text via CSS.",
+        note: "The corner-frame only breathes on the newest message in the chat — every earlier one keeps the same glow, just held still, so the animation stays cheap regardless of how long the scrollback gets. That newest card also gets a one-time ripple ring expanding outward as it appears, on top of the breathe. Toggling off instantly collapses existing brackets back to plain text via CSS.",
       },
       {
         key: "scBracketPipeNewline",
@@ -1701,7 +1702,7 @@
         name: "Thought Parentheses",
         description:
           "Highlights a standalone (round bracket) thought with a soft, italic literary-serif inner-monologue bubble — a different voice from both narration and spoken dialogue below. Only applies when the parenthetical is alone on its own line; parentheses used mid-sentence are always left untouched.",
-        note: "Toggling off instantly collapses existing thought bubbles back to plain text via CSS.",
+        note: "On the newest message, the bubble drifts with a slow 3.4s glow instead of sitting static — unhurried, unlike the brisker pulses elsewhere. Toggling off instantly collapses existing thought bubbles back to plain text via CSS.",
       },
       {
         key: "scPlainStyle",
@@ -1714,19 +1715,21 @@
         name: "Action Text Style",
         description:
           "Replaces SpicyChat's sky-blue italic for *action* narration with an upright geometric sans in muted lavender — a distinct 'stage direction' voice, easier to read across long passages.",
+        note: "Action on the newest message gets a single quick brighten-then-fade flash instead of a lingering glow — narration reads as crisp and direct, not moody.",
       },
       {
         key: "scDialogueStyle",
         name: "Dialogue Style",
         description:
-          "Renders \"quoted dialogue\" (rendered by SpicyChat as <q> elements) in a warmer literary serif at a slightly larger size, with glowing curly quotes for a spoken-aloud feel.",
+          "Renders \"quoted dialogue\" (rendered by SpicyChat as <q> elements) in a warmer literary serif at a slightly larger size, with glowing hot-pink curly quotes for a sultrier spoken-aloud feel.",
+        note: "The glow only pulses on quotes inside the newest message — everywhere earlier in the scrollback it holds at the same brightness instead of looping, so the effect stays cheap no matter how long the chat gets.",
       },
       {
         key: "scBoldStyle",
         name: "Bold Glow",
         description:
-          "Adds a soft ambient blue glow and firmer weight to **bold** text — a different hue from the violet used elsewhere, so emphasis stands out as its own thing instead of blending in.",
-        note: "With Dialogue Style also on, bolded dialogue keeps this blue glow instead of Dialogue's usual violet one, so a bolded quote never quietly blends back into an ordinary one.",
+          "Adds a soft ambient blue glow, firmer weight, and a one-time satin shimmer sweep to **bold** text as it appears — a different hue from the violet used elsewhere, so emphasis stands out as its own thing instead of blending in.",
+        note: "The shimmer plays once per bold span everywhere, so it stays cheap regardless of chat length — but on the newest message specifically, it's also followed by a continuing glow pulse and a quick elastic bounce as the text pops in. With Dialogue Style also on, bolded dialogue keeps this blue glow instead of Dialogue's usual pink one, so a bolded quote never quietly blends back into an ordinary one.",
       },
       {
         key: "scBulletStyle",
@@ -1739,6 +1742,7 @@
         name: "Blockquote Style",
         description:
           "Styles > blockquotes as an incoming transmission feed — the same sharp monospace as scene brackets, dark background, glowing ▶ marker — for system updates and log entries.",
+        note: "On the newest message, the ▶ marker flickers like a live signal instead of sitting still.",
       },
       {
         key: "scNumberedListStyle",
@@ -1751,6 +1755,13 @@
         name: "Separator Style",
         description:
           "Renders --- dividers as a glowing purple gradient rule instead of the blank space SpicyChat shows by default.",
+      },
+      {
+        key: "scScrollbarStyle",
+        name: "Chat Scrollbar",
+        description:
+          "Restyles the chat pane's scrollbar with a slim violet-to-pink gradient thumb instead of the browser default.",
+        note: "One persistent bar the browser repaints natively on scroll — costs nothing extra as the chat history grows.",
       },
     ];
 
