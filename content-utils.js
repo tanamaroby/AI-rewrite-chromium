@@ -19,6 +19,14 @@
     return /^\*\*[^*\n]+:\*\*/.test(t);
   }
 
+  // A standalone --- (3+ hyphens, nothing else on the line) — a markdown
+  // thematic-break divider, not prose. Wrapping it in asterisks would turn
+  // it into what looks like italicized text instead of a scene break.
+  function isSeparatorLine(line) {
+    const t = line.trim();
+    return /^-{3,}$/.test(t);
+  }
+
   // Strips stray single asterisks from a line while leaving any **bold**
   // pairs fully intact — used by fmtStripAsterisks when fmtPreserveBold is
   // on, so mid-sentence emphasis survives even outside a speaker-tag line.
@@ -56,6 +64,8 @@
       if (opts && opts.fmtPreserveBlockquotes && isBlockquoteLine(trimmed))
         return chunk;
       if (opts && opts.fmtPreserveSpeakerTags && isSpeakerTagLine(trimmed))
+        return chunk;
+      if (opts && opts.fmtPreserveSeparator && isSeparatorLine(trimmed))
         return chunk;
       const leadWS = chunk.slice(0, chunk.length - chunk.trimStart().length);
       const trailWS = chunk.slice(chunk.trimEnd().length);

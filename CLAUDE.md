@@ -83,6 +83,7 @@ Pure formatter logic lives in `content-utils.js` (`formatText(text, opts)`) and 
 - `fmtPreserveLists` — leaves `- item` / `1. item` lines unwrapped and un-spaced
 - `fmtPreserveBlockquotes` — leaves `> quoted` lines unwrapped and un-spaced
 - `fmtPreserveSpeakerTags` — leaves `**Name:** message` lines untouched: asterisks in the `**Name:**` tag survive `fmtStripAsterisks`, the line is skipped by the auto-wrap-in-asterisks pass, and paragraph-spacing won't insert blank lines between consecutive tagged lines
+- `fmtPreserveSeparator` — leaves a standalone `---` line (3+ hyphens, nothing else) unwrapped in asterisks — a scene-break divider, not prose to italicize
 - `fmtPreserveBold` — protects any `**bold**` pair, even mid-sentence (not just whole speaker-tag lines): `fmtStripAsterisks` skips over it (`stripAsterisksPreservingBold`), and the auto-wrap-in-asterisks pass wraps only the plain-text runs around it instead of consuming it (`wrapPreservingBold`, both in `content-utils.js`) — deliberately *not* handled via the same whole-text pattern-extraction as `fmtUnwrapBrackets`/`fmtUnwrapParens`, since pulling `**bold**` out at that stage would strip a leading `**Name:**` off a speaker-tag line before `fmtPreserveSpeakerTags` ever sees the full line. `fmtActionPunctuation`'s regex also uses a lookaround so it never reaches into a bold pair and corrupts it with a stray period
 - `fmtExtraDelimiters` — user-defined character pairs (string of even length) treated like brackets
 

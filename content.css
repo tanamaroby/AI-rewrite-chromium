@@ -392,6 +392,84 @@ span.leading-6[data-ai-md-table] {
   }
 }
 
+/* Back-to-back [bracket] cards — e.g. the formatter's [STATS: ...] /
+   [PARTY: ...] / [RESOURCES: ...] lines — read as one grouped readout
+   instead of three separate floating cards with a gap between each.
+   "Back to back" in the DOM means only a <br> sits between two
+   .ai-bracket-scene spans (see wrapDelimitedInNode in content.js — each
+   standalone-line bracket becomes its own block card, and consecutive
+   ones are separated by exactly the one soft line-break between them in
+   the source text). Selectors below key off that <br> directly rather
+   than guessing from spacing, so it only kicks in for genuinely adjacent
+   brackets — one on its own between paragraphs of prose still gets the
+   full standalone card treatment untouched. */
+
+/* The connecting <br> is now purely redundant (each card is already
+   display: block and starts its own line) — hiding it removes the blank
+   line's worth of gap between grouped cards instead of trying to cancel
+   it out with a compensating negative margin. */
+.ai-bracket-scene + br:has(+ .ai-bracket-scene) {
+  display: none;
+}
+
+/* A card with another grouped card right below it: flatten its bottom
+   edge so the two sit flush, and trim its own padding — a standalone
+   card's padding is sized for a card that has to carry its own visual
+   weight; a row in a group doesn't. */
+.ai-bracket-scene:has(+ br + .ai-bracket-scene) {
+  padding-top: 9px;
+  padding-bottom: 9px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: 1px solid rgba(var(--sc-system-accent-rgb), 0.16);
+}
+
+/* A card with another grouped card right above it: flatten its top edge
+   to match, and don't redraw a second divider line right against the one
+   the row above already drew. */
+.ai-bracket-scene + br + .ai-bracket-scene {
+  padding-top: 9px;
+  padding-bottom: 9px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-top: none;
+}
+
+/* Corner ticks only belong at the group's true outer corners — a tick
+   marking a seam between two fused rows would read as a stray decoration,
+   not a corner. First row keeps just its top pair, last row just its
+   bottom pair, and a middle row (matches both patterns below at once)
+   gets neither — the extra-specific middle selector has to come after
+   (and out-specify) the two single-edge ones, or a middle row would only
+   ever pick up whichever of the two happened to win the tie. */
+.ai-bracket-scene:has(+ br + .ai-bracket-scene)::before {
+  background-image:
+    linear-gradient(to right, rgba(var(--sc-system-accent-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to bottom, rgba(var(--sc-system-accent-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to left, rgba(var(--sc-system-accent-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to bottom, rgba(var(--sc-system-accent-rgb), 0.95) 2.5px, transparent 2.5px);
+  background-size:
+    18px 2.5px, 2.5px 18px,
+    18px 2.5px, 2.5px 18px;
+  background-position: top left, top left, top right, top right;
+}
+
+.ai-bracket-scene + br + .ai-bracket-scene::before {
+  background-image:
+    linear-gradient(to right, rgba(var(--sc-system-accent-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to top, rgba(var(--sc-system-accent-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to left, rgba(var(--sc-system-accent-rgb), 0.95) 2.5px, transparent 2.5px),
+    linear-gradient(to top, rgba(var(--sc-system-accent-rgb), 0.95) 2.5px, transparent 2.5px);
+  background-size:
+    18px 2.5px, 2.5px 18px,
+    18px 2.5px, 2.5px 18px;
+  background-position: bottom left, bottom left, bottom right, bottom right;
+}
+
+.ai-bracket-scene + br + .ai-bracket-scene:has(+ br + .ai-bracket-scene)::before {
+  background-image: none;
+}
+
 /* Inline bracket chip — when a [bracket] annotation shares its source line
    with other text (see hasInlineTextBefore/After in content.js), the
    full-width block card would force that text onto its own line below it.
@@ -810,74 +888,97 @@ html.sc-style-numbered div[id^="message-"] ol li::before {
    Blue rather than another shade of violet, so emphasis reads as its own
    thing next to the rest of the (mostly violet) message styling.
 
-   A satin highlight sweeps across the text once when it first appears, via
-   background-clip: text animated by background-position. That property
-   isn't compositor-only like transform/opacity — it repaints each frame —
-   but this runs ONCE (animation-iteration-count defaults to 1) and then
-   goes fully idle, so the cost is bounded by how much bold text just
-   appeared, never by how long the chat's scrollback is. An infinite loop
-   here (like the dialogue quotes' pulse) would instead mean every bold span
-   across the whole history repainting forever, including off-screen ones —
-   deliberately avoided. color stays as a fallback for the rare case
-   background-clip: text isn't supported. */
+   color/text-shadow are set directly, plainly, here — no background-clip:
+   text trick. That was the original way the shimmer sweep below was built,
+   but background-clip: text + -webkit-text-fill-color: transparent doesn't
+   just make ordinary glyphs transparent-and-refilled — for an emoji, the
+   browser uses its glyph purely as a clipping mask and paints the gradient
+   through it, discarding the emoji's own embedded color layers entirely.
+   An emoji inside **bold** text rendered as a flat monochrome silhouette
+   because of exactly this. The sweep is now a separate overlay (::after,
+   below) that passes in front of the glyphs instead of clipping through
+   them, so this element's own color is never touched — emoji included.
+
+   display: inline-block (not plain inline) gives the ::after overlay below
+   a properly-defined box to anchor to. This was originally left off here —
+   only added for the latest message's bounce, which separately needs
+   inline-block for transform to apply at all — on the theory that a plain
+   inline position: relative element would still work as a containing block
+   for its own absolutely-positioned ::after. It doesn't, reliably: Chrome's
+   containing-block resolution for an absolutely-positioned box generated by
+   a non-atomic inline ancestor is a genuinely messier spec case than for a
+   block or inline-block box, and in practice the overlay's inset: 0 could
+   resolve against the wrong box — rendering as a stray sliver of the
+   gradient elsewhere in the layout instead of sitting over the text.
+   inline-block does force a long bold phrase onto one unbreakable line,
+   which is a real trade-off, but a rare cosmetic one next to a rendering
+   bug happening on every bold span.
+
+   Clipping the overlay uses clip-path, not overflow: hidden — deliberately.
+   Both visually clip the same way, but they are NOT interchangeable on an
+   inline-block: per spec, an inline-block's baseline is normally "the
+   baseline of its last line box" (i.e. wherever its own text naturally
+   sits — matches the surrounding line correctly), but if its overflow is
+   anything other than visible, the baseline switches to "the bottom margin
+   edge" instead. That's a different anchor point than the rest of the
+   line is using, and it's exactly what made bold text stand at a different
+   line height than the plain text around it. clip-path isn't part of that
+   spec rule at all, so it clips without touching the baseline. */
 html.sc-style-bold div[id^="message-"] strong {
+  position: relative;
+  display: inline-block;
+  clip-path: inset(0);
   color: var(--sc-azure-bright) !important;
   font-weight: 700;
   letter-spacing: 0.01em;
   text-shadow:
     0 0 10px rgba(var(--sc-info-rgb), 0.7),
     0 0 26px rgba(var(--sc-azure-deep-rgb), 0.35);
-  background-image: linear-gradient(
+}
+
+/* The satin highlight itself — a translucent diagonal band that sweeps
+   once across via transform (compositor-only, cheaper than the old
+   background-position approach even before counting the emoji fix) and
+   fades out, clipped to the text's own box by clip-path above. */
+html.sc-style-bold div[id^="message-"] strong::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
     100deg,
-    var(--sc-azure-bright) 0%,
-    var(--sc-azure-bright) 42%,
-    #ffffff 50%,
-    var(--sc-azure-bright) 58%,
-    var(--sc-azure-bright) 100%
+    transparent 30%,
+    rgba(255, 255, 255, 0.55) 48%,
+    rgba(255, 255, 255, 0.55) 52%,
+    transparent 70%
   );
-  background-size: 300% 100%;
-  background-position: 100% 0;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  pointer-events: none;
+  transform: translateX(-140%);
   animation: ai-bold-shimmer 1.4s ease-out;
 }
 
 @keyframes ai-bold-shimmer {
   from {
-    background-position: 100% 0;
+    transform: translateX(-140%);
   }
   to {
-    background-position: 0% 0;
+    transform: translateX(140%);
   }
 }
 
-/* On the latest message only, the one-shot shimmer is followed by a gentle
-   continuing pulse — starts right as the shimmer finishes (2.6s cycle,
-   1.4s delay) instead of overlapping it — plus a one-time elastic bounce as
-   it appears. Three animations, three different properties (background-
-   position, text-shadow, transform), so they layer freely with no risk of
-   one clobbering another the way same-property animations would. transform
-   is also the cheapest kind of motion available — compositor-only, doesn't
-   repaint — so this is the least costly effect in the whole file, before
-   even accounting for it being scoped to one message.
-
-   display: inline-block is required for transform to apply reliably —
-   plain inline elements aren't guaranteed to honor `transform` at all per
-   spec, only atomic/inline-block-level ones are. Safe here since bold spans
-   are short, effectively single-line text; scoped to latest only so it
-   never risks nudging historical layout.
-
-   animation is a shorthand, so this has to restate ai-bold-shimmer
-   alongside the others rather than only adding the new one, or the earlier
-   animations would get silently dropped for the latest message. Needs the
-   fully compound selector (not just .ai-message-latest strong) to actually
-   out-specificity the base rule above, which also sets animation on the
-   same element. */
-html.sc-style-bold div[id^="message-"].ai-message-latest strong {
-  display: inline-block;
+/* On the latest message only, the shimmer overlay above is followed by a
+   gentle continuing glow pulse — starts right as the shimmer finishes
+   (2.6s cycle, 1.4s delay) — plus a one-time elastic bounce as the text
+   appears. Both run on the strong element itself; the shimmer lives on
+   ::after, a separate box, so there's no animation-shorthand collision to
+   route around here. transform is the cheapest kind of motion available —
+   compositor-only, doesn't repaint — so the bounce is the least costly
+   effect in the whole file, before even accounting for it being scoped to
+   one message. display: inline-block is already set on the base rule above
+   (every bold span needs it, not just this one, for the overlay's
+   positioning) — it's also what makes the bounce's transform apply
+   reliably here. */
+html.sc-style-bold .ai-message-latest strong {
   animation:
-    ai-bold-shimmer 1.4s ease-out,
     ai-bold-pulse 2.6s ease-in-out 1.4s infinite,
     ai-bold-bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -912,11 +1013,12 @@ html.sc-style-bold div[id^="message-"].ai-message-latest strong {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html.sc-style-bold div[id^="message-"] strong,
-  html.sc-style-bold div[id^="message-"].ai-message-latest strong {
+  html.sc-style-bold div[id^="message-"] strong::after {
     animation: none;
-    background-image: none;
-    -webkit-text-fill-color: initial;
+    display: none;
+  }
+  html.sc-style-bold .ai-message-latest strong {
+    animation: none;
   }
 }
 

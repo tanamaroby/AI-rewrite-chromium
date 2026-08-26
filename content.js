@@ -20,6 +20,7 @@
   let fmtPreserveLists = true;
   let fmtPreserveBlockquotes = true;
   let fmtPreserveSpeakerTags = true;
+  let fmtPreserveSeparator = true;
   let fmtPreserveBold = true;
   let fmtUnwrapBrackets = true;
   let fmtUnwrapParens = true;
@@ -76,6 +77,7 @@
     "fmtPreserveLists",
     "fmtPreserveBlockquotes",
     "fmtPreserveSpeakerTags",
+    "fmtPreserveSeparator",
     "fmtPreserveBold",
     "fmtUnwrapBrackets",
     "fmtUnwrapParens",
@@ -139,6 +141,7 @@
       fmtPreserveLists = data.fmtPreserveLists !== false;
       fmtPreserveBlockquotes = data.fmtPreserveBlockquotes !== false;
       fmtPreserveSpeakerTags = data.fmtPreserveSpeakerTags !== false;
+      fmtPreserveSeparator = data.fmtPreserveSeparator !== false;
       fmtPreserveBold = data.fmtPreserveBold !== false;
       fmtUnwrapBrackets = data.fmtUnwrapBrackets !== false;
       fmtUnwrapParens = data.fmtUnwrapParens !== false;
@@ -327,10 +330,27 @@
     return raw;
   }
 
+  // One [HEADER: ...] line per category — STATS / PARTY / RESOURCES — instead
+  // of a single [TRACKER | ...] blob. Keep this in sync with the headers
+  // buildTrackerSummaryForFormat() actually emits below.
+  //
+  // The square brackets aren't just cosmetic: handleFormat() reformats the
+  // textbox's FULL current value on every Ctrl+M press, including whatever
+  // summary a previous press already inserted — there's no "only touch the
+  // new text" step. fmtUnwrapBrackets (see content-utils.js) treats a
+  // [bracketed] span as already-formatted and leaves it completely alone;
+  // without the brackets, the next format pass would see a plain sentence
+  // and auto-wrap it in *asterisks* like ordinary action text, corrupting
+  // the header AND breaking the check below that's meant to stop a second
+  // press from stacking a duplicate summary underneath the first.
+  const TRACKER_HEADER_NAMES = ["STATS", "PARTY", "RESOURCES"];
+
   function hasTrackerHeaderAtTop(text) {
     if (!text) return false;
-    // Matches both legacy multi-line [TRACKER] and new single-line [TRACKER | ...]
-    return /^\s*\[TRACKER(?:\]|\s*\|)/.test(String(text));
+    const firstLine = String(text).trimStart().split("\n", 1)[0] || "";
+    return TRACKER_HEADER_NAMES.some((name) =>
+      new RegExp(`^\\[${name}:`).test(firstLine),
+    );
   }
 
   function formatResourceValue(raw) {
@@ -355,18 +375,17 @@
       const resources = Array.isArray(data[keys.resources])
         ? data[keys.resources]
         : [];
-      const parts = [];
 
-      // Stats — first, name: value (notes)
-      stats.forEach((s) => {
+      // Stats — name: value (notes)
+      const statsParts = stats.map((s) => {
         const name = String(s?.name || "").trim() || "(unnamed)";
         const value = String(s?.value ?? "").trim() || "—";
         const notes = String(s?.notes || "").trim();
-        parts.push(notes ? `${name}: ${value} (${notes})` : `${name}: ${value}`);
+        return notes ? `${name}: ${value} (${notes})` : `${name}: ${value}`;
       });
 
-      // Party members — all fields packed into parentheses, pipe-separated
-      party.forEach((m) => {
+      // Party members — all fields packed into parentheses
+      const partyParts = party.map((m) => {
         const name = String(m?.name || "").trim() || "(unnamed)";
         const notes = String(m?.notes || "").trim();
         const equipment = String(m?.equipment || "").trim();
@@ -375,18 +394,29 @@
         if (equipment) detail.push(`equip: ${equipment}`);
         if (affiliation) detail.push(`aff: ${affiliation}`);
         if (notes) detail.push(notes);
-        parts.push(`${name} (${detail.join("; ")})`);
+        return `${name} (${detail.join("; ")})`;
       });
 
       // Resources — formatted value with thousand separators / compact suffix
-      resources.forEach((r) => {
+      const resourceParts = resources.map((r) => {
         const name = String(r?.name || "").trim() || "(unnamed)";
         const value = formatResourceValue(r?.value);
         const notes = String(r?.notes || "").trim();
-        parts.push(notes ? `${name}: ${value} (${notes})` : `${name}: ${value}`);
+        return notes ? `${name}: ${value} (${notes})` : `${name}: ${value}`;
       });
 
-      done(parts.length ? `[TRACKER | ${parts.join(" | ")}]` : "");
+      // One [HEADER: ...] line per category, items pipe-separated inside the
+      // brackets — only for categories that actually have something in
+      // them. No single outer [TRACKER] wrapper any more, but each line
+      // keeps its own brackets (see the comment on hasTrackerHeaderAtTop
+      // above for why) — and TRACKER_HEADER_NAMES there has to match these.
+      const lines = [];
+      if (statsParts.length) lines.push(`[STATS: ${statsParts.join(" | ")}]`);
+      if (partyParts.length) lines.push(`[PARTY: ${partyParts.join(" | ")}]`);
+      if (resourceParts.length)
+        lines.push(`[RESOURCES: ${resourceParts.join(" | ")}]`);
+
+      done(lines.join("\n"));
     });
   }
 
@@ -410,6 +440,7 @@
       fmtPreserveLists,
       fmtPreserveBlockquotes,
       fmtPreserveSpeakerTags,
+      fmtPreserveSeparator,
       fmtPreserveBold,
       fmtUnwrapBrackets,
       fmtUnwrapParens,

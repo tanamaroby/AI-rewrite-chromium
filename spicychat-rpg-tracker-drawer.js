@@ -1688,13 +1688,13 @@
         name: "Bracket Emphasis",
         description:
           "Highlights [scene bracket] content — location, outfit, time, status — as a dark card with a cool cyan corner-frame and a faint scanline texture, set in a sharp monospace so it reads as a system readout rather than prose. Deliberately colder than the violet used everywhere else.",
-        note: "The corner-frame only breathes on the newest message in the chat — every earlier one keeps the same glow, just held still, so the animation stays cheap regardless of how long the scrollback gets. That newest card also gets a one-time ripple ring expanding outward as it appears, on top of the breathe. Toggling off instantly collapses existing brackets back to plain text via CSS.",
+        note: "The corner-frame only breathes on the newest message in the chat — every earlier one keeps the same glow, just held still, so the animation stays cheap regardless of how long the scrollback gets. That newest card also gets a one-time ripple ring expanding outward as it appears, on top of the breathe. Back-to-back brackets — like the formatter's [STATS] / [PARTY] / [RESOURCES] lines — fuse into one grouped readout with a thin divider between rows instead of stacking as separate cards. Toggling off instantly collapses existing brackets back to plain text via CSS.",
       },
       {
         key: "scBracketPipeNewline",
         name: "Expand pipes as lines",
         description:
-          "Renders \" | \" separators inside brackets as newlines so [TRACKER | Dani | Mimi] displays as a multi-line block instead of a single dense line.",
+          "Renders \" | \" separators inside brackets as newlines so [Party | Dani | Mimi] displays as a multi-line block instead of a single dense line.",
         subOf: "scBracketEmphasis",
       },
       {
