@@ -820,6 +820,46 @@
       background: rgba(var(--sc-rest-panel-rgb), 0.58);
     }
     .abl-rest-notes::placeholder { color: var(--sc-rest-notes-placeholder); }
+    .abl-rest-detail-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .abl-rest-detail-label {
+      color: var(--sc-rest-hint);
+      font-size: 10.5px;
+      line-height: 1.3;
+    }
+    .abl-rest-toggle { position: relative; width: 30px; height: 17px; flex-shrink: 0; cursor: pointer; }
+    .abl-rest-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .abl-rest-toggle-track {
+      position: absolute;
+      inset: 0;
+      background: rgba(var(--sc-rest-panel-dark-rgb), 0.6);
+      border: 1px solid rgba(var(--sc-wood-border-rgb), 0.4);
+      border-radius: 999px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .abl-rest-toggle-track::after {
+      content: "";
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      left: 2px;
+      top: 2px;
+      border-radius: 50%;
+      background: var(--sc-rest-hint);
+      transition: transform 0.15s, background 0.15s;
+    }
+    .abl-rest-toggle input:checked ~ .abl-rest-toggle-track {
+      background: linear-gradient(180deg, rgba(var(--sc-rest-btn-rgb), 0.9), rgba(var(--sc-rest-btn-dark-rgb), 0.9));
+      border-color: rgba(var(--sc-wood-border-hover-rgb), 0.6);
+    }
+    .abl-rest-toggle input:checked ~ .abl-rest-toggle-track::after {
+      transform: translateX(13px);
+      background: var(--sc-rest-gold-text);
+    }
 
     /* ── Party Tracker ── */
     .party-item {
@@ -1272,6 +1312,13 @@
                   <button id="sc-np-abl-rest-btn" class="abl-rest-btn">Take Rest</button>
                 </div>
                 <textarea id="sc-np-abl-rest-notes" class="abl-rest-notes" rows="1" data-ai-rewriter-ignore="1" placeholder="Rest notes… campfire watch, prayer, tavern night, dawn march…"></textarea>
+                <div class="abl-rest-detail-row">
+                  <span class="abl-rest-detail-label">Detailed rest log — list every ability</span>
+                  <label class="abl-rest-toggle">
+                    <input type="checkbox" id="sc-np-abl-rest-detailed" data-ai-rewriter-ignore="1" />
+                    <span class="abl-rest-toggle-track"></span>
+                  </label>
+                </div>
               </div>
               <div id="sc-np-abl-list"></div>
             </div>

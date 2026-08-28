@@ -305,8 +305,31 @@
     const ablListEl = document.getElementById("sc-np-abl-list");
     const ablRestBtn = document.getElementById("sc-np-abl-rest-btn");
     const ablRestNotesEl = document.getElementById("sc-np-abl-rest-notes");
+    const ablRestDetailedEl = document.getElementById("sc-np-abl-rest-detailed");
 
     let ablSaveTimer = null;
+
+    // Global preference (not per-chat, like the abilities data itself) —
+    // off by default. Off logs a single compact "all abilities restored"
+    // line; on restores the previous behavior of listing every ability's
+    // before/after state.
+    let restDetailedLog = false;
+    if (ablRestDetailedEl) {
+      chrome.storage.sync.get(["scAbilityRestDetailedLog"], (d) => {
+        restDetailedLog = d.scAbilityRestDetailedLog === true;
+        ablRestDetailedEl.checked = restDetailedLog;
+      });
+      ablRestDetailedEl.addEventListener("change", () => {
+        restDetailedLog = ablRestDetailedEl.checked;
+        chrome.storage.sync.set({ scAbilityRestDetailedLog: restDetailedLog });
+      });
+      chrome.storage.onChanged.addListener((changes, area) => {
+        if (area === "sync" && "scAbilityRestDetailedLog" in changes) {
+          restDetailedLog = changes.scAbilityRestDetailedLog.newValue === true;
+          ablRestDetailedEl.checked = restDetailedLog;
+        }
+      });
+    }
 
     function newAbility() {
       return {
@@ -346,6 +369,13 @@
       return `[Rest: ${restoredCount} restored — ${summary}${notePart}]`;
     }
 
+    // Detailed rest log toggle off (default): no per-ability breakdown, just
+    // the fact that everyone's topped up plus whatever notes were typed.
+    function formatAbilityRestLogLineCompact(note) {
+      const notePart = note ? ` — Notes: ${note}` : "";
+      return `[Rest: All abilities restored${notePart}]`;
+    }
+
     function applyAbilityRest() {
       const abilities = getAbilities();
       const note = (ablRestNotesEl?.value || "").trim();
@@ -373,7 +403,11 @@
       });
 
       save();
-      addLog(formatAbilityRestLogLine(changes, note));
+      addLog(
+        restDetailedLog
+          ? formatAbilityRestLogLine(changes, note)
+          : formatAbilityRestLogLineCompact(note),
+      );
       if (ablRestNotesEl) {
         ablRestNotesEl.value = "";
         autoResizeTextarea(ablRestNotesEl);
