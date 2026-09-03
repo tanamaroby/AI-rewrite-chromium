@@ -172,7 +172,7 @@ All "Add" actions log **on blur** (after the user fills in the name/text), so th
 - `export*()` functions — one per section, return single-line `[…]` string
 - `exportAll()` — joins all section exports with `\n`
 - `applyResOp(op)` — handles resource add/use/set, logs with before→after format
-- `renderAbl()` — renders ability slots as visual Use buttons (one per max, up to 10); each click decrements and logs
+- `renderAbl()` — delegates to the Abilities section's own `render()`, which draws each ability's uses as a pip track (one glowing orb per use, up to 24): click a lit pip to spend it, click a dark one to give it back. A "Multi-Use mode" switch (in-memory only, off by default) controls logging: off, every pip click logs immediately; on, clicks batch silently until the switch flips back off, at which point each ability that changed logs once (`recordAblUse`/`flushAblUse`/`flushAllPendingAblUse` in `spicychat-rpg-tracker-sections.js`) — a burst that nets to zero change logs nothing at all
 - `autoResizeTextarea(el)` — auto-sizes textareas by scrollHeight
 
 ### SpicyChat RP events (handled in `content.js`)

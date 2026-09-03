@@ -705,15 +705,35 @@
       color: var(--sc-slate-200); font-size: 12px; font-family: inherit; caret-color: var(--sc-accent-2); min-width: 0;
     }
     .abl-name-input::placeholder { color: var(--sc-slate-700); }
-    .abl-use-btn {
-      width: 22px; height: 22px; border-radius: 4px;
-      border: 1px solid rgba(var(--sc-accent-rgb), 0.28); background: rgba(var(--sc-accent-rgb), 0.07);
-      color: var(--sc-accent-2); font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.12s, border-color 0.12s;
-    }
-    .abl-use-btn:hover { background: rgba(var(--sc-accent-rgb), 0.2); border-color: rgba(var(--sc-accent-rgb), 0.5); }
     .abl-cur { font-size: 13px; font-weight: 700; color: var(--sc-accent-2); min-width: 18px; text-align: center; }
+    /* Pip track — one glowing orb per use, click to spend, click a spent one
+       to give it back. Replaces a row of identical "Use" text buttons with
+       something that reads at a glance (lit vs. dark = available vs. spent)
+       instead of needing to read the current/max number to know the state. */
+    .abl-pip-track { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 1px 0; }
+    .abl-pip {
+      width: 18px; height: 18px; border-radius: 50%; padding: 0; flex-shrink: 0;
+      border: 1.5px solid rgba(var(--sc-accent-rgb), 0.35);
+      background: rgba(var(--sc-white-rgb), 0.02);
+      cursor: pointer; font-family: inherit;
+      transition: transform 0.12s ease, background 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+    .abl-pip.available {
+      border-color: rgba(var(--sc-accent-2-rgb), 0.85);
+      background: radial-gradient(circle at 32% 28%, var(--sc-accent-2), rgb(var(--sc-accent-rgb)) 75%);
+      box-shadow: 0 0 7px rgba(var(--sc-accent-rgb), 0.55), inset 0 1px 1px rgba(var(--sc-white-rgb), 0.4);
+    }
+    .abl-pip.available:hover {
+      transform: scale(1.16);
+      box-shadow: 0 0 11px rgba(var(--sc-accent-rgb), 0.8), inset 0 1px 1px rgba(var(--sc-white-rgb), 0.5);
+    }
+    .abl-pip.used { border-color: rgba(var(--sc-accent-rgb), 0.18); }
+    .abl-pip.used:hover {
+      transform: scale(1.1);
+      border-color: rgba(var(--sc-accent-2-rgb), 0.6);
+      background: rgba(var(--sc-accent-rgb), 0.12);
+    }
+    .abl-pip-more { font-size: 9.5px; color: var(--sc-slate-700); align-self: center; padding: 0 2px; }
     .abl-sep { font-size: 11px; color: var(--sc-slate-700); }
     .abl-max-input {
       width: 28px; text-align: center; background: rgba(var(--sc-black-rgb), 0.2);
@@ -859,6 +879,49 @@
     .abl-rest-toggle input:checked ~ .abl-rest-toggle-track::after {
       transform: translateX(13px);
       background: var(--sc-rest-gold-text);
+    }
+    /* Violet, not the Rest panel's wood/gold — this toggle governs the
+       ability list generally, not the Rest flow specifically. */
+    .abl-batch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 5px 8px 6px;
+    }
+    .abl-batch-label {
+      color: var(--sc-slate-600);
+      font-size: 10.5px;
+      line-height: 1.3;
+    }
+    .abl-batch-toggle { position: relative; width: 30px; height: 17px; flex-shrink: 0; cursor: pointer; }
+    .abl-batch-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .abl-batch-toggle-track {
+      position: absolute;
+      inset: 0;
+      background: rgba(var(--sc-black-rgb), 0.25);
+      border: 1px solid rgba(var(--sc-accent-rgb), 0.3);
+      border-radius: 999px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .abl-batch-toggle-track::after {
+      content: "";
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      left: 2px;
+      top: 2px;
+      border-radius: 50%;
+      background: var(--sc-slate-600);
+      transition: transform 0.15s, background 0.15s;
+    }
+    .abl-batch-toggle input:checked ~ .abl-batch-toggle-track {
+      background: rgba(var(--sc-accent-rgb), 0.35);
+      border-color: rgba(var(--sc-accent-rgb), 0.65);
+    }
+    .abl-batch-toggle input:checked ~ .abl-batch-toggle-track::after {
+      transform: translateX(13px);
+      background: var(--sc-accent-2);
     }
 
     /* ── Party Tracker ── */
@@ -1319,6 +1382,13 @@
                     <span class="abl-rest-toggle-track"></span>
                   </label>
                 </div>
+              </div>
+              <div class="abl-batch-row">
+                <span class="abl-batch-label">Multi-Use mode — batch pip clicks into one log line until you switch this off</span>
+                <label class="abl-batch-toggle">
+                  <input type="checkbox" id="sc-np-abl-batch-toggle" data-ai-rewriter-ignore="1" />
+                  <span class="abl-batch-toggle-track"></span>
+                </label>
               </div>
               <div id="sc-np-abl-list"></div>
             </div>

@@ -210,12 +210,27 @@
     const patterns = ['"[^"]*"'];
     if (options.fmtUnwrapBrackets) patterns.push("\\[[^\\]]*\\]");
     if (options.fmtUnwrapParens) patterns.push("\\([^)]*\\)");
-    // Note: **bold** is intentionally NOT added here. Unlike brackets/parens
-    // (whose delimiter chars never collide with the wrap), pulling **bold**
-    // out at this whole-text stage would strip the leading **Name:** off a
-    // speaker-tag line before wrapOutsideText's own isSpeakerTagLine check
-    // ever sees the full line — breaking fmtPreserveSpeakerTags. Bold is
-    // instead handled per-line inside wrapOutsideText (see wrapPreservingBold).
+    if (options.fmtPreserveBold) {
+      // Matched here (not just left to wrapPreservingBold below) so a bold
+      // pair whose *entire* inner content is itself a quoted/bracketed span
+      // — e.g. **"Testing"** or **[Testing]** — is captured as one atomic
+      // unit before the quote/bracket pattern above can split it in two.
+      // Splitting left two bare "**" fragments behind, each of which then
+      // got individually re-wrapped in fresh asterisks by wrapOutsideText,
+      // doubling them into "****...****" — the reported bug.
+      //
+      // A **Word:** pair (ending in ":" right before the close) is excluded
+      // here whenever fmtPreserveSpeakerTags is on: matching it at this
+      // whole-text stage would strip that prefix off a speaker-tag line
+      // before wrapOutsideText's own isSpeakerTagLine check ever sees the
+      // full line, breaking that feature. It's left for wrapPreservingBold
+      // to handle per-line instead, which doesn't have that blind spot.
+      patterns.push(
+        options.fmtPreserveSpeakerTags
+          ? "\\*\\*(?:[^*\\n]*[^:*\\n])\\*\\*"
+          : "\\*\\*[^*\\n]+\\*\\*",
+      );
+    }
 
     for (const [open, close] of parseDelimiterPairs(
       options.fmtExtraDelimiters || "",

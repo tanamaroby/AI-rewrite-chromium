@@ -306,8 +306,79 @@
     const ablRestBtn = document.getElementById("sc-np-abl-rest-btn");
     const ablRestNotesEl = document.getElementById("sc-np-abl-rest-notes");
     const ablRestDetailedEl = document.getElementById("sc-np-abl-rest-detailed");
+    const ablBatchToggleEl = document.getElementById("sc-np-abl-batch-toggle");
 
     let ablSaveTimer = null;
+
+    // Batches rapid pip clicks on the same ability into one log line instead
+    // of printing one per click — e.g. tapping an ability's use-pips 3 times
+    // logs once as "used ×3", not three separate lines cluttering the chat
+    // input. Gated by an explicit switch rather than a debounce timer: no
+    // setTimeout/clearTimeout juggling or listener to manage, and no risk of
+    // a delayed log firing after you've already moved on to something else
+    // — the flush point is exactly when the switch goes off, not a guess at
+    // when clicking stopped. In-memory only (not chrome.storage) and off by
+    // default, so it can never be silently "stuck on" from a previous
+    // session — you flip it on right before a burst of uses and off right
+    // after. Off: every pip click logs immediately, one line per click.
+    //
+    // Keyed by the ability object itself (stable across re-renders, since
+    // getAbilities()/render() reuse the same objects rather than cloning)
+    // so it doesn't depend on every ability having a unique id.
+    let ablBatchMode = false;
+    const pendingAblUse = new Map(); // ability -> { startCurrent }
+
+    function flushAblUse(a) {
+      const pending = pendingAblUse.get(a);
+      if (!pending) return;
+      pendingAblUse.delete(a);
+      const net = pending.startCurrent - a.current; // >0 net used, <0 net restored
+      if (net === 0) return; // uses and restores canceled out — nothing to say
+      const notesPart = a.notes ? ` — ${a.notes}` : "";
+      const times = Math.abs(net) > 1 ? ` ×${Math.abs(net)}` : "";
+      if (net > 0) {
+        addLog(
+          `[${a.name || "Ability"} used${times} — ${a.current}/${a.max} remaining${notesPart}]`,
+        );
+      } else {
+        addLog(
+          `[${a.name || "Ability"} restored${times} — ${a.current}/${a.max}${notesPart}]`,
+        );
+      }
+    }
+
+    function flushAllPendingAblUse() {
+      Array.from(pendingAblUse.keys()).forEach(flushAblUse);
+    }
+
+    function cancelPendingAblUse(a) {
+      pendingAblUse.delete(a); // drop silently, no log — Rest/Delete supersede it
+    }
+
+    // Called after `a.current` has already been mutated by one pip click.
+    // `delta` is how much that one click reduced current by (+1 = used one,
+    // so current went down by 1; -1 = restored one, so current went up by
+    // 1) — i.e. current_before = current_after + delta, and a.current here
+    // already IS current_after. In batch mode this just records/updates the
+    // burst's starting value and waits for the switch to flip off. Outside
+    // batch mode it flushes immediately — a "batch" of exactly one click —
+    // which reuses the same net-based message builder, so a single click's
+    // wording is identical to before (no "×1" ever shown).
+    function recordAblUse(a, delta) {
+      let pending = pendingAblUse.get(a);
+      if (!pending) {
+        pending = { startCurrent: a.current + delta };
+        pendingAblUse.set(a, pending);
+      }
+      if (!ablBatchMode) flushAblUse(a);
+    }
+
+    if (ablBatchToggleEl) {
+      ablBatchToggleEl.addEventListener("change", () => {
+        ablBatchMode = ablBatchToggleEl.checked;
+        if (!ablBatchMode) flushAllPendingAblUse();
+      });
+    }
 
     // Global preference (not per-chat, like the abilities data itself) —
     // off by default. Off logs a single compact "all abilities restored"
@@ -378,6 +449,10 @@
 
     function applyAbilityRest() {
       const abilities = getAbilities();
+      // A full rest supersedes any in-flight per-ability use/restore
+      // accounting — drop it rather than let a stale batched log line fire
+      // after everything's already back to max.
+      abilities.forEach(cancelPendingAblUse);
       const note = (ablRestNotesEl?.value || "").trim();
       if (!abilities.length) {
         addLog(
@@ -489,6 +564,7 @@
         resetBtn.className = "abl-reset-btn";
         resetBtn.textContent = "RST";
         resetBtn.addEventListener("click", () => {
+          cancelPendingAblUse(a);
           a.current = a.max;
           save();
           const notesPart = a.notes ? ` (${a.notes})` : "";
@@ -508,6 +584,7 @@
         delBtn.title = "Remove";
         delBtn.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
         delBtn.addEventListener("click", () => {
+          cancelPendingAblUse(a);
           const notesPart = a.notes ? ` (${a.notes})` : "";
           addLog(`[Ability removed: ${a.name || "(unnamed)"}${notesPart}]`);
           abilities.splice(idx, 1);
@@ -577,47 +654,48 @@
           }
         });
 
-        const useRow = document.createElement("div");
-        useRow.style.cssText = "display:flex;flex-wrap:wrap;gap:4px;";
-        const useCount = Math.min(a.max, 10);
-        for (let i = 0; i < useCount; i++) {
-          const btn = document.createElement("button");
-          btn.style.cssText =
-            "flex:1;min-width:28px;padding:4px 0;border-radius:5px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;border:1px solid;transition:background 0.12s,opacity 0.12s;";
+        // Pip track — one glowing orb per use. Click a lit (available) pip
+        // to spend it; click a dark (used) pip to give it back — bidirectional,
+        // so a misclick or manual adjustment doesn't require the Rest button.
+        // Which specific pip gets clicked doesn't matter, only whether it was
+        // lit or dark at render time — uses are fungible, not individually
+        // tracked. With Multi-Use mode on, repeated clicks batch into one log
+        // line via recordAblUse instead of printing one per click.
+        const pipTrack = document.createElement("div");
+        pipTrack.className = "abl-pip-track";
+        // Pips are small fixed-size circles that wrap onto extra rows as
+        // needed (unlike the old full-width "Use" buttons, which had to stay
+        // to a single row) — there's room to show a lot more before falling
+        // back to "+N more" for the truly extreme cases.
+        const pipCount = Math.min(a.max, 24);
+        for (let i = 0; i < pipCount; i++) {
+          const pip = document.createElement("button");
           const used = i >= a.current;
-          btn.style.background = used
-            ? "rgba(var(--sc-accent-rgb), 0.04)"
-            : "rgba(var(--sc-accent-rgb), 0.15)";
-          btn.style.borderColor = used
-            ? "rgba(var(--sc-accent-rgb), 0.1)"
-            : "rgba(var(--sc-accent-rgb), 0.4)";
-          btn.style.color = used ? "var(--sc-slate-700)" : "var(--sc-accent-2)";
-          btn.style.opacity = used ? "0.4" : "1";
-          btn.textContent = "Use";
-          btn.disabled = a.current === 0;
-          btn.addEventListener("click", () => {
-            if (a.current <= 0) return;
-            a.current--;
-            curEl.textContent = a.current;
-            curEl.style.opacity = a.current === 0 ? "0.35" : "1";
+          pip.className = "abl-pip " + (used ? "used" : "available");
+          pip.title = used ? "Click to restore one use" : "Click to use one";
+          pip.addEventListener("click", () => {
+            if (used) {
+              if (a.current >= a.max) return;
+              a.current++;
+              recordAblUse(a, -1);
+            } else {
+              if (a.current <= 0) return;
+              a.current--;
+              recordAblUse(a, 1);
+            }
             save();
-            const notesPart = a.notes ? ` — ${a.notes}` : "";
-            addLog(
-              `[${a.name || "Ability"} used — ${a.current}/${a.max} remaining${notesPart}]`,
-            );
             render();
           });
-          useRow.appendChild(btn);
+          pipTrack.appendChild(pip);
         }
-        if (a.max > 10) {
+        if (a.max > pipCount) {
           const more = document.createElement("span");
-          more.style.cssText =
-            "font-size:9.5px;color:var(--sc-slate-700);align-self:center;padding:0 4px;";
-          more.textContent = `+${a.max - 10} more`;
-          useRow.appendChild(more);
+          more.className = "abl-pip-more";
+          more.textContent = `+${a.max - pipCount} more`;
+          pipTrack.appendChild(more);
         }
 
-        wrapper.append(topRow, notesSpan, notesEditIn, useRow);
+        wrapper.append(topRow, notesSpan, notesEditIn, pipTrack);
         ablListEl.appendChild(wrapper);
       });
     }
